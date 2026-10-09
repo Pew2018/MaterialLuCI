@@ -13,7 +13,7 @@
   const sync=()=>{const selected=!!input.checked,disabled=!!input.disabled;control.classList.toggle("mdc-switch--selected",selected);control.setAttribute("aria-checked",String(selected));control.disabled=disabled;control.setAttribute("aria-disabled",String(disabled));};
   input.classList.add("ml-switch-source");input.setAttribute("tabindex","-1");input.setAttribute("aria-hidden","true");
   input.addEventListener("change",sync);
-  try{const descriptor=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"checked");Object.defineProperty(input,"checked",{configurable:true,get(){return descriptor.get.call(input);},set(value){descriptor.set.call(input,value);sync();}});}catch(_){}
+  try{const descriptor=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"checked"),disabledDescriptor=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"disabled");Object.defineProperty(input,"checked",{configurable:true,get(){return descriptor.get.call(input);},set(value){descriptor.set.call(input,value);sync();}});Object.defineProperty(input,"disabled",{configurable:true,get(){return disabledDescriptor.get.call(input);},set(value){disabledDescriptor.set.call(input,value);sync();}});}catch(_){}
   control.addEventListener("click",event=>{event.preventDefault();if(input.disabled)return;input.checked=!input.checked;input.dispatchEvent(new Event("change",{bubbles:true}));});
   if(window.MaterialMDC?.MDCSwitch){try{control._mlMdcSwitch=new MaterialMDC.MDCSwitch(control);}catch(_){}}
   sync();return control;
