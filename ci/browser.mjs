@@ -79,3 +79,9 @@ try{
   await browser.close();console.log(name+": real LuCI widget values, submission, disabled states, modal lifecycle, appearance, history, responsive, login, offline resources passed");
  }
 }finally{server.kill();}
+// Inline image records allow remote visual review without a browser session or
+// granting Actions repository write access. They contain only mock fixture UI.
+for(const file of ["desktop-light.png","mobile-dark-cards.png","appearance-dark.png"]){
+ const path="dist/previews/"+file;
+ if(fs.existsSync(path))console.log("MATERIALLUCI_PREVIEW "+JSON.stringify({file,base64:fs.readFileSync(path).toString("base64")}));
+}
