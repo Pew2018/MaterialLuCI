@@ -172,6 +172,8 @@ try{
   await page.waitForSelector("#ml-mdc-wait-progress");
   await page.waitForTimeout(180);
   const progressBox=await page.locator("#ml-mdc-wait-progress").boundingBox(),busyBox=await page.locator("#modal_overlay>.modal").boundingBox();
+  assert(busyBox.width>=320,"short mobile status dialog collapsed");
+  assert((await page.locator("#modal_overlay>.modal>h4").boundingBox()).height<35,"short dialog title wraps");
   assert(progressBox.x>=busyBox.x&&progressBox.x+progressBox.width<=busyBox.x+busyBox.width+1);
   assert(progressBox.y>=busyBox.y&&progressBox.y+progressBox.height<=busyBox.y+busyBox.height+1,"progress outside modal on reduced mobile viewport");
   if(name==="chromium")await page.screenshot({path:"dist/previews/mdc-wait-mobile.png"});
@@ -197,6 +199,7 @@ try{
    const a=await field.boundingBox(),b=await clear.boundingBox();
    assert(a.x+a.width<=b.x+1||a.y+a.height<=b.y+1,"opkg input overlaps clear button");
   }
+  await page.waitForFunction(()=>{const track=document.querySelector(".cbi-progressbar"),fill=track?.querySelector("div");return fill&&Math.abs(fill.getBoundingClientRect().width/track.getBoundingClientRect().width-0.8)<0.02;});
   if(name==="chromium"){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:"dist/previews/opkg-desktop.png"});}
   await page.goto(base+"/login.html");await page.waitForSelector(".ml-login");
   assert.equal(await page.locator('input[name="luci_password"]').getAttribute("autocomplete"),"current-password");
