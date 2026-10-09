@@ -33,15 +33,20 @@ body button.ml-icon-button{width:48px;height:48px;min-width:48px;min-height:48px
 .ml-sidebar{position:sticky;top:calc(56px + var(--inset-top));height:calc(100dvh - 56px - var(--inset-top));overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border-right:1px solid var(--divider);padding:12px 0;z-index:11}
 .ml-sidebar-heading{display:flex;align-items:center;justify-content:space-between;min-height:40px;padding:0 20px 8px;color:var(--muted);font-size:13px}
 #ml-drawer-close,#ml-menu-button{display:none}
-.ml-nav-row{display:flex;align-items:center}
-.ml-sidebar a{display:flex;align-items:center;min-height:44px;padding:10px 20px;color:var(--ink);font-size:14px;text-decoration:none;line-height:1.4}
-.ml-nav-parent{flex:1;font-weight:500}
-body .ml-sidebar .ml-nav-toggle{width:44px;min-height:44px;margin:0;padding:8px;border:0;background:transparent;color:var(--muted);--button-bg:transparent;--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed)}
+.ml-nav-row{display:flex;align-items:stretch}
+.ml-sidebar a,.ml-sidebar button{display:flex;align-items:center;min-height:44px;padding:10px 20px;color:var(--ink);font:inherit;font-size:14px;text-decoration:none;line-height:1.4}
+.ml-nav-parent{flex:1;justify-content:space-between;gap:16px;width:100%;border:0;border-radius:0;background:transparent;color:var(--ink);text-align:left;font-weight:500;cursor:pointer;--button-bg:transparent;--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed)}
+.ml-nav-parent-label{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.ml-nav-chevron{flex:none;color:var(--muted);font-size:18px;line-height:1;transform:rotate(0deg);transition:transform 140ms ease,color 140ms ease}
+.ml-nav-parent[aria-expanded=true] .ml-nav-chevron{transform:rotate(180deg);color:var(--accent-ink)}
+.ml-nav-parent[aria-expanded=true]{color:var(--accent-ink)}
+.ml-nav-children{overflow:hidden}
 .ml-nav-children a{padding-left:36px}
+.ml-nav-entry-link{font-weight:400}
 .ml-nav-group+.ml-nav-group{margin-top:4px}
-.ml-nav-group[data-active=true]>.ml-nav-row>.ml-nav-parent{color:var(--accent-ink)}
 .ml-sidebar a[aria-current=page]{color:var(--accent-ink);background:var(--action-tonal);box-shadow:inset 2px 0 var(--control-accent)}
-.ml-sidebar a:hover{background:var(--hover)}
+.ml-sidebar a:hover,.ml-sidebar button:hover{background:var(--hover)}
+.ml-sidebar button:focus-visible{outline:2px solid var(--control-strong);outline-offset:-2px}
 .ml-drawer-scrim{position:fixed;inset:0;background:var(--overlay);z-index:19}
 .ml-skip{position:fixed;top:-80px;left:16px;z-index:50;padding:12px;background:var(--surface)}
 .ml-skip:focus{top:8px}
@@ -88,18 +93,24 @@ input[disabled],textarea[disabled],select[disabled]{opacity:1;color:var(--disabl
 .cbi-input-invalid,.cbi-value-error input,input[aria-invalid=true]{border-color:var(--danger)!important}
 input[type=checkbox],input[type=radio]{accent-color:var(--control-accent);width:18px;height:18px}
 .ml-switch-hit{width:48px;height:48px;flex:none;display:inline-grid;place-items:center;vertical-align:middle;border:0;padding:0}
-input[type=checkbox].ml-switch{appearance:none;-webkit-appearance:none;width:28px;height:10px;min-height:0;margin:0 3px;padding:0;border:0;border-radius:5px;position:relative;background:rgba(0,0,0,.38);cursor:pointer;box-shadow:none;transition:background-color 160ms ease}
-input.ml-switch::before{content:"";position:absolute;top:-3px;left:-2px;width:16px;height:16px;border:1px solid #858585;border-radius:50%;background:#eee;box-shadow:0 1px 1px rgba(0,0,0,.12);transition:transform 160ms ease,background-color 160ms ease,border-color 160ms ease}
+input[type=checkbox].ml-switch{appearance:none;-webkit-appearance:none;width:34px;height:14px;min-height:0;margin:0 3px;padding:0;border:0;border-radius:7px;position:relative;background:rgba(0,0,0,.38);cursor:pointer;box-shadow:none;transition:background-color 160ms ease}
+input.ml-switch::before{content:"";position:absolute;top:-3px;left:-3px;width:20px;height:20px;border:1px solid #757575;border-radius:50%;background:#fafafa;box-shadow:0 1px 2px rgba(0,0,0,.28);transition:transform 160ms ease,background-color 160ms ease,border-color 160ms ease,box-shadow 160ms ease}
 input.ml-switch:checked{background:var(--switch-track)}
-input.ml-switch:checked::before{background:var(--switch-thumb);border-color:var(--switch-thumb);transform:translateX(16px)}
-:root[data-theme=dark] input.ml-switch:not(:checked){background:rgba(255,255,255,.30)}
+input.ml-switch:checked::before{background:var(--switch-thumb);border-color:var(--switch-thumb);transform:translateX(20px)}
+input.ml-switch:hover::before{box-shadow:0 1px 3px rgba(0,0,0,.38)}
+input.ml-switch:active::before{box-shadow:0 2px 5px rgba(0,0,0,.42)}
+input.ml-switch:focus-visible{outline:2px solid var(--control-strong);outline-offset:4px}
+:root[data-theme=dark] input.ml-switch:not(:checked){background:rgba(255,255,255,.32)}
 :root[data-theme=dark] input.ml-switch:not(:checked)::before{background:#bdbdbd;border-color:#9e9e9e}
-input.ml-switch:disabled{background:#d4d4d4;cursor:default}
-input.ml-switch:disabled:checked{background:#c0c0c0}
-input.ml-switch:disabled::before{background:#bdbdbd;border-color:#a6a6a6;box-shadow:none}
-:root[data-theme=dark] input.ml-switch:disabled{background:#353535}
-:root[data-theme=dark] input.ml-switch:disabled:checked{background:#484848}
-:root[data-theme=dark] input.ml-switch:disabled::before{background:#616161;border-color:#757575}
+input.ml-switch:disabled{background:rgba(0,0,0,.20);cursor:default}
+input.ml-switch:disabled:checked{background:var(--switch-track)}
+input.ml-switch:disabled::before{background:#bdbdbd;border-color:#9e9e9e;box-shadow:none}
+:root[data-theme=dark] input.ml-switch:disabled{background:rgba(255,255,255,.20)}
+:root[data-theme=dark] input.ml-switch:disabled:checked{background:rgba(255,255,255,.30)}
+:root[data-theme=dark] input.ml-switch:disabled::before{background:#6f6f6f;border-color:#858585}
+@media (prefers-reduced-motion:reduce){
+ input.ml-switch,input.ml-switch::before,.ml-nav-chevron{transition:none}
+}
 
 body :is(.btn,.cbi-button,button){
  --button-bg:var(--action-tonal);--button-hover-bg:var(--tonal-pressed);--button-pressed-bg:var(--tonal-pressed);--button-ink:var(--on-action-tonal);
