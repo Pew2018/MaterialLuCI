@@ -8,6 +8,16 @@
  const zh=document.documentElement.lang.startsWith("zh"),t=(cn,en)=>zh?cn:en;
  const node=(tag,attrs={},children=[])=>{const el=document.createElement(tag);for(const [key,val] of Object.entries(attrs)){if(key==="text")el.textContent=val;else if(key==="class")el.className=val;else el.setAttribute(key,String(val));}for(const child of children)el.append(child);return el;};
  const textButton=(text,fn,cls="text-action")=>{const b=node("button",{type:"button",class:cls},[node("span",{text})]);b.addEventListener("click",fn);return b;};
+ function switchControl(input,label){
+  const control=node("button",{type:"button",class:"mdc-switch",role:"switch","aria-label":label,"aria-checked":String(!!input.checked)},[node("span",{class:"mdc-switch__track"}),node("span",{class:"mdc-switch__handle-track"},[node("span",{class:"mdc-switch__handle"}),node("span",{class:"mdc-switch__icons","aria-hidden":"true"},[node("span",{class:"mdc-switch__icon mdc-switch__icon--on"}),node("span",{class:"mdc-switch__icon mdc-switch__icon--off"})])])]);
+  const hit=node("span",{class:"ml-switch-hit"},[input,control]);
+  const sync=()=>{const selected=!!input.checked,disabled=!!input.disabled;control.classList.toggle("mdc-switch--selected",selected);control.setAttribute("aria-checked",String(selected));control.disabled=disabled;control.setAttribute("aria-disabled",String(disabled));};
+  input.classList.add("ml-switch-source");input.setAttribute("tabindex","-1");input.setAttribute("aria-hidden","true");
+  input.addEventListener("change",sync);
+  control.addEventListener("click",event=>{event.preventDefault();if(input.disabled)return;input.checked=!input.checked;input.dispatchEvent(new Event("change",{bubbles:true}));});
+  if(window.MaterialMDC?.MDCSwitch){try{control._mlMdcSwitch=new MaterialMDC.MDCSwitch(control);}catch(_){}}
+  sync();return hit;
+ }
  const narrow=matchMedia("(max-width: 1023px)");
  let dialog=null,sequence=0,drawerFocus=null,drawerInert=[];
  const focusables=el=>[...el.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled):not([type=hidden]),select:not(:disabled),textarea:not(:disabled),summary,[tabindex="0"]')].filter(n=>n.getClientRects().length&&!n.closest("[inert]"));
@@ -39,7 +49,7 @@
      const open=list.hidden;
      list.hidden=!open;toggle.setAttribute("aria-expanded",String(open));group.dataset.active=String(open);
     });
-    const header=node("div",{class:"ml-nav-row"},[toggle]);group.append(header);
+    const header=node("div",{class:"ml-nav-row ml-nav-row-action"},[toggle]);group.append(header);
     if(entry.url&&!children.some(child=>child.url===entry.url)){
      const direct=node("a",{href:entry.url,class:"ml-nav-entry-link",text:entry.title});
      if(entry.active&&!children.some(child=>child.active))direct.setAttribute("aria-current","page");
@@ -96,8 +106,8 @@
  }
  function row(title,description,control){return node("div",{class:"ml-setting-row"},[node("span",{class:"ml-row-copy"},[node("strong",{text:title}),node("small",{text:description})]),control]);}
  function prefSwitch(key,title,description){
-  const input=node("input",{type:"checkbox",class:"ml-switch",role:"switch","aria-label":title});input.checked=appearance.prefs[key];input.addEventListener("change",()=>appearance.set(key,input.checked));
-  return row(title,description,node("label",{class:"ml-switch-hit"},[input]));
+  const input=node("input",{type:"checkbox",class:"ml-switch","aria-label":title});input.checked=appearance.prefs[key];input.addEventListener("change",()=>appearance.set(key,input.checked));
+  return row(title,description,switchControl(input,title));
  }
  function openAppearance(container){
   if(document.getElementById("ml-appearance"))return;
@@ -125,7 +135,7 @@
   const select=selects.find(s=>/(^|\.)mediaurlbase$/.test(s.name)||[...s.options].some(o=>o.value.startsWith("/luci-static/")));
   const field=select?.closest(".cbi-value");
   if(!field)return;
-  const details=node("details",{id:"ml-appearance-entry",class:"ml-appearance-entry"},[node("summary",{text:t("主题外观（此浏览器）","Theme appearance (this browser)")})]);
+  const details=node("details",{id:"ml-appearance-entry",class:"ml-appearance-entry",open:"true"},[node("summary",{text:t("主题外观（此浏览器）","Theme appearance (this browser)")})]);
   field.after(details);details.addEventListener("toggle",()=>{if(details.open)openAppearance(details);});
  }
  function enhance(root){
@@ -142,10 +152,12 @@
   for(const input of all('.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox')){
    if(input.classList.contains("ml-switch")||input.closest(".cbi-dropdown,[role=group],.cbi-section-table,.ml-table-scroll")||input.closest("label"))continue;
    const field=input.closest(".cbi-value-field");
-   if(!field||field.querySelectorAll('input[type="checkbox"]').length!==1)continue;
-   input.classList.add("ml-switch");input.setAttribute("role","switch");
-   if(!input.getAttribute("aria-label")){const title=input.closest(".cbi-value")?.querySelector(".cbi-value-title")?.textContent.trim();if(title)input.setAttribute("aria-label",title);}
-   const hit=node("label",{class:"ml-switch-hit"});input.parentNode.insertBefore(hit,input);hit.append(input);
+   if(!field||field.querySelectorAll("input[type=checkbox]").length!==1)continue;
+   input.classList.add("ml-switch");
+   const title=input.getAttribute("aria-label")||input.closest(".cbi-value")?.querySelector(".cbi-value-title")?.textContent.trim()||t("开关","Switch");
+   if(input.closest("label")){const label=input.closest("label");label.classList.add("ml-switch-hit");label.append(switchControl(input,title));}
+   else{const hit=switchControl(input,title);input.parentNode.insertBefore(hit,input);hit.append(input);}
+   if(input.disabled)input.setAttribute("aria-disabled","true");
   }
   for(const input of all('.cbi-page-actions>input[type="submit"],.cbi-page-actions>input[type="button"],.cbi-page-actions>input[type="reset"]')){
    if(input.closest(".ml-native-button"))continue;const wrapper=node("span",{class:"ml-native-button"});input.parentNode.insertBefore(wrapper,input);wrapper.append(input);
@@ -160,6 +172,10 @@
    if(cells>=5)table.classList.add("ml-wide-table");
    table.parentNode.insertBefore(wrapper,table);wrapper.append(table);
   }
+  // Mark semantic page sections for optional card surfaces; never wrap rows or tables.
+  const cardCandidates=new Set([...(root.matches?.("#maincontent")?[root]:[]),...root.querySelectorAll(":scope > section,:scope > fieldset,:scope > .cbi-map > .cbi-section,:scope > .cbi-map > fieldset,:scope > .cbi-map > [data-tab]")]);
+  for(const section of cardCandidates)if(!section.classList.contains("ml-toolbar")&&!section.classList.contains("ml-sidebar"))section.classList.add("ml-card-surface");
+
   // Preserve zone/status background semantics, with readable foreground in either mode.
   for(const head of all('.ifacebox-head[style*="background"]')){
    const rgb=getComputedStyle(head).backgroundColor.match(/[0-9.]+/g)?.map(Number);
