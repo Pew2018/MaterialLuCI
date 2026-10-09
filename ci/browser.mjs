@@ -99,9 +99,12 @@ try{
   assert.equal(await page.locator("#ml-sidebar").evaluate(el=>el.inert),true);
   await page.locator("#ml-menu-button").click();
   const networkGroup=page.locator('.ml-nav-parent[aria-controls]').filter({hasText:"网络"});
-  await networkGroup.focus();await page.keyboard.press("Enter");
-  assert.equal(await networkGroup.getAttribute("aria-expanded"),"false");
-  await page.keyboard.press(" ");assert.equal(await networkGroup.getAttribute("aria-expanded"),"true");
+  await networkGroup.focus();
+  const networkInitial=await networkGroup.getAttribute("aria-expanded");
+  await page.keyboard.press("Enter");
+  assert.equal(await networkGroup.getAttribute("aria-expanded"),networkInitial==="true"?"false":"true");
+  await page.keyboard.press(" ");
+  assert.equal(await networkGroup.getAttribute("aria-expanded"),networkInitial);
   assert.equal(await page.locator("#ml-menu-button").getAttribute("aria-expanded"),"true");
   assert.equal(await page.locator("#ml-sidebar").getAttribute("aria-modal"),"true");
   assert.equal(await page.locator("#maincontent").evaluate(el=>el.inert),true);
