@@ -23,24 +23,30 @@
  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
  <meta name="theme-color" content="#FFFFFF">
  <title><%=striptags((boardinfo.hostname or "?") .. ((node and node.title) and " - "..translate(node.title) or ""))%> - MaterialLuCI</title>
- <script src="<%=media%>/palette.js?v=0.1.0"></script>
- <script src="<%=media%>/startup.js?v=0.1.0"></script>
- <link rel="stylesheet" href="<%=media%>/cascade.css?v=0.1.0">
+ <script src="<%=media%>/palette.js?v=@VERSION@"></script>
+ <script src="<%=media%>/startup.js?v=@VERSION@"></script>
+ <link rel="stylesheet" href="<%=media%>/cascade.css?v=@VERSION@">
  <% if node and node.css then %><link rel="stylesheet" href="<%=resource%>/<%=node.css%>"><% end %>
  <% if css then %><style><%=css%></style><% end %>
  <script src="<%=url('admin/translations',luci.i18n.context.lang)%>"></script>
  <script src="<%=resource%>/cbi.js"></script>
- <script defer src="<%=media%>/feedback.js?v=0.1.0"></script>
- <script defer src="<%=media%>/app.js?v=0.1.0"></script>
+ <script defer src="<%=media%>/feedback.js?v=@VERSION@"></script>
+ <script defer src="<%=media%>/app.js?v=@VERSION@"></script>
 </head>
 <body class="lang_<%=pcdata(luci.i18n.context.lang)%>" data-page="<%=pcdata(table.concat(disp.context.requestpath,'-'))%>">
  <header class="ml-toolbar"><div class="ml-toolbar-inner">
   <button id="ml-back" class="ml-icon-button" type="button" aria-label="<%:Back%>" hidden><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
-  <button id="ml-menu-button" class="ml-icon-button" type="button" aria-label="<%:Menu%>"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg></button>
+  <button id="ml-menu-button" class="ml-icon-button" type="button" aria-label="<%:Menu%>" aria-controls="ml-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg></button>
   <span class="ml-title">MaterialLuCI</span>
   <div id="indicators"></div>
-  <button id="ml-appearance-button" class="ml-icon-button" type="button" aria-label="<%:Appearance%>"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 2-2c0-.6-.3-1.1-.6-1.4-.4-.4-.6-.8-.4-1.3.2-.5.6-.8 1.2-.8H17a4 4 0 0 0 4-4A8.5 8.5 0 0 0 12 3zm-5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg></button>
  </div></header>
+ <a class="ml-skip" href="#maincontent"><%:Skip to content%></a>
+ <div class="ml-layout">
+ <aside id="ml-sidebar" class="ml-sidebar" aria-label="<%:Navigation%>">
+  <div class="ml-sidebar-heading"><span><%=pcdata(boardinfo.hostname or "MaterialLuCI")%></span><button id="ml-drawer-close" type="button" class="text-action" aria-label="<%:Close%>">×</button></div>
+  <nav id="ml-menu-tree"><p class="hint"><%:Loading…%></p></nav>
+ </aside>
+ <div id="ml-drawer-scrim" class="ml-drawer-scrim" hidden></div>
  <div id="page-content"><main id="maincontent" class="container" tabindex="-1">
   <div id="ml-startup-error" role="alert" hidden><%:The interface could not be initialized. Please reload this page.%> <button type="button" onclick="location.reload()"><%:Reload%></button></div>
   <noscript><div class="alert-message warning"><%:You must enable JavaScript in your browser or LuCI will not work properly.%></div></noscript>

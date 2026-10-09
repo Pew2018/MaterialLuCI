@@ -5,9 +5,9 @@ def menu_node(title,children=None,order=10):
  return {"title":title,"satisfied":True,"order":order,"children":children or {}}
 MENU={"children":{"admin":menu_node("管理",{
  "status":menu_node("状态",{"overview":menu_node("概览"),"syslog":menu_node("系统日志")}),
- "network":menu_node("网络",{"network":menu_node("接口"),"wireless":menu_node("无线"),"firewall":menu_node("防火墙")},20),
- "system":menu_node("系统",{"system":menu_node("系统设置"),"admin":menu_node("管理权"),"opkg":menu_node("软件包")},30),
- "services":menu_node("服务",{"mtwifi":menu_node("无线配置"),"turboacc":menu_node("网络加速")},40),
+ "network":menu_node("网络",{"network":menu_node("接口",{"interfaces":menu_node("接口"),"devices":menu_node("设备",order=20),"globals":menu_node("全局网络选项",order=30)}),"wireless":menu_node("无线"),"firewall":menu_node("防火墙")},40),
+ "system":menu_node("系统",{"system":menu_node("系统设置"),"admin":menu_node("管理权"),"opkg":menu_node("软件包")},20),
+ "services":menu_node("服务",{"mtwifi":menu_node("无线配置"),"turboacc":menu_node("网络加速")},30),
  "logout":menu_node("退出",order=90)
 })}}
 class Handler(http.server.SimpleHTTPRequestHandler):

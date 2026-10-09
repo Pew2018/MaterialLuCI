@@ -53,7 +53,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: MaterialLuCI-0.1.1-IPK-in-ZIP-AX3000T-aarch64_cortex-a53
-          path: dist/luci-theme-materialluci_0.1.1-1_aarch64_cortex-a53.ipk
+          name: MaterialLuCI-0.2.0-IPK-in-ZIP-AX3000T-aarch64_cortex-a53
+          path: dist/luci-theme-materialluci_0.2.0-1_aarch64_cortex-a53.ipk
           if-no-files-found: error
           retention-days: 30

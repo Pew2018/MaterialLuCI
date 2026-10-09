@@ -15,9 +15,22 @@
 <div class="cbi-value"><label class="cbi-value-title" for="legacy-switch">功能开关</label><div class="cbi-value-field"><input class="cbi-input-checkbox" type="checkbox" id="legacy-switch" name="enabled" value="1" checked><input type="hidden" name="cbi.cbe.fixture.enabled" value="1"></div></div>
 <div class="cbi-value"><span class="cbi-value-title">LuCI 动态开关</span><div class="cbi-value-field" id="real-widget"></div></div>
 <div class="cbi-value"><span class="cbi-value-title">选择项目</span><div class="cbi-value-field" id="real-select"></div></div>
+<div class="cbi-value" id="fixture-theme-field"><label class="cbi-value-title" for="fixture-theme">主题</label><div class="cbi-value-field"><select id="fixture-theme" name="luci.main.mediaurlbase"><option value="/luci-static/materialluci">MaterialLuCI</option><option value="/luci-static/bootstrap_mod">Bootstrap Mod</option></select></div></div>
+<div class="cbi-value"><span class="cbi-value-title">选项组</span><div class="cbi-value-field"><input class="cbi-input-checkbox" type="checkbox" name="optionA"><input class="cbi-input-checkbox" type="checkbox" name="optionB"></div></div>
 <div class="cbi-page-actions"><input class="cbi-button cbi-button-apply" type="submit" value="保存并应用"><input class="cbi-button cbi-button-reset" type="reset" value="重置"></div>
 </form>
 </section>
+
+<section class="cbi-section"><h3>无线客户端</h3>
+<div class="table" id="fixture-clients"><div class="tr table-titles"><div class="th">网络</div><div class="th">设备</div><div class="th">MAC 地址</div><div class="th">信号 / 噪声</div><div class="th">接收速率</div><div class="th">发送速率</div></div>
+<div class="tr"><div class="td">无线网络 5 GHz</div><div class="td">MacBook-Pro</div><div class="td"><code>00:11:22:33:44:55</code></div><div class="td">−49 / −92 dBm</div><div class="td">1201 Mbit/s<br>80 MHz · HE-MCS 11</div><div class="td">1201 Mbit/s<br>HE-NSS 2 · GI 0.8</div></div></div>
+</section>
+<section class="cbi-section"><h3>网络接口</h3>
+<ul class="tabs" id="fixture-tabs"><li class="active"><a href="#fixture-interfaces">接口</a></li><li><a id="fixture-device-tab" href="#fixture-devices">设备</a></li><li><a href="#fixture-globals">全局网络选项</a></li></ul>
+<div class="table cbi-section-table" id="fixture-interfaces"><div class="tr"><div class="th">接口</div><div class="th">状态</div><div class="th">操作</div></div>
+<div class="tr"><div class="td"><div class="ifacebox"><div class="ifacebox-head" style="background-color:#90f090">LAN</div><div class="ifacebox-body">桥接设备<br>br-lan</div></div></div><div class="td">IPv4: 192.0.2.1/24<br>已发送：25.8 GiB</div><div class="td cbi-section-actions"><button class="cbi-button cbi-button-reload">重启</button><button class="cbi-button cbi-button-edit">编辑</button><button class="cbi-button cbi-button-remove">删除</button></div></div></div>
+</section>
+<section class="cbi-section"><h3>启动项</h3><table id="fixture-startup"><tr><th>启动顺序</th><th>名称</th><th>启用状态</th><th>操作</th></tr><tr><td>50</td><td>example-service</td><td><button class="cbi-button cbi-button-positive important">已启用</button></td><td class="cbi-section-actions"><button class="cbi-button" id="fixture-start">启动</button><button class="cbi-button">重启</button><button class="cbi-button cbi-button-negative">停止</button><button class="cbi-button" disabled>不可用</button></td></tr></table></section>
 <section class="cbi-section"><h3>日志</h3><pre>接口 wan：已连接
 主题预览：模拟状态数据
 表单行为：真实 LuCI Checkbox / Select</pre></section>

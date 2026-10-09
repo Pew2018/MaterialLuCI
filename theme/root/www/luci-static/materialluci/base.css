@@ -791,7 +791,7 @@ tr tr {
 #swapfree>div {
     border: 1.5px solid #bbb !important;
     border-radius: 5px;
-    width: 240px !important;
+    width: 100%;
 }
 
 #cpu_free>div>div,
@@ -802,7 +802,7 @@ tr tr {
 #conns>div>div,
 #swaptotal>div>div,
 #swapfree>div>div {
-    height: 18px !important;
+    height: 100%;
     border-radius: 3px;
 }
 
@@ -866,7 +866,7 @@ input[type=button],
 input[type=reset],
 input[type=submit],
 button {
-    width: auto !important;
+    width: auto;
 }
 
 input[type=checkbox],
@@ -935,7 +935,6 @@ input[type=file] {
 .btn,
 .cbi-button,
 button {
-    border-radius: 6px !important;
     display: inline-block;
     background: #fff;
     border: 1px solid #ccc;

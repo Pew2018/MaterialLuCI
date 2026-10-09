@@ -1,58 +1,86 @@
 "use strict";
-/* Presentation adapters. Original LuCI inputs, form handlers and RPC remain authoritative. */
+/* Presentation only. LuCI owns menu ACLs, fields, values, RPC and modal actions. */
 (function(){
- const appearance=window.MaterialAppearance,main=document.getElementById("maincontent"),content=document.getElementById("page-content"),back=document.getElementById("ml-back");
+ const appearance=window.MaterialAppearance,main=document.getElementById("maincontent"),
+ sidebar=document.getElementById("ml-sidebar"),toolbar=document.querySelector(".ml-toolbar"),
+ menuButton=document.getElementById("ml-menu-button"),scrim=document.getElementById("ml-drawer-scrim");
  if(!main||!appearance)return;
  const zh=document.documentElement.lang.startsWith("zh"),t=(cn,en)=>zh?cn:en;
  const node=(tag,attrs={},children=[])=>{const el=document.createElement(tag);for(const [key,val] of Object.entries(attrs)){if(key==="text")el.textContent=val;else if(key==="class")el.className=val;else el.setAttribute(key,String(val));}for(const child of children)el.append(child);return el;};
  const textButton=(text,fn,cls="text-action")=>{const b=node("button",{type:"button",class:cls},[node("span",{text})]);b.addEventListener("click",fn);return b;};
- let menus=null,dialog=null,appearancePage=null,hiddenBefore=[],scrollBefore=0,previousFocus=null,menuError="";
- let sequence=0;
- const nativeBack=()=>{if(history.state&&history.state.materialluci)history.back();};
- function finishDialog(){
-  if(!dialog)return;const old=dialog;dialog=null;content.style.overflow=old.overflow;
-  const done=()=>{old.backdrop.remove();if(old.focus&&old.focus.isConnected)old.focus.focus({preventScroll:true});};
-  if(matchMedia("(prefers-reduced-motion: reduce)").matches||!old.backdrop.animate){done();return;}
-  old.backdrop.animate([{opacity:1},{opacity:0}],{duration:100,easing:"ease-in"}).finished.catch(()=>{}).then(done);
+ const narrow=matchMedia("(max-width: 1023px)");
+ let dialog=null,sequence=0,drawerFocus=null,drawerInert=[];
+ const focusables=el=>[...el.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled):not([type=hidden]),select:not(:disabled),textarea:not(:disabled),summary,[tabindex="0"]')].filter(n=>n.getClientRects().length&&!n.closest("[inert]"));
+ function trap(e,panel){if(e.key!=="Tab")return;const fs=focusables(panel);if(!fs.length)return;const first=fs[0],last=fs[fs.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
+ function setDrawer(open,restore=true){
+  open=!!open&&narrow.matches&&!document.body.classList.contains("ml-login");
+  const was=document.body.classList.contains("ml-drawer-open");
+  if(open===was){sidebar.inert=narrow.matches&&!open;return;}
+  document.body.classList.toggle("ml-drawer-open",open);scrim.hidden=!open;
+  menuButton.setAttribute("aria-expanded",String(open));sidebar.inert=narrow.matches&&!open;
+  if(open){drawerFocus=document.activeElement;drawerInert=[main,toolbar].map(el=>[el,el.inert]);drawerInert.forEach(([el])=>el.inert=true);sidebar.setAttribute("role","dialog");sidebar.setAttribute("aria-modal","true");(sidebar.querySelector('[aria-current="page"]')||focusables(sidebar)[0])?.focus({preventScroll:true});}
+  else{drawerInert.forEach(([el,value])=>el.inert=value);drawerInert=[];sidebar.removeAttribute("role");sidebar.removeAttribute("aria-modal");if(restore&&drawerFocus?.isConnected)drawerFocus.focus({preventScroll:true});}
  }
- function closeDialog(){if(!dialog)return;if(history.state&&history.state.materialluci==="dialog"&&history.state.id===dialog.id)history.back();else finishDialog();}
+ function renderMenus(entries){
+  const host=document.getElementById("ml-menu-tree");host.replaceChildren();
+  for(const [i,entry] of entries.entries()){
+   const group=node("section",{class:"ml-nav-group"}),link=node("a",{href:entry.url,class:"ml-nav-parent",text:entry.title});
+   const header=node("div",{class:"ml-nav-row"},[link]);group.append(header);
+   if(entry.active)group.dataset.active="true";
+   if(entry.children?.length){
+    const list=node("div",{id:"ml-nav-children-"+i,class:"ml-nav-children"});list.hidden=!entry.active;
+    const toggle=textButton("⌄",()=>{list.hidden=!list.hidden;toggle.setAttribute("aria-expanded",String(!list.hidden));},"ml-nav-toggle");
+    toggle.setAttribute("aria-label",t("展开或收起：","Expand or collapse: ")+entry.title);
+    toggle.setAttribute("aria-controls",list.id);toggle.setAttribute("aria-expanded",String(!list.hidden));header.append(toggle);
+    for(const child of entry.children){const a=node("a",{href:child.url,text:child.title});if(child.active)a.setAttribute("aria-current","page");list.append(a);}
+    group.append(list);
+   }else if(entry.active)link.setAttribute("aria-current","page");
+   host.append(group);
+  }
+  host.querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>setDrawer(false,false)));
+  MaterialFeedback.bind(sidebar);document.body.dataset.mlMenus="ready";
+ }
+ menuButton?.addEventListener("click",()=>setDrawer(!document.body.classList.contains("ml-drawer-open")));
+ document.getElementById("ml-drawer-close")?.addEventListener("click",()=>setDrawer(false));
+ scrim?.addEventListener("click",()=>setDrawer(false));
+ sidebar?.addEventListener("keydown",e=>{if(narrow.matches&&document.body.classList.contains("ml-drawer-open")){if(e.key==="Escape"){e.preventDefault();setDrawer(false);}trap(e,sidebar);}});
+ function drawerResize(){setDrawer(false);sidebar.inert=narrow.matches;}
+ if(narrow.addEventListener)narrow.addEventListener("change",drawerResize);else narrow.addListener(drawerResize);
+ drawerResize();
+ function finishDialog(){
+  if(!dialog)return;const old=dialog;dialog=null;old.backdrop.remove();document.body.classList.remove("ml-dialog-open");
+  old.inert.forEach(([el,value])=>el.inert=value);if(old.focus?.isConnected)old.focus.focus({preventScroll:true});
+ }
+ function closeDialog(){if(!dialog)return;if(history.state?.materialluci==="dialog"&&history.state.id===dialog.id)history.back();else finishDialog();}
  function openDialog(title,body){
-  if(dialog)return;
-  const id=++sequence,heading=node("h2",{id:"ml-dialog-title-"+id,text:title}),panel=node("div",{class:"ml-dialog",role:"dialog","aria-modal":"true","aria-labelledby":heading.id},[heading,body]);
+  if(dialog)return;setDrawer(false,false);
+  const id=++sequence,heading=node("h2",{id:"ml-dialog-title-"+id,text:title}),
+  panel=node("div",{class:"ml-dialog",role:"dialog","aria-modal":"true","aria-labelledby":heading.id},[heading,node("div",{class:"ml-dialog-body"},[body])]);
   const cancel=textButton(t("取消","Cancel"),closeDialog);panel.append(node("div",{class:"ml-dialog-actions"},[cancel]));
-  const bg=node("div",{class:"ml-backdrop"},[panel]);dialog={id,backdrop:bg,focus:document.activeElement,overflow:content.style.overflow};
-  content.style.overflow="hidden";document.body.append(bg);history.pushState({materialluci:"dialog",id},"",location.href);
+  const bg=node("div",{class:"ml-backdrop"},[panel]);
+  dialog={id,backdrop:bg,focus:document.activeElement,inert:[main,sidebar,toolbar].map(el=>[el,el.inert])};
+  dialog.inert.forEach(([el])=>el.inert=true);document.body.classList.add("ml-dialog-open");document.body.append(bg);
+  history.pushState({materialluci:"dialog",id},"",location.href);
   bg.addEventListener("click",e=>{if(e.target===bg)closeDialog();});
-  bg.addEventListener("keydown",e=>{if(e.key==="Escape"){e.preventDefault();closeDialog();}if(e.key==="Tab"){const fs=[...panel.querySelectorAll("button:not(:disabled),a[href],input:not(:disabled),summary")];if(!fs.length)return;const first=fs[0],last=fs[fs.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
-  MaterialFeedback.bind(bg);
-  if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&bg.animate){bg.animate([{opacity:0},{opacity:1}],{duration:160,easing:"ease-out"});panel.animate([{transform:"translateY(4px)"},{transform:"translateY(0)"}],{duration:160,easing:"ease-out"});}
-  (panel.querySelector("button,a[href],summary")||cancel).focus({preventScroll:true});
+  bg.addEventListener("keydown",e=>{if(e.key==="Escape"){e.preventDefault();closeDialog();}trap(e,panel);});
+  MaterialFeedback.bind(bg);viewport();(focusables(panel)[0]||cancel).focus({preventScroll:true});
  }
  function choose(title,options,value,onChange){
   const body=node("div",{role:"radiogroup","aria-label":title});
-  for(const [key,label] of options){const b=node("button",{type:"button",class:"ml-option",role:"radio","aria-checked":key===value},[node("span",{text:label}),node("span",{class:"ml-radio","aria-hidden":"true"})]);
-   b.addEventListener("click",()=>{if(!dialog)return;body.querySelectorAll("[aria-checked]").forEach(e=>e.setAttribute("aria-checked",String(e===b)));onChange(key);const id=dialog.id;setTimeout(()=>{if(dialog&&dialog.id===id)closeDialog();},150);});body.append(b);
-  }openDialog(title,body);
- }
- function closeAppearance(){
-  if(!appearancePage)return;appearancePage.remove();appearancePage=null;
-  hiddenBefore.forEach(([el,hidden])=>{if(el.isConnected)el.hidden=hidden;});hiddenBefore=[];
-  content.scrollTop=scrollBefore;back.hidden=true;
-  document.querySelector(".ml-bottom-nav").hidden=false;document.getElementById("ml-menu-button").hidden=false;
-  document.querySelectorAll(".ml-bottom-tab").forEach(b=>b.disabled=false);
-  if(previousFocus&&previousFocus.isConnected)previousFocus.focus({preventScroll:true});
+  for(const [key,label] of options){
+   const b=node("button",{type:"button",class:"ml-option",role:"radio","aria-checked":key===value},[node("span",{text:label}),node("span",{class:"ml-radio","aria-hidden":"true"})]);
+   b.addEventListener("click",()=>{if(!dialog)return;body.querySelectorAll("[aria-checked]").forEach(e=>e.setAttribute("aria-checked",String(e===b)));onChange(key);closeDialog();});body.append(b);
+  }
+  openDialog(title,body);
  }
  function row(title,description,control){return node("div",{class:"ml-setting-row"},[node("span",{class:"ml-row-copy"},[node("strong",{text:title}),node("small",{text:description})]),control]);}
  function prefSwitch(key,title,description){
   const input=node("input",{type:"checkbox",class:"ml-switch",role:"switch","aria-label":title});input.checked=appearance.prefs[key];input.addEventListener("change",()=>appearance.set(key,input.checked));
   return row(title,description,node("label",{class:"ml-switch-hit"},[input]));
  }
- function openAppearance(){
-  if(dialog){closeDialog();return;}if(appearancePage)return;
-  previousFocus=document.activeElement;scrollBefore=content.scrollTop;hiddenBefore=[...main.children].map(el=>[el,el.hidden]);hiddenBefore.forEach(([el])=>el.hidden=true);
-  const host=node("section",{id:"ml-appearance"});appearancePage=host;main.append(host);back.hidden=false;content.scrollTop=0;
-  document.querySelector(".ml-bottom-nav").hidden=true;document.getElementById("ml-menu-button").hidden=true;
-  history.pushState({materialluci:"appearance"},"",location.href);
+ function openAppearance(container){
+  if(document.getElementById("ml-appearance"))return;
+  const host=node("section",{id:"ml-appearance"});container.append(host);
   const group=title=>{const g=node("section",{class:"ml-group"},[node("h2",{text:title})]);host.append(g);return g;};
   const general=group(t("界面","Appearance"));
   const modeLabels={system:t("跟随系统","System"),light:t("浅色","Light"),dark:t("深色","Dark")};
@@ -67,48 +95,25 @@
   custom.append(label,hex,error);
   const ranges=group(t("额外着色范围","Additional accent areas"));
   ranges.append(prefSwitch("toolbar",t("顶栏背景","Toolbar background"),t("使用派生主表面和对应文字色。","Use the derived primary surface.")),prefSwitch("categories",t("分组标题","Section headings"),t("使用可读的强调色文字。","Use contrast adjusted accent text.")),prefSwitch("icons",t("导航与返回图标","Navigation and back icons"),t("为中性顶栏图标着色。","Accent icons in the neutral toolbar.")));
-  const about=group(t("关于","About"));about.append(node("p",{class:"hint",text:"MaterialLuCI 0.1.0 · Classic Native"}),node("p",{class:"hint",text:t("外观偏好保存在此浏览器，不更改路由器配置。","Preferences are stored in this browser without changing router configuration.")}));
-  updateSwatches();MaterialFeedback.bind(host);mode.focus({preventScroll:true});
+  const about=group(t("关于","About"));about.append(node("p",{class:"hint",text:"MaterialLuCI @VERSION@ · Classic Native"}),node("p",{class:"hint",text:t("外观偏好保存在此浏览器，不更改路由器配置。","Preferences are stored in this browser without changing router configuration.")}));
+  updateSwatches();MaterialFeedback.bind(host);
  }
- function menuBody(entries){const body=node("div",{class:"ml-menu"});for(const entry of entries){if(entry.children&&entry.children.length){const details=node("details",{},[node("summary",{text:entry.title}),menuBody(entry.children)]);if(entry.active||entries.length===1)details.open=true;body.append(details);}else if(entry.url){const link=node("a",{href:entry.url},[node("span",{text:entry.title})]);if(entry.active)link.setAttribute("aria-current","page");body.append(link);}}return body;}
- function openMenu(group){
-  if(appearancePage){if(history.state&&history.state.materialluci==="appearance")history.back();return;}
-  const title={status:t("状态","Status"),network:t("网络","Network"),settings:t("设置","Settings")}[group],entries=menus?menus[group]:null;
-  const body=entries?menuBody(entries):node("div",{},[node("p",{text:menuError||t("正在读取菜单…","Loading menu…")}),node("div",{class:"ml-loading-line"})]);
-  if(group==="settings"){const b=textButton(t("界面外观","Appearance"),()=>{closeDialog();setTimeout(openAppearance,180);},"ml-option");body.prepend(b);}
-  openDialog(title,body);
- }
- const selectAdapters=new WeakMap();
- function adaptSelect(select){
-  if(selectAdapters.has(select)||select.multiple||select.size>1||select.closest(".cbi-dropdown")||select.options.length>60)return;
-  const title=select.closest(".cbi-value")?.querySelector(".cbi-value-title")?.textContent.trim()||t("选择","Select");
-  const choice=textButton("",()=>{
-   if(select.disabled)return;
-   const options=[...select.options].filter(o=>!o.disabled).map(o=>[o.value,o.textContent]);
-   choose(title,options,select.value,value=>{
-    select.value=value;
-    select.dispatchEvent(new Event("input",{bubbles:true}));
-    select.dispatchEvent(new Event("change",{bubbles:true}));
-    select.dispatchEvent(new Event("blur"));
-    update();
-   });
-  },"ml-choice ml-select-choice");
-  choice.setAttribute("aria-label",title);choice.setAttribute("aria-haspopup","dialog");
-  const originalHidden=select.hidden;select.hidden=true;select.after(choice);
-  function update(){choice.firstChild.textContent=select.selectedOptions[0]?.textContent||t("未设置","Not set");choice.disabled=select.disabled;choice.setAttribute("aria-invalid",String(select.classList.contains("cbi-input-invalid")||select.getAttribute("aria-invalid")==="true"));}
-  select.addEventListener("change",update);
-  const obs=new MutationObserver(update);obs.observe(select,{attributes:true,childList:true,subtree:true});
-  // Preserve LuCI UISelect.setValue(), which sets individual option.selected properties.
-  for(const option of select.options){
-   const d=Object.getOwnPropertyDescriptor(HTMLOptionElement.prototype,"selected");
-   if(d&&d.configurable)Object.defineProperty(option,"selected",{configurable:true,get(){return d.get.call(this);},set(v){d.set.call(this,v);queueMicrotask(update);}});
-  }
-  selectAdapters.set(select,{update,originalHidden,observer:obs});update();
+ function appearanceEntry(root){
+  if(document.getElementById("ml-appearance-entry"))return;
+  const selects=[...root.querySelectorAll("select")];
+  const select=selects.find(s=>/(^|\.)mediaurlbase$/.test(s.name)||[...s.options].some(o=>o.value.startsWith("/luci-static/")));
+  const field=select?.closest(".cbi-value");
+  if(!field)return;
+  const details=node("details",{id:"ml-appearance-entry",class:"ml-appearance-entry"},[node("summary",{text:t("主题外观（此浏览器）","Theme appearance (this browser)")})]);
+  field.after(details);details.addEventListener("toggle",()=>{if(details.open)openAppearance(details);});
  }
  function enhance(root){
   const all=selector=>[...(root.matches&&root.matches(selector)?[root]:[]),...root.querySelectorAll(selector)];
+  // Only explicit boolean LuCI fields get switches; list/group checkboxes remain checkboxes.
   for(const input of all('.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox')){
-   if(input.classList.contains("ml-switch")||input.closest(".cbi-dropdown,[role=group]")||input.closest("label"))continue;
+   if(input.classList.contains("ml-switch")||input.closest(".cbi-dropdown,[role=group],.cbi-section-table,.ml-table-scroll")||input.closest("label"))continue;
+   const field=input.closest(".cbi-value-field");
+   if(!field||field.querySelectorAll('input[type="checkbox"]').length!==1)continue;
    input.classList.add("ml-switch");input.setAttribute("role","switch");
    if(!input.getAttribute("aria-label")){const title=input.closest(".cbi-value")?.querySelector(".cbi-value-title")?.textContent.trim();if(title)input.setAttribute("aria-label",title);}
    const hit=node("label",{class:"ml-switch-hit"});input.parentNode.insertBefore(hit,input);hit.append(input);
@@ -116,34 +121,53 @@
   for(const input of all('.cbi-page-actions>input[type="submit"],.cbi-page-actions>input[type="button"],.cbi-page-actions>input[type="reset"]')){
    if(input.closest(".ml-native-button"))continue;const wrapper=node("span",{class:"ml-native-button"});input.parentNode.insertBefore(wrapper,input);wrapper.append(input);
   }
-  for(const table of all("table.cbi-section-table,.table.cbi-section-table")){
-   if(table.parentElement.classList.contains("ml-table-scroll"))continue;const wrapper=node("div",{class:"ml-table-scroll"});table.parentNode.insertBefore(wrapper,table);wrapper.append(table);
+  // Includes live status div-tables as well as legacy Lua CBI tables.
+  for(const table of all("table,.table")){
+   if(table.closest(".ml-table-scroll")||table.parentElement.closest("table,.table"))continue;
+   const first=table.querySelector("tr,.tr"),cells=first?[...first.children].filter(c=>c.matches("td,th,.td,.th")).length:0;
+   if(cells<3&&!table.classList.contains("cbi-section-table"))continue;
+   const wrapper=node("div",{class:"ml-table-scroll",tabindex:0,role:"region","aria-label":t("表格，可横向滚动","Table, horizontally scrollable")});
+   if(cells>=5)table.classList.add("ml-wide-table");
+   table.parentNode.insertBefore(wrapper,table);wrapper.append(table);
   }
-  for(const select of all(".cbi-value-field select"))adaptSelect(select);
-  MaterialFeedback.bind(root);
+  // Keep original selects and LuCI dropdowns authoritative, including keyboard behavior.
+  appearanceEntry(main);MaterialFeedback.bind(root);
  }
- window.addEventListener("popstate",()=>{
-  if(dialog&&(!history.state||history.state.materialluci!=="dialog"||history.state.id!==dialog.id))finishDialog();
-  if(appearancePage&&(!history.state||!["appearance","dialog"].includes(history.state.materialluci)))closeAppearance();
-  // A forward entry must not recreate an already handled dialog or action.
- });
- if(back)back.addEventListener("click",nativeBack);
- document.getElementById("ml-appearance-button")?.addEventListener("click",openAppearance);
- document.getElementById("ml-menu-button")?.addEventListener("click",()=>openMenu(document.body.dataset.mlGroup||"settings"));
- document.querySelectorAll(".ml-bottom-tab").forEach(b=>b.addEventListener("click",()=>openMenu(b.dataset.group)));
+ window.addEventListener("popstate",()=>{if(dialog&&(!history.state||history.state.materialluci!=="dialog"||history.state.id!==dialog.id))finishDialog();setDrawer(false);});
  if(document.querySelector('input[name="luci_password"]'))document.body.classList.add("ml-login");
  enhance(main);
  let scheduled=false;const pending=new Set();
  function flush(){scheduled=false;for(const n of pending)if(n.isConnected)enhance(n);pending.clear();}
  const observer=new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&!n.classList.contains("tap-ripple"))pending.add(n);if(pending.size&&!scheduled){scheduled=true;requestAnimationFrame(flush);}});
  observer.observe(main,{childList:true,subtree:true});
- // LuCI owns its modal. Enhance new controls without replacing showModal/hideModal.
- const modalObserver=new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&!n.classList.contains("tap-ripple"))enhance(n);});
- function watchModal(modal){if(modal){modalObserver.observe(modal,{childList:true,subtree:true});enhance(modal);}}
+ const watched=new WeakSet();
+ function watchModal(modal){if(!modal||watched.has(modal))return;watched.add(modal);enhance(modal);new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&!n.classList.contains("tap-ripple"))enhance(n);}).observe(modal,{childList:true,subtree:true});}
  watchModal(document.getElementById("modal_overlay"));
- const bodyObserver=new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&n.id==="modal_overlay")watchModal(n);});
- bodyObserver.observe(document.body,{childList:true});
- const vv=window.visualViewport;function viewport(){if(vv)document.body.style.height=vv.height+"px";}if(vv){vv.addEventListener("resize",viewport);viewport();}
- window.MaterialLuCI={setMenus(value,group){menus=value;document.body.dataset.mlGroup=group;document.querySelectorAll(".ml-bottom-tab").forEach(b=>{if(b.dataset.group===group)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");});},menuFailed(err){menuError=t("菜单加载失败，请刷新页面。","Menu could not load. Reload the page.");console.error(err);},openMenu,openAppearance,choose,enhance};
+ new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&n.id==="modal_overlay")watchModal(n);}).observe(document.body,{childList:true});
+ const vv=window.visualViewport,root=document.documentElement;let viewportFrame=0;
+ function viewport(){
+  viewportFrame=0;
+  // Restrict viewport geometry to overlays. Do not resize the document or disable zoom.
+  const h=vv?.height||innerHeight,w=vv?.width||innerWidth,top=vv?.offsetTop||0,left=vv?.offsetLeft||0;
+  root.style.setProperty("--ml-vv-height",h+"px");root.style.setProperty("--ml-vv-width",w+"px");
+  root.style.setProperty("--ml-vv-top",top+"px");root.style.setProperty("--ml-vv-left",left+"px");
+ }
+ function queueViewport(){if(!viewportFrame)viewportFrame=requestAnimationFrame(viewport);}
+ if(vv){vv.addEventListener("resize",queueViewport,{passive:true});vv.addEventListener("scroll",queueViewport,{passive:true});}
+ window.addEventListener("resize",queueViewport,{passive:true});viewport();
+ // A one-time focus correction after keyboard resize; avoid scroll-event feedback loops.
+ let focusTimer;
+ function revealFocused(){
+  const el=document.activeElement;
+  if(!el?.matches('input:not([type=hidden]):not([type=checkbox]):not([type=radio]),textarea,select'))return;
+  if(vv&&Math.abs(vv.scale-1)>.05)return;
+  const rect=el.getBoundingClientRect(),top=(vv?.offsetTop||0)+12,bottom=(vv?.offsetTop||0)+(vv?.height||innerHeight)-16;
+  const container=el.closest(".modal,.ml-dialog-body"),limits=container?.getBoundingClientRect();
+  const high=Math.max(top,limits?.top||top),low=Math.min(bottom,limits?.bottom||bottom);
+  if(rect.top<high||rect.bottom>low)el.scrollIntoView({block:"nearest",inline:"nearest",behavior:"auto"});
+ }
+ document.addEventListener("focusin",()=>{clearTimeout(focusTimer);focusTimer=setTimeout(revealFocused,280);});
+ if(vv)vv.addEventListener("resize",()=>{clearTimeout(focusTimer);focusTimer=setTimeout(revealFocused,180);},{passive:true});
+ window.MaterialLuCI={setMenus:renderMenus,menuFailed(err){const host=document.getElementById("ml-menu-tree");host.replaceChildren(node("p",{class:"hint",text:t("菜单加载失败，请刷新页面。","Menu could not load. Reload the page.")}));console.error(err);},choose,enhance};
  document.documentElement.dataset.loading="false";
 })();

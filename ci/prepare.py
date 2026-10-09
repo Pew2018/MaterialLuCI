@@ -28,7 +28,7 @@ def compile_template(text):
   pos=m.end()
  result.append("write("+luaquote(text[pos:])+")")
  return "\n".join(result)
-templates=ROOT/"theme/root/usr/lib/lua/luci/view/themes/materialluci"
+templates=ROOT/"build/stage/usr/lib/lua/luci/view/themes/materialluci"
 compiled={p.stem:compile_template(p.read_text()) for p in templates.glob("*.htm")}
 bootstrap=r'''
 local function escape(s)
@@ -72,3 +72,10 @@ for login in (False,True):
  html=html.replace("</head>",runtime+"</head>")
  (output/("login.html" if login else "index.html")).write_text(html)
 print("Compiled and rendered all Lua templates; prepared real LuCI JS fixture.")
+
+# Same compiled templates and content, with network dispatch tabs selected.
+network_env=dict(env)
+network_env["requestpath"]=["admin","network","network","devices"]
+network_env["dispatchpath"]=["admin","network","network","devices"]
+index=(output/"index.html").read_text()
+(output/"network.html").write_text(index.replace(json.dumps(env),json.dumps(network_env)))

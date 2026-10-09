@@ -7,6 +7,11 @@ assert meta["architecture"]=="aarch64_cortex-a53" and meta["target"]=="mediatek/
 stage=ROOT/"build/stage"
 if stage.exists(): shutil.rmtree(stage)
 shutil.copytree(ROOT/"theme/root",stage)
+# A single source of truth also invalidates browser caches on package upgrades.
+version=meta["version"].rsplit("-",1)[0]
+for file in stage.rglob("*"):
+ if file.is_file() and file.suffix in (".htm",".js"):
+  file.write_text(file.read_text().replace("@VERSION@",version))
 assets=stage/"www/luci-static/materialluci"
 css=(assets/"base.css").read_text()+(assets/"cascade.css").read_text().replace('@import url("base.css");',"")
 (assets/"cascade.css").write_text(css);(assets/"base.css").unlink()
