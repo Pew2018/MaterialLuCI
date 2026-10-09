@@ -48,7 +48,7 @@ try{
   await page.evaluate(()=>document.querySelector("#real-widget input[type=checkbox]").disabled=true);
   assert.equal(await page.locator("#real-widget .ml-switch-hit .mdc-switch").isDisabled(),true);
   if(name==="chromium"){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:"dist/previews/desktop-light.png"});await page.locator("#fixture-clients").scrollIntoViewIfNeeded();await page.screenshot({path:"dist/previews/desktop-tables.png"});}
-  await page.locator("#ml-appearance-entry>summary").click();await page.waitForSelector("#ml-appearance");
+  if((await page.locator("#ml-appearance-entry").getAttribute("open"))!=="true")await page.locator("#ml-appearance-entry>summary").click();await page.waitForSelector("#ml-appearance");
   assert.equal(await page.locator(".ml-swatch-item").count(),20);
   await page.locator(".ml-choice").filter({hasText:"跟随系统"}).click();
   await page.getByRole("radio",{name:"深色",exact:true}).click();await page.waitForSelector(".ml-backdrop",{state:"detached"});
