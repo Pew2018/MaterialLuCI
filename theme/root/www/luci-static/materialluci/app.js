@@ -235,7 +235,7 @@
   const title=container?.querySelector(":scope>h4,:scope>h3"),actions=container?.querySelector(":scope>.right");
   const headerBottom=title&&getComputedStyle(title).position==="sticky"?title.getBoundingClientRect().bottom+8:0;
   const actionTop=actions&&getComputedStyle(actions).position==="sticky"?actions.getBoundingClientRect().top-8:bottom;
-  const high=Math.max(top,limits?.top||top,headerBottom,container?0:toolbar.getBoundingClientRect().bottom+12),low=Math.min(bottom,limits?.bottom||bottom,actionTop);
+  const high=Math.max(top,limits?.top||top,headerBottom,container?0:(toolbar?.getBoundingClientRect().bottom||top)+12),low=Math.min(bottom,limits?.bottom||bottom,actionTop);
   const delta=rect.top<high?rect.top-high:rect.bottom>low?Math.min(rect.bottom-low,rect.top-high):0;
   if(delta){if(container)container.scrollBy({top:delta,behavior:"auto"});else window.scrollBy({top:delta,behavior:"auto"});}
 
