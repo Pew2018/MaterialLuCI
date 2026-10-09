@@ -12,7 +12,7 @@ try{
   const browser=await engine.launch(),page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[],requests=[];
   page.on("pageerror",e=>errors.push(e.message));page.on("request",r=>requests.push(r.url()));
   await page.goto(base);await page.waitForFunction(()=>window.fixtureCheckbox&&window.fixtureSelect&&document.body.dataset.mlMenus==="ready");
-  await page.waitForSelector("#real-widget .ml-switch");
+  await page.waitForSelector("#real-widget .ml-switch-hit .mdc-switch");
   assert.equal(await page.locator(".ml-bottom-nav").count(),0);
   assert.equal(await page.locator('meta[name="theme-color"]').count(),0);
   assert(requests.some(url=>/materialluci-menu-v0_3_0-[0-9]+/.test(url)),"versioned menu module not requested");
@@ -26,16 +26,16 @@ try{
   assert.equal(await page.locator('#ml-menu-tree a[href="/cgi-bin/luci/admin/network/network"]').count(),1);
   assert.equal(await page.locator('#ml-menu-tree .ml-nav-parent[aria-controls]').count(),4);
   assert.equal(await page.locator('#ml-menu-tree a[href="/cgi-bin/luci/admin/network/network/devices"]').count(),0);
-  assert.equal(await page.locator("#ml-appearance-entry").getAttribute("open"),null);
+  assert.equal(await page.locator("#ml-appearance-entry").getAttribute("open"),"");
   assert.equal(await page.locator("#fixture-theme-field + #ml-appearance-entry").count(),1);
   assert.equal(await page.locator('input[name=optionA]').getAttribute("role"),null);
   assert.equal(await page.locator('input[name=optionB]').getAttribute("role"),null);
   await page.locator("#fixture-name").fill("Unapplied draft");
   await page.locator("#legacy-switch").uncheck();
-  await page.locator("#real-widget .ml-switch").uncheck();
+  await page.locator("#real-widget .ml-switch-hit .mdc-switch").click();
   assert.equal(await page.evaluate(()=>fixtureCheckbox.getValue()),"0");
   await page.evaluate(()=>fixtureCheckbox.setValue("1"));
-  assert.equal(await page.locator("#real-widget .ml-switch").isChecked(),true);
+  assert.equal(await page.locator("#real-widget .ml-switch-hit .mdc-switch").getAttribute("aria-checked"),"true");
   await page.evaluate(()=>fixtureSelect.setValue("manual"));
   await page.waitForFunction(()=>document.querySelector("#real-select select")?.value==="manual");
   await page.locator("#real-select select").selectOption("auto");
@@ -46,7 +46,7 @@ try{
   assert.equal(await page.evaluate(()=>fixtureData.realflag),"1");
   assert.equal(await page.evaluate(()=>fixtureData.mode),"auto");
   await page.evaluate(()=>document.querySelector("#real-widget input[type=checkbox]").disabled=true);
-  assert.equal(await page.locator("#real-widget .ml-switch").isDisabled(),true);
+  assert.equal(await page.locator("#real-widget .ml-switch-hit .mdc-switch").isDisabled(),true);
   if(name==="chromium"){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:"dist/previews/desktop-light.png"});await page.locator("#fixture-clients").scrollIntoViewIfNeeded();await page.screenshot({path:"dist/previews/desktop-tables.png"});}
   await page.locator("#ml-appearance-entry>summary").click();await page.waitForSelector("#ml-appearance");
   assert.equal(await page.locator(".ml-swatch-item").count(),20);
