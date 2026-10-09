@@ -1,12 +1,15 @@
 # MaterialLuCI Classic Native 0.1.1 安装与回退
 
 目标：小米 AX3000T / ImmortalWrt 21.02-SNAPSHOT（mediatek/mt7981，aarch64_cortex-a53，Lua LuCI）。
-GitHub Actions 下载包仅包含目标路由器的 IPK；安装包是 Lua 模板和本地网页资源，不含 ELF。
+GitHub Actions artifact 下载文件是 ZIP，ZIP 内只包含目标路由器的 IPK。不要把 ZIP 改名为 `.ipk`；先解压，再把解压得到的 IPK 上传到路由器。
 
 ## 安装
 
-下载本分支成功的 Actions artifact：`MaterialLuCI-0.1.1-AX3000T-aarch64_cortex-a53`。解压后只有：
+在 Actions 下载 artifact `MaterialLuCI-0.1.1-IPK-in-ZIP-AX3000T-aarch64_cortex-a53`。在 Mac 上双击 ZIP 解压，找到：
+
 `luci-theme-materialluci_0.1.1-1_aarch64_cortex-a53.ipk`
+
+请上传这个 `.ipk` 文件本身；不要上传外层 ZIP，也不要上传 macOS 展开 IPK 后显示的 `control.tar.gz`、`data.tar.gz`、`debian-binary`。
 
 把 IPK 上传到路由器的 `/tmp/` 并安装。请在命令中填写你自己的路由器地址和 SSH 端口：
 
