@@ -161,6 +161,11 @@
   const h=vv?.height||innerHeight,w=vv?.width||innerWidth,top=vv?.offsetTop||0,left=vv?.offsetLeft||0;
   root.style.setProperty("--ml-vv-height",h+"px");root.style.setProperty("--ml-vv-width",w+"px");
   root.style.setProperty("--ml-vv-top",top+"px");root.style.setProperty("--ml-vv-left",left+"px");
+  const editing=document.activeElement?.matches('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),textarea');
+  const inset=narrow.matches&&editing&&(!vv||Math.abs(vv.scale-1)<.05)?Math.max(0,innerHeight-h-top):0;
+  // Add scroll room for the final form field only while an editor is focused.
+  root.style.setProperty("--ml-keyboard-space",inset>100?inset+"px":"0px");
+
  }
  function queueViewport(){if(!viewportFrame)viewportFrame=requestAnimationFrame(viewport);}
  if(vv){vv.addEventListener("resize",queueViewport,{passive:true});vv.addEventListener("scroll",queueViewport,{passive:true});}
@@ -173,12 +178,16 @@
   if(vv&&Math.abs(vv.scale-1)>.05)return;
   const rect=el.getBoundingClientRect(),top=(vv?.offsetTop||0)+12,bottom=(vv?.offsetTop||0)+(vv?.height||innerHeight)-16;
   const container=el.closest(".modal,.ml-dialog-body"),limits=container?.getBoundingClientRect();
-  const high=Math.max(top,limits?.top||top),low=Math.min(bottom,limits?.bottom||bottom);
+  const title=container?.querySelector(":scope>h4,:scope>h3"),actions=container?.querySelector(":scope>.right");
+  const headerBottom=title&&getComputedStyle(title).position==="sticky"?title.getBoundingClientRect().bottom+8:0;
+  const actionTop=actions&&getComputedStyle(actions).position==="sticky"?actions.getBoundingClientRect().top-8:bottom;
+  const high=Math.max(top,limits?.top||top,headerBottom,container?0:toolbar.getBoundingClientRect().bottom+12),low=Math.min(bottom,limits?.bottom||bottom,actionTop);
   const delta=rect.top<high?rect.top-high:rect.bottom>low?Math.min(rect.bottom-low,rect.top-high):0;
   if(delta){if(container)container.scrollBy({top:delta,behavior:"auto"});else window.scrollBy({top:delta,behavior:"auto"});}
 
  }
- document.addEventListener("focusin",()=>{clearTimeout(focusTimer);focusTimer=setTimeout(revealFocused,280);});
+ document.addEventListener("focusin",()=>{queueViewport();clearTimeout(focusTimer);focusTimer=setTimeout(revealFocused,280);});
+ document.addEventListener("focusout",queueViewport);
  if(vv)vv.addEventListener("resize",()=>{clearTimeout(focusTimer);focusTimer=setTimeout(revealFocused,180);},{passive:true});
  window.MaterialLuCI={setMenus:renderMenus,menuFailed(err){const host=document.getElementById("ml-menu-tree");host.replaceChildren(node("p",{class:"hint",text:t("菜单加载失败，请刷新页面。","Menu could not load. Reload the page.")}));console.error(err);},choose,enhance};
  document.documentElement.dataset.loading="false";

@@ -129,12 +129,28 @@ try{
   await keyboard.locator("#keyboard-field-11").fill("retained draft");
   await keyboard.waitForTimeout(350);
   const input=await keyboard.locator("#keyboard-field-11").boundingBox();assert(input.y>=40&&input.y+input.height<=380,"input hidden below simulated keyboard");
+  const commands=await keyboard.locator("#modal_overlay .right").boundingBox();
+  assert(commands.y>=40&&commands.y+commands.height<=381,"modal commands hidden by keyboard");
+  assert(input.y+input.height<=commands.y,"focused field obscured by modal commands");
   assert.equal(await keyboard.locator("#keyboard-field-11").inputValue(),"retained draft");
   assert.equal(await keyboard.evaluate(()=>document.body.style.height),"");
   if(name==="chromium")await keyboard.screenshot({path:"dist/previews/mobile-keyboard.png"});
   await keyboard.evaluate(()=>{fixtureViewport.height=844;fixtureViewport.offsetTop=0;fixtureViewport.dispatchEvent(new Event("resize"));});
   await keyboard.getByRole("button",{name:"完成",exact:true}).click();
   await keyboard.waitForFunction(()=>!document.body.classList.contains("modal-overlay-active"));
+  // Also verify a final field in the natural document can scroll above a
+  // visual-only keyboard, without altering its value or imposing a body height.
+  await keyboard.evaluate(()=>{
+   const field=document.createElement("input");field.id="keyboard-last-field";field.type="text";field.value="last draft";document.getElementById("maincontent").append(field);
+   fixtureViewport.height=340;fixtureViewport.offsetTop=0;fixtureViewport.dispatchEvent(new Event("resize"));
+  });
+  await keyboard.locator("#keyboard-last-field").focus();await keyboard.waitForTimeout(400);
+  assert.equal(await keyboard.evaluate(()=>getComputedStyle(document.documentElement).getPropertyValue("--ml-keyboard-space")),"504px");
+  const last=await keyboard.locator("#keyboard-last-field").boundingBox();assert(last.y>=0&&last.y+last.height<=340,"last document field hidden by keyboard");
+  assert.equal(await keyboard.locator("#keyboard-last-field").inputValue(),"last draft");
+  await keyboard.evaluate(()=>{fixtureViewport.height=844;fixtureViewport.dispatchEvent(new Event("resize"));});
+  await keyboard.waitForFunction(()=>getComputedStyle(document.documentElement).getPropertyValue("--ml-keyboard-space")==="0px");
+  assert.equal(await keyboard.locator("#keyboard-last-field").inputValue(),"last draft");
   await keyboard.close();await browser.close();
   console.log(name+": menu hierarchy, native widgets, field submission, tables, dark states, density, drawers, modals, keyboard viewport and login passed");
  }

@@ -46,6 +46,7 @@ body .ml-sidebar .ml-nav-toggle{width:44px;min-height:44px;margin:0;padding:8px;
 .ml-skip{position:fixed;top:-80px;left:16px;z-index:50;padding:12px;background:var(--surface)}
 .ml-skip:focus{top:8px}
 #page-content{min-width:0;overflow:visible;padding:0 0 calc(24px + var(--inset-bottom));touch-action:auto}
+body:not(.modal-overlay-active):not(.ml-dialog-open) #page-content{padding-bottom:calc(24px + var(--inset-bottom) + var(--ml-keyboard-space,0px))}
 #maincontent.container{width:100%;max-width:none;min-width:0;padding:8px 32px 0;margin:0;background:transparent}
 #maincontent:focus{outline:none}
 #maincontent>form{margin:0}
@@ -227,3 +228,13 @@ button>span:not(.tap-ripple),button>svg{position:relative;z-index:2}
  .ml-dialog{padding-top:12px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.tap-ripple{display:none}}
+
+/* Keep modal commands in sight while the keyboard reduces the scroll surface. */
+#modal_overlay .modal>h4,#modal_overlay .modal>h3{position:sticky;top:-20px;z-index:3;background:var(--surface);margin:-20px -24px 12px;padding:20px 24px 12px}
+#modal_overlay .modal>.right{position:sticky;bottom:-12px;z-index:3;background:var(--surface);border-top:1px solid var(--divider);margin-bottom:-12px;padding:12px 0}
+body.modal-overlay-active #modal_overlay>.modal{scroll-padding-top:64px;scroll-padding-bottom:72px}
+@media(max-width:599px){
+ #modal_overlay .modal>h4,#modal_overlay .modal>h3{top:-16px;margin:-16px -18px 12px;padding:16px 18px 12px}
+ .cbi-progressbar{margin-bottom:38px}
+ .cbi-progressbar::after{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.4}
+}
