@@ -115,6 +115,7 @@ try{
   await page.getByRole("button",{name:"关闭",exact:true}).click();
   await page.waitForFunction(()=>!document.body.classList.contains("modal-overlay-active"));
 
+  await page.setViewportSize({width:1440,height:900});
   // Real LuCI status/modal APIs, with no router writes. The official MDC
   // instance survives the apply countdown's repeated content replacement.
   await page.evaluate(async()=>{
@@ -140,6 +141,9 @@ try{
   assert.equal(await page.locator("#ml-mdc-wait-progress").count(),1);
   assert.equal(await page.locator("#ml-mdc-wait-progress .mdc-linear-progress__bar-inner").first().evaluate(el=>getComputedStyle(el).borderColor),await page.evaluate(()=>{const probe=document.createElement("span");probe.style.color="var(--control-accent)";document.body.append(probe);const color=getComputedStyle(probe).color;probe.remove();return color;}));
   await page.waitForTimeout(300);
+  const desktopBusy=await page.locator("#modal_overlay>.modal").boundingBox(),desktopProgress=await page.locator("#ml-mdc-wait-progress").boundingBox();
+  assert(desktopBusy.width>=320&&desktopProgress.x>=desktopBusy.x&&desktopProgress.x+desktopProgress.width<=desktopBusy.x+desktopBusy.width+1);
+  assert(desktopProgress.y>=desktopBusy.y&&desktopProgress.y+desktopProgress.height<=desktopBusy.y+desktopBusy.height+1,"desktop progress outside dialog");
   if(name==="chromium")await page.screenshot({path:"dist/previews/mdc-apply-dark.png"});
   await page.evaluate(()=>fixtureUI.changes.displayStatus("notice",E("p","配置已应用")));
   await page.waitForSelector("#ml-mdc-wait-progress",{state:"detached"});
