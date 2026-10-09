@@ -268,3 +268,18 @@ body :is(.btn,.cbi-button)[disabled]{background:var(--pressed);color:var(--disab
  #maincontent #pager>.btn{flex-basis:48px;min-width:48px}
  .network-status-table{grid-template-columns:minmax(0,1fr)}
 }
+
+/* Official MDC Web animation; only colors and placement follow this theme. */
+body.modal-overlay-active #modal_overlay>.modal.ml-has-progress{padding-bottom:36px}
+#modal_overlay .modal.ml-has-progress.spinning,#modal_overlay .modal.ml-has-progress p.spinning{background-image:none}
+#modal_overlay .modal.ml-has-progress p.spinning{padding-left:0}
+#modal_overlay .modal.ml-has-progress.spinning::before,#modal_overlay .modal.ml-has-progress p.spinning::before{display:none}
+#modal_overlay>.ml-wait-progress{position:absolute;z-index:4;height:4px;pointer-events:none;border-radius:0}
+#modal_overlay>.ml-wait-progress .mdc-linear-progress__bar-inner{border-color:var(--control-accent)}
+#modal_overlay>.ml-wait-progress .mdc-linear-progress__buffer-bar{background-color:var(--action-tonal)}
+#modal_overlay>.ml-wait-progress .mdc-linear-progress__buffer-dots{background-image:none}
+@media(prefers-reduced-motion:reduce){
+ #modal_overlay>.ml-wait-progress .mdc-linear-progress__primary-bar{width:35%;transform:translateX(0)}
+ #modal_overlay>.ml-wait-progress .mdc-linear-progress__secondary-bar{display:none}
+ #modal_overlay>.ml-wait-progress .mdc-linear-progress__primary-bar .mdc-linear-progress__bar-inner{transform:scaleX(1)}
+}

@@ -24,13 +24,16 @@
  <title><%=striptags((boardinfo.hostname or "?") .. ((node and node.title) and " - "..translate(node.title) or ""))%> - MaterialLuCI</title>
  <script src="<%=media%>/palette.js?v=@CACHE@"></script>
  <script src="<%=media%>/startup.js?v=@CACHE@"></script>
+ <link rel="stylesheet" href="<%=media%>/mdc-linear-progress.css?v=@CACHE@">
  <link rel="stylesheet" href="<%=media%>/cascade.css?v=@CACHE@">
  <% if node and node.css then %><link rel="stylesheet" href="<%=resource%>/<%=node.css%>"><% end %>
  <% if css then %><style><%=css%></style><% end %>
  <script src="<%=url('admin/translations',luci.i18n.context.lang)%>"></script>
  <script src="<%=resource%>/cbi.js"></script>
+ <script defer src="<%=media%>/mdc-linear-progress.js?v=@CACHE@"></script>
  <script defer src="<%=media%>/feedback.js?v=@CACHE@"></script>
  <script defer src="<%=media%>/app.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/wait.js?v=@CACHE@"></script>
 </head>
 <body class="lang_<%=pcdata(luci.i18n.context.lang)%>" data-page="<%=pcdata(table.concat(disp.context.requestpath,'-'))%>">
  <header class="ml-toolbar"><div class="ml-toolbar-inner">

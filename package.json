@@ -1,12 +1,14 @@
 {
   "name": "materialluci-build",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.3.0",
   "scripts": {
     "test": "node ci/browser.mjs"
   },
   "devDependencies": {
     "esbuild": "0.25.10",
-    "playwright": "1.55.1"
+    "playwright": "1.55.1",
+    "@material/linear-progress": "14.0.0",
+    "sass": "1.89.2"
   }
 }

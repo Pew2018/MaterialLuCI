@@ -22,10 +22,22 @@ resource_dir=stage/"www/luci-static/resources"
 assets=stage/"www/luci-static/materialluci"
 css=(assets/"base.css").read_text()+(assets/"cascade.css").read_text().replace('@import url("base.css");',"")
 (assets/"cascade.css").write_text(css);(assets/"base.css").unlink()
-for name in ("palette","startup","feedback","app"):
+for name in ("palette","startup","feedback","app","wait"):
  subprocess.run([str(ROOT/"node_modules/.bin/esbuild"),str(assets/(name+".js")),"--minify","--target=es2020","--outfile="+str(assets/(name+".min.js"))],check=True)
  (assets/(name+".js")).unlink();(assets/(name+".min.js")).rename(assets/(name+".js"))
+# Only the official linear-progress package and required helpers are bundled.
+subprocess.run([str(ROOT/"node_modules/.bin/esbuild"),str(ROOT/"theme/mdc-entry.js"),
+ "--bundle","--minify","--format=iife","--global-name=MaterialMDC","--target=es2020",
+ "--outfile="+str(assets/"mdc-linear-progress.js")],check=True)
+subprocess.run([str(ROOT/"node_modules/.bin/sass"),"--load-path="+str(ROOT/"node_modules"),
+ "--style=compressed","--no-source-map","--quiet-deps",str(ROOT/"theme/mdc.scss"),
+ str(assets/"mdc-linear-progress.css")],check=True)
 notice=stage/"usr/share/doc/luci-theme-materialluci";notice.mkdir(parents=True)
+shutil.copy(ROOT/"licenses/MDC-Web-MIT.txt",notice/"MDC-Web-MIT.txt")
+# tslib is a small transitive runtime helper. Preserve its shipped notices too.
+for filename in ("LICENSE.txt","CopyrightNotice.txt"):
+ license_file=ROOT/"node_modules/tslib"/filename
+ if license_file.exists():shutil.copy(license_file,notice/("tslib-"+filename))
 for name in ("LICENSE","NOTICE"): shutil.copy(ROOT/name,notice/name)
 (stage/"etc/uci-defaults/95-materialluci").chmod(0o755)
 epoch=int(os.environ.get("SOURCE_DATE_EPOCH","1791558000"))

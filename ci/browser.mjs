@@ -15,7 +15,7 @@ try{
   await page.waitForSelector("#real-widget .ml-switch");
   assert.equal(await page.locator(".ml-bottom-nav").count(),0);
   assert.equal(await page.locator('meta[name="theme-color"]').count(),0);
-  assert(requests.some(url=>/materialluci-menu-v0_2_1-[0-9]+/.test(url)),"versioned menu module not requested");
+  assert(requests.some(url=>/materialluci-menu-v0_3_0-[0-9]+/.test(url)),"versioned menu module not requested");
   assert(!requests.some(url=>new URL(url).pathname.endsWith("/materialluci-menu.js")),"stale menu adapter path used");
 
   assert.equal(await page.locator("#ml-appearance-button").count(),0);
@@ -114,6 +114,74 @@ try{
   const modal=await page.locator("#modal_overlay>.modal").boundingBox();assert(modal.y>=0&&modal.y+modal.height<=361);
   await page.getByRole("button",{name:"关闭",exact:true}).click();
   await page.waitForFunction(()=>!document.body.classList.contains("modal-overlay-active"));
+
+  // Real LuCI status/modal APIs, with no router writes. The official MDC
+  // instance survives the apply countdown's repeated content replacement.
+  await page.evaluate(async()=>{
+   window.fixtureUI=await L.require("ui");
+   fixtureUI.changes.displayStatus("notice spinning",E("p","正在等待配置被应用… 30"));
+  });
+  await page.waitForSelector("#ml-mdc-wait-progress");
+  assert.equal(await page.locator("#ml-mdc-wait-progress .mdc-linear-progress__bar").count(),2);
+  assert.equal(await page.locator("#ml-mdc-wait-progress").getAttribute("aria-valuenow"),null);
+  assert.equal(await page.evaluate(()=>document.querySelector("#ml-mdc-wait-progress").parentElement.id),"modal_overlay");
+  assert.equal(await page.locator("#modal_overlay>.modal").evaluate(el=>el.lastChild.tagName),"P","adapter changed the business modal children");
+  await page.evaluate(()=>{
+   window.fixtureProgressRoot=document.querySelector("#ml-mdc-wait-progress");
+   window.fixtureProgressAnimation=fixtureProgressRoot.querySelector(".mdc-linear-progress__primary-bar").getAnimations()[0];
+   window.fixtureProgressTime=fixtureProgressAnimation.currentTime;
+  });
+  await page.waitForTimeout(220);
+  assert(await page.evaluate(()=>fixtureProgressAnimation.currentTime>fixtureProgressTime),"indeterminate animation does not advance");
+  await page.evaluate(()=>fixtureUI.changes.displayStatus("notice spinning",E("p","正在等待配置被应用… 29")));
+  await page.waitForTimeout(100);
+  assert(await page.evaluate(()=>document.querySelector("#ml-mdc-wait-progress")===fixtureProgressRoot),"countdown restarted MDC component");
+  assert(await page.evaluate(()=>fixtureProgressRoot.querySelector(".mdc-linear-progress__primary-bar").getAnimations()[0]===fixtureProgressAnimation),"countdown restarted animation");
+  assert.equal(await page.locator("#ml-mdc-wait-progress").count(),1);
+  assert.equal(await page.locator("#ml-mdc-wait-progress .mdc-linear-progress__bar-inner").first().evaluate(el=>getComputedStyle(el).borderColor),await page.evaluate(()=>{const probe=document.createElement("span");probe.style.color="var(--control-accent)";document.body.append(probe);const color=getComputedStyle(probe).color;probe.remove();return color;}));
+  await page.waitForTimeout(300);
+  if(name==="chromium")await page.screenshot({path:"dist/previews/mdc-apply-dark.png"});
+  await page.evaluate(()=>fixtureUI.changes.displayStatus("notice",E("p","配置已应用")));
+  await page.waitForSelector("#ml-mdc-wait-progress",{state:"detached"});
+  assert.equal(await page.locator("#modal_overlay>.modal").getAttribute("aria-owns"),null);
+  await page.evaluate(()=>fixtureUI.hideModal());
+  // opkg removes dlg.lastChild when execution finishes. The MDC element must
+  // be outside that sequence, then disappear while logs/actions remain intact.
+  await page.evaluate(()=>{
+   const dlg=fixtureUI.showModal("执行软件包操作",[E("p",{class:"spinning"},"正在执行")]);
+   window.fixtureOpkgDialog=dlg;window.fixtureOpkgBusy=dlg.lastChild;
+  });
+  await page.waitForSelector("#ml-mdc-wait-progress");
+  assert(await page.evaluate(()=>fixtureOpkgDialog.lastChild===fixtureOpkgBusy));
+  await page.evaluate(()=>{
+   fixtureOpkgDialog.removeChild(fixtureOpkgDialog.lastChild);
+   fixtureOpkgDialog.appendChild(E("pre",{id:"fixture-opkg-result"},"操作结果"));
+   fixtureOpkgDialog.appendChild(E("div",{class:"right"},E("button",{class:"cbi-button",click:()=>fixtureUI.hideModal()},"完成")));
+  });
+  await page.waitForSelector("#ml-mdc-wait-progress",{state:"detached"});
+  assert.equal(await page.locator("#fixture-opkg-result").textContent(),"操作结果");
+  await page.evaluate(()=>fixtureUI.hideModal());
+  await page.evaluate(()=>fixtureUI.showModal("确认操作",[E("p","请确认"),E("button",{class:"cbi-button"},"确认")]));
+  await page.waitForTimeout(80);
+  assert.equal(await page.locator("#ml-mdc-wait-progress").count(),0,"ordinary confirmation shows a busy indicator");
+  await page.evaluate(()=>fixtureUI.showModal("上传文件",[E("p",{class:"spinning"},"上传中"),E("div",{class:"cbi-progressbar"},E("div",{style:"width:50%"}))]));
+  await page.waitForTimeout(80);
+  assert.equal(await page.locator("#ml-mdc-wait-progress").count(),0,"known upload progress duplicated");
+  await page.setViewportSize({width:390,height:360});
+  await page.evaluate(()=>fixtureUI.showModal("读取配置",[E("p",{class:"spinning"},"正在读取配置…")]));
+  await page.waitForSelector("#ml-mdc-wait-progress");
+  await page.waitForTimeout(180);
+  const progressBox=await page.locator("#ml-mdc-wait-progress").boundingBox(),busyBox=await page.locator("#modal_overlay>.modal").boundingBox();
+  assert(progressBox.x>=busyBox.x&&progressBox.x+progressBox.width<=busyBox.x+busyBox.width+1);
+  assert(progressBox.y>=busyBox.y&&progressBox.y+progressBox.height<=busyBox.y+busyBox.height+1,"progress outside modal on reduced mobile viewport");
+  if(name==="chromium")await page.screenshot({path:"dist/previews/mdc-wait-mobile.png"});
+  await page.emulateMedia({reducedMotion:"reduce"});
+  assert.equal(await page.locator("#ml-mdc-wait-progress .mdc-linear-progress__primary-bar").evaluate(el=>getComputedStyle(el).animationName),"none");
+  assert.equal(await page.locator("#modal_overlay>.modal p").textContent(),"正在读取配置…");
+  await page.evaluate(()=>fixtureUI.hideModal());
+  await page.waitForSelector("#ml-mdc-wait-progress",{state:"detached"});
+  await page.emulateMedia({reducedMotion:"no-preference"});
+
   await page.setViewportSize({width:844,height:390});
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"landscape overflow");
   await page.goto(base+"/opkg.html");await page.waitForFunction(()=>document.querySelectorAll("#packages .tr").length>2&&document.body.dataset.mlMenus==="ready");
@@ -181,7 +249,7 @@ try{
   console.log(name+": menu hierarchy, native widgets, field submission, tables, dark states, density, drawers, modals, keyboard viewport and login passed");
  }
 }finally{server.kill();
-for(const file of ["desktop-light.png","desktop-tables.png","desktop-dark-tables.png","opkg-desktop.png","mobile-dark.png","mobile-drawer.png","mobile-keyboard.png"]){
+for(const file of ["desktop-light.png","desktop-tables.png","desktop-dark-tables.png","opkg-desktop.png","mobile-dark.png","mobile-drawer.png","mobile-keyboard.png","mdc-apply-dark.png","mdc-wait-mobile.png"]){
  const path="dist/previews/"+file;
  if(fs.existsSync(path))console.log("MATERIALLUCI_PREVIEW "+JSON.stringify({file,base64:fs.readFileSync(path).toString("base64")}));
 }

@@ -28,6 +28,7 @@ jobs:
       - name: Validate script syntax
         run: |
           for file in theme/root/www/luci-static/materialluci/*.js; do node --check "$file"; done
+          node --check ci/browser.mjs
           node -e 'new Function(require("fs").readFileSync("theme/root/www/luci-static/resources/materialluci-menu.js","utf8"))'
           sh -n theme/control/postinst
           sh -n theme/control/prerm
@@ -55,7 +56,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: MaterialLuCI-0.2.1-IPK-in-ZIP-AX3000T-aarch64_cortex-a53
-          path: dist/luci-theme-materialluci_0.2.1-1_aarch64_cortex-a53.ipk
+          name: MaterialLuCI-0.3.0-IPK-in-ZIP-AX3000T-aarch64_cortex-a53
+          path: dist/luci-theme-materialluci_0.3.0-1_aarch64_cortex-a53.ipk
           if-no-files-found: error
           retention-days: 30
