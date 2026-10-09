@@ -136,7 +136,7 @@
   const field=select?.closest(".cbi-value");
   if(!field)return;
   const details=node("details",{id:"ml-appearance-entry",class:"ml-appearance-entry",open:"true"},[node("summary",{text:t("主题外观（此浏览器）","Theme appearance (this browser)")})]);
-  field.after(details);details.addEventListener("toggle",()=>{if(details.open)openAppearance(details);});
+  field.after(details);details.addEventListener("toggle",()=>{if(details.open)openAppearance(details);});if(details.open)openAppearance(details);
  }
  function enhance(root){
   const all=selector=>[...(root.matches&&root.matches(selector)?[root]:[]),...root.querySelectorAll(selector)];
