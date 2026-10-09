@@ -19,12 +19,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Install build and test tools
+      - name: Install Lua build tools
+        timeout-minutes: 5
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y lua5.1
-          npm install --no-audit --no-fund
-          npx playwright install --with-deps chromium webkit
+      - name: Install pinned Node dependencies
+        timeout-minutes: 5
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium and WebKit test engines
+        timeout-minutes: 5
+        run: npx playwright install --with-deps chromium webkit
       - name: Validate script syntax
         run: |
           for file in theme/root/www/luci-static/materialluci/*.js; do node --check "$file"; done
