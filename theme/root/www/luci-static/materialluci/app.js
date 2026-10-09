@@ -10,13 +10,12 @@
  const textButton=(text,fn,cls="text-action")=>{const b=node("button",{type:"button",class:cls},[node("span",{text})]);b.addEventListener("click",fn);return b;};
  function switchControl(input,label){
   const control=node("button",{type:"button",class:"mdc-switch",role:"switch","aria-label":label,"aria-checked":String(!!input.checked)},[node("span",{class:"mdc-switch__track"}),node("span",{class:"mdc-switch__handle-track"},[node("span",{class:"mdc-switch__handle"}),node("span",{class:"mdc-switch__icons","aria-hidden":"true"},[node("span",{class:"mdc-switch__icon mdc-switch__icon--on"}),node("span",{class:"mdc-switch__icon mdc-switch__icon--off"})])])]);
-  const hit=node("span",{class:"ml-switch-hit"},[input,control]);
   const sync=()=>{const selected=!!input.checked,disabled=!!input.disabled;control.classList.toggle("mdc-switch--selected",selected);control.setAttribute("aria-checked",String(selected));control.disabled=disabled;control.setAttribute("aria-disabled",String(disabled));};
   input.classList.add("ml-switch-source");input.setAttribute("tabindex","-1");input.setAttribute("aria-hidden","true");
   input.addEventListener("change",sync);
   control.addEventListener("click",event=>{event.preventDefault();if(input.disabled)return;input.checked=!input.checked;input.dispatchEvent(new Event("change",{bubbles:true}));});
   if(window.MaterialMDC?.MDCSwitch){try{control._mlMdcSwitch=new MaterialMDC.MDCSwitch(control);}catch(_){}}
-  sync();return hit;
+  sync();return control;
  }
  const narrow=matchMedia("(max-width: 1023px)");
  let dialog=null,sequence=0,drawerFocus=null,drawerInert=[];
@@ -107,7 +106,7 @@
  function row(title,description,control){return node("div",{class:"ml-setting-row"},[node("span",{class:"ml-row-copy"},[node("strong",{text:title}),node("small",{text:description})]),control]);}
  function prefSwitch(key,title,description){
   const input=node("input",{type:"checkbox",class:"ml-switch","aria-label":title});input.checked=appearance.prefs[key];input.addEventListener("change",()=>appearance.set(key,input.checked));
-  return row(title,description,switchControl(input,title));
+  return row(title,description,node("span",{class:"ml-switch-hit"},[input,switchControl(input,title)]));
  }
  function openAppearance(container){
   if(document.getElementById("ml-appearance"))return;
@@ -156,7 +155,7 @@
    input.classList.add("ml-switch");
    const title=input.getAttribute("aria-label")||input.closest(".cbi-value")?.querySelector(".cbi-value-title")?.textContent.trim()||t("开关","Switch");
    if(input.closest("label")){const label=input.closest("label");label.classList.add("ml-switch-hit");label.append(switchControl(input,title));}
-   else{const hit=switchControl(input,title);input.parentNode.insertBefore(hit,input);hit.append(input);}
+   else{const hit=node("span",{class:"ml-switch-hit"});const parent=input.parentNode;parent.insertBefore(hit,input);hit.append(input,switchControl(input,title));}
    if(input.disabled)input.setAttribute("aria-disabled","true");
   }
   for(const input of all('.cbi-page-actions>input[type="submit"],.cbi-page-actions>input[type="button"],.cbi-page-actions>input[type="reset"]')){
