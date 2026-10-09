@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
-"""Build an OpenWrt-format resource-only IPK for the user's aarch64 target.
-No firmware/ELF cross compilation is necessary: files are Lua templates and web assets.
-Uses the same gzip/tar container layout as OpenWrt 21.02 scripts/ipkg-build.
-"""
-import io, json, tarfile, gzip, hashlib, pathlib, shutil, subprocess, os
+"""Build and verify an OpenWrt 21.02 resource-only IPK for the AX3000T."""
+import io, json, tarfile, gzip, pathlib, shutil, subprocess, os
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 meta=json.loads((ROOT/"theme/package.json").read_text())
 assert meta["architecture"]=="aarch64_cortex-a53" and meta["target"]=="mediatek/mt7981"
@@ -20,14 +17,20 @@ notice=stage/"usr/share/doc/luci-theme-materialluci";notice.mkdir(parents=True)
 for name in ("LICENSE","NOTICE"): shutil.copy(ROOT/name,notice/name)
 (stage/"etc/uci-defaults/95-materialluci").chmod(0o755)
 epoch=int(os.environ.get("SOURCE_DATE_EPOCH","1791558000"))
-def archive(items):
+def archive(items,directories=()):
  buf=io.BytesIO()
  with tarfile.open(fileobj=buf,mode="w",format=tarfile.GNU_FORMAT) as tar:
+  for name,mode in sorted(directories,key=lambda item:(item[0].count("/"),item[0])):
+   info=tarfile.TarInfo("./"+name.rstrip("/")+"/");info.type=tarfile.DIRTYPE;info.size=0;info.mode=mode
+   info.uid=info.gid=0;info.uname=info.gname="root";info.mtime=epoch
+   tar.addfile(info)
   for name,data,mode in sorted(items):
-   info=tarfile.TarInfo("./"+name);info.size=len(data);info.mode=mode;info.uid=info.gid=0;info.uname=info.gname="root";info.mtime=epoch
+   info=tarfile.TarInfo("./"+name);info.size=len(data);info.mode=mode
+   info.uid=info.gid=0;info.uname=info.gname="root";info.mtime=epoch
    tar.addfile(info,io.BytesIO(data))
  return gzip.compress(buf.getvalue(),mtime=0)
 items=[(str(p.relative_to(stage)),p.read_bytes(),p.stat().st_mode&0o777) for p in stage.rglob("*") if p.is_file()]
+directories=[(str(p.relative_to(stage)),p.stat().st_mode&0o777) for p in stage.rglob("*") if p.is_dir()]
 size=sum(len(data) for _,data,_ in items)
 control="\n".join([
  "Package: "+meta["name"],"Version: "+meta["version"],"Architecture: "+meta["architecture"],
@@ -36,22 +39,31 @@ control="\n".join([
  "Description: "+meta["description"]+"\n Classic local theme; Lua LuCI 21.02 compatible.",""
 ]).encode()
 controls=[("control",control,0o644)]+[(p.name,p.read_bytes(),0o755) for p in (ROOT/"theme/control").iterdir()]
-data=archive(items);ctrl=archive(controls)
+data=archive(items,directories);ctrl=archive(controls)
 out=ROOT/"dist";out.mkdir(exist_ok=True)
+for child in out.iterdir():
+ if child.is_file(): child.unlink()
 name=meta["name"]+"_"+meta["version"]+"_"+meta["architecture"]+".ipk"
 ipk=archive([("debian-binary",b"2.0\n",0o644),("data.tar.gz",data,0o644),("control.tar.gz",ctrl,0o644)])
 (out/name).write_bytes(ipk)
-# Independently inspect the resulting archive, path allowlist and metadata.
+# Verify IPK structure, metadata, allowlisted payload, and every parent directory.
 outer=tarfile.open(fileobj=io.BytesIO(ipk))
 assert sorted(n.removeprefix("./") for n in outer.getnames())==["control.tar.gz","data.tar.gz","debian-binary"]
 c=tarfile.open(fileobj=io.BytesIO(outer.extractfile("./control.tar.gz").read()))
 assert b"Architecture: aarch64_cortex-a53\n" in c.extractfile("./control").read()
 d=tarfile.open(fileobj=io.BytesIO(outer.extractfile("./data.tar.gz").read()))
 allowed=("www/luci-static/materialluci/","www/luci-static/resources/materialluci-menu.js","usr/lib/lua/luci/view/themes/materialluci/","etc/uci-defaults/95-materialluci","usr/share/doc/luci-theme-materialluci/")
-for member in d:
- n=member.name.removeprefix("./")
- assert member.isfile() and ".." not in pathlib.PurePosixPath(n).parts and n.startswith(allowed), n
-(out/"SHA256SUMS").write_text(hashlib.sha256(ipk).hexdigest()+"  "+name+"\n")
-(out/"package-manifest.json").write_text(json.dumps({"package":meta,"uncompressedBytes":size,"ipkBytes":len(ipk),"files":[n for n,_,_ in items]},indent=2))
-shutil.copy(ROOT/"docs/INSTALL.md",out/"INSTALL.md")
-print(json.dumps({"file":name,"bytes":len(ipk),"files":len(items)}))
+members=list(d)
+actual_dirs={m.name.removeprefix("./").rstrip("/") for m in members if m.isdir()}
+actual_files={m.name.removeprefix("./") for m in members if m.isfile()}
+assert actual_files=={name for name,_,_ in items}
+for member in members:
+ n=member.name.removeprefix("./").rstrip("/") if member.isdir() else member.name.removeprefix("./")
+ assert ".." not in pathlib.PurePosixPath(n).parts
+ assert member.isdir() or member.isfile()
+ assert any(n==root.rstrip("/") or n.startswith(root) or (member.isdir() and root.rstrip("/").startswith(n+"/")) for root in allowed),n
+ for parent in pathlib.PurePosixPath(n).parents:
+  if str(parent)!=".":
+   assert str(parent) in actual_dirs, f"missing parent directory entry: {parent} for {n}"
+assert len(actual_dirs)==len([m for m in members if m.isdir()])
+print(json.dumps({"file":name,"bytes":len(ipk),"files":len(items),"directoryEntries":len(directories)}))

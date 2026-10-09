@@ -1,6 +1,6 @@
 {
   "name": "luci-theme-materialluci",
-  "version": "0.1.0-1",
+  "version": "0.1.1-1",
   "architecture": "aarch64_cortex-a53",
   "target": "mediatek/mt7981",
   "description": "MaterialLuCI Classic Native for ImmortalWrt 21.02 Lua LuCI",

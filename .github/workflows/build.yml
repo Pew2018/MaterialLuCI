@@ -47,23 +47,13 @@ jobs:
           sparse-checkout: modules/luci-base/htdocs/luci-static/resources
       - name: Compile Lua templates and prepare compatibility preview
         run: python3 ci/prepare.py
-      - name: Test real LuCI widgets in Chromium and WebKit and capture previews
+      - name: Test desktop and mobile layouts in Chromium and WebKit
         run: node ci/browser.mjs
       - name: Upload target installation package
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: MaterialLuCI-0.1.0-AX3000T-aarch64_cortex-a53
-          path: |
-            dist/*.ipk
-            dist/SHA256SUMS
-            dist/package-manifest.json
-            dist/INSTALL.md
+          name: MaterialLuCI-0.1.1-AX3000T-aarch64_cortex-a53
+          path: dist/luci-theme-materialluci_0.1.1-1_aarch64_cortex-a53.ipk
           if-no-files-found: error
-      - name: Upload previews
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: MaterialLuCI-Classic-Native-previews
-          path: dist/previews/
-          if-no-files-found: ignore
+          retention-days: 30

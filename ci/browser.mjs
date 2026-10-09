@@ -74,7 +74,8 @@ try{
   await page.locator("#ml-appearance-button").click();
   assert.equal(await page.locator(".tap-ripple").count(),0);
   await page.locator("#ml-back").click();await page.waitForSelector("#ml-appearance",{state:"detached"});
-  for(const width of [320,360,412,1100]){await page.setViewportSize({width,height:915});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),name+": overflow at "+width);}
+  for(const width of [320,360,375,390,412,768,1024,1100,1280,1440]){await page.setViewportSize({width,height:915});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),name+": overflow at "+width);}
+  await page.setViewportSize({width:844,height:390});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),name+": overflow in mobile landscape");
   await page.goto(base+"/login.html");await page.waitForSelector(".ml-login");
   assert.equal(await page.locator('input[name="luci_password"]').getAttribute("autocomplete"),"current-password");
   assert.equal(await page.locator("form").getAttribute("method"),"post");
