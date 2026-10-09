@@ -122,13 +122,23 @@
    if(input.closest(".ml-native-button"))continue;const wrapper=node("span",{class:"ml-native-button"});input.parentNode.insertBefore(wrapper,input);wrapper.append(input);
   }
   // Includes live status div-tables as well as legacy Lua CBI tables.
-  for(const table of all("table,.table")){
+  const tables=new Set(all("table,.table"));const ancestor=root.closest?.("table,.table");if(ancestor)tables.add(ancestor);
+  for(const table of tables){
    if(table.closest(".ml-table-scroll")||table.parentElement.closest("table,.table"))continue;
    const first=table.querySelector("tr,.tr"),cells=first?[...first.children].filter(c=>c.matches("td,th,.td,.th")).length:0;
    if(cells<3&&!table.classList.contains("cbi-section-table"))continue;
    const wrapper=node("div",{class:"ml-table-scroll",tabindex:0,role:"region","aria-label":t("表格，可横向滚动","Table, horizontally scrollable")});
    if(cells>=5)table.classList.add("ml-wide-table");
    table.parentNode.insertBefore(wrapper,table);wrapper.append(table);
+  }
+  // Preserve zone/status background semantics, with readable foreground in either mode.
+  for(const head of all('.ifacebox-head[style*="background"]')){
+   const rgb=getComputedStyle(head).backgroundColor.match(/[\\d.]+/g)?.map(Number);
+   if(rgb&&rgb.length>=3&&(rgb.length<4||rgb[3]>0)){
+    const linear=rgb.slice(0,3).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;});
+    const luminance=linear[0]*.2126+linear[1]*.7152+linear[2]*.0722;
+    const foreground=luminance>.179?"#000000":"#FFFFFF";if(head.style.color!==foreground)head.style.color=foreground;
+   }
   }
   // Keep original selects and LuCI dropdowns authoritative, including keyboard behavior.
   appearanceEntry(main);MaterialFeedback.bind(root);
@@ -164,7 +174,9 @@
   const rect=el.getBoundingClientRect(),top=(vv?.offsetTop||0)+12,bottom=(vv?.offsetTop||0)+(vv?.height||innerHeight)-16;
   const container=el.closest(".modal,.ml-dialog-body"),limits=container?.getBoundingClientRect();
   const high=Math.max(top,limits?.top||top),low=Math.min(bottom,limits?.bottom||bottom);
-  if(rect.top<high||rect.bottom>low)el.scrollIntoView({block:"nearest",inline:"nearest",behavior:"auto"});
+  const delta=rect.top<high?rect.top-high:rect.bottom>low?Math.min(rect.bottom-low,rect.top-high):0;
+  if(delta){if(container)container.scrollBy({top:delta,behavior:"auto"});else window.scrollBy({top:delta,behavior:"auto"});}
+
  }
  document.addEventListener("focusin",()=>{clearTimeout(focusTimer);focusTimer=setTimeout(revealFocused,280);});
  if(vv)vv.addEventListener("resize",()=>{clearTimeout(focusTimer);focusTimer=setTimeout(revealFocused,180);},{passive:true});

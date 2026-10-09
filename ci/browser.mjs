@@ -41,7 +41,7 @@ try{
   assert.equal(await page.evaluate(()=>fixtureData.mode),"auto");
   await page.evaluate(()=>document.querySelector("#real-widget input[type=checkbox]").disabled=true);
   assert.equal(await page.locator("#real-widget .ml-switch").isDisabled(),true);
-  if(name==="chromium"){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:"dist/previews/desktop-light.png"});}
+  if(name==="chromium"){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:"dist/previews/desktop-light.png"});await page.locator("#fixture-clients").scrollIntoViewIfNeeded();await page.screenshot({path:"dist/previews/desktop-tables.png"});}
   await page.locator("#ml-appearance-entry>summary").click();await page.waitForSelector("#ml-appearance");
   assert.equal(await page.locator(".ml-swatch-item").count(),20);
   await page.locator(".ml-choice").filter({hasText:"跟随系统"}).click();
@@ -134,8 +134,10 @@ try{
   await keyboard.close();await browser.close();
   console.log(name+": menu hierarchy, native widgets, field submission, tables, dark states, density, drawers, modals, keyboard viewport and login passed");
  }
-}finally{server.kill();}
-for(const file of ["desktop-light.png","mobile-dark.png","mobile-drawer.png","mobile-keyboard.png"]){
+}finally{server.kill();
+for(const file of ["desktop-light.png","desktop-tables.png","mobile-dark.png","mobile-drawer.png","mobile-keyboard.png"]){
  const path="dist/previews/"+file;
  if(fs.existsSync(path))console.log("MATERIALLUCI_PREVIEW "+JSON.stringify({file,base64:fs.readFileSync(path).toString("base64")}));
+}
+
 }
