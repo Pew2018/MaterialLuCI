@@ -191,15 +191,6 @@
  window.addEventListener("popstate",()=>{if(dialog&&(!history.state||history.state.materialluci!=="dialog"||history.state.id!==dialog.id))finishDialog();setDrawer(false);});
  if(document.querySelector('input[name="luci_password"]'))document.body.classList.add("ml-login");
  enhance(main);
- let submitTask=null;
- main.addEventListener("submit",event=>{
-  if(event.defaultPrevented||!window.MaterialWait?.start)return;
-  submitTask?.stop();
-  const form=event.target,button=form.querySelector(":focus")||form.querySelector('button[type="submit"],input[type="submit"]');
-  const label=button?.getAttribute("aria-label")||button?.textContent?.trim()||t("正在提交配置","Applying configuration");
-  submitTask=MaterialWait.start(label,{scope:main});
- },true);
- window.addEventListener("pagehide",()=>{submitTask?.stop();submitTask=null;},{passive:true});
  let scheduled=false;const pending=new Set();
  function flush(){scheduled=false;for(const n of pending)if(n.isConnected)enhance(n);pending.clear();}
  const observer=new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&!n.classList.contains("tap-ripple"))pending.add(n);if(pending.size&&!scheduled){scheduled=true;requestAnimationFrame(flush);}});
