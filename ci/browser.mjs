@@ -10,7 +10,7 @@ try{
  for(let i=0;i<50;i++){try{if((await fetch(base)).ok)break;}catch{}await pause(200);}
  for(const [name,engine] of [["chromium",chromium],["webkit",webkit]]){
   const browser=await engine.launch(),page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[],requests=[];
-  page.on("pageerror",e=>errors.push(e.message));page.on("request",r=>requests.push(r.url()));
+  page.on("pageerror",e=>errors.push(e.stack||e.message));page.on("request",r=>requests.push(r.url()));
   await page.goto(base);await page.waitForFunction(()=>window.fixtureCheckbox&&window.fixtureSelect&&document.body.dataset.mlMenus==="ready");
   await page.waitForSelector("#real-widget .ml-switch-hit .mdc-switch");
   assert.equal(await page.locator(".ml-bottom-nav").count(),0);
