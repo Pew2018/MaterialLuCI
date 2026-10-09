@@ -38,6 +38,7 @@
   if(!appearancePage)return;appearancePage.remove();appearancePage=null;
   hiddenBefore.forEach(([el,hidden])=>{if(el.isConnected)el.hidden=hidden;});hiddenBefore=[];
   content.scrollTop=scrollBefore;back.hidden=true;
+  document.querySelector(".ml-bottom-nav").hidden=false;document.getElementById("ml-menu-button").hidden=false;
   document.querySelectorAll(".ml-bottom-tab").forEach(b=>b.disabled=false);
   if(previousFocus&&previousFocus.isConnected)previousFocus.focus({preventScroll:true});
  }
@@ -50,6 +51,7 @@
   if(dialog){closeDialog();return;}if(appearancePage)return;
   previousFocus=document.activeElement;scrollBefore=content.scrollTop;hiddenBefore=[...main.children].map(el=>[el,el.hidden]);hiddenBefore.forEach(([el])=>el.hidden=true);
   const host=node("section",{id:"ml-appearance"});appearancePage=host;main.append(host);back.hidden=false;content.scrollTop=0;
+  document.querySelector(".ml-bottom-nav").hidden=true;document.getElementById("ml-menu-button").hidden=true;
   history.pushState({materialluci:"appearance"},"",location.href);
   const group=title=>{const g=node("section",{class:"ml-group"},[node("h2",{text:title})]);host.append(g);return g;};
   const general=group(t("界面","Appearance"));
@@ -108,6 +110,7 @@
   for(const input of all('.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox')){
    if(input.classList.contains("ml-switch")||input.closest(".cbi-dropdown,[role=group]")||input.closest("label"))continue;
    input.classList.add("ml-switch");input.setAttribute("role","switch");
+   if(!input.getAttribute("aria-label")){const title=input.closest(".cbi-value")?.querySelector(".cbi-value-title")?.textContent.trim();if(title)input.setAttribute("aria-label",title);}
    const hit=node("label",{class:"ml-switch-hit"});input.parentNode.insertBefore(hit,input);hit.append(input);
   }
   for(const input of all('.cbi-page-actions>input[type="submit"],.cbi-page-actions>input[type="button"],.cbi-page-actions>input[type="reset"]')){

@@ -172,3 +172,16 @@ button>span:not(.tap-ripple),button>svg,.ml-native-button>input{position:relativ
 .cbi-value-field .ml-switch-hit + label:empty{display:none}
 .cbi-tooltip{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.2)}
 body.modal-overlay-active{height:100dvh}
+
+/* Native submit nodes retain form semantics; wrapper owns the painted surface
+   so the ripple below the input text remains visible. */
+.ml-native-button{background:var(--action-tonal);color:var(--on-action-tonal)}
+.ml-native-button>.cbi-button{background:transparent!important;box-shadow:none!important;color:inherit;border-color:transparent!important}
+.ml-native-button:has(>.cbi-button-apply){background:var(--action-fill);color:var(--on-accent);box-shadow:0 2px 3px rgba(0,0,0,.22)}
+.ml-native-button:has(>.cbi-button-apply):active{background:var(--action-pressed);box-shadow:0 1px 2px rgba(0,0,0,.18)}
+.ml-native-button:has(>.cbi-button-apply) .tap-ripple{background:var(--on-accent);--ripple-opacity:.14}
+.ml-native-button:not(:has(>.cbi-button-apply)) .tap-ripple{background:var(--on-action-tonal);--ripple-opacity:.12}
+.ml-native-button:not(:has(>.cbi-button-apply)):active{background:var(--tonal-pressed)}
+.ml-native-button:has(>input:disabled){background:rgba(0,0,0,.12);color:rgba(0,0,0,.38);box-shadow:none}
+:root[data-theme=dark] .ml-native-button:has(>input:disabled){background:rgba(255,255,255,.12);color:rgba(255,255,255,.38)}
+.ml-choice:focus,.ml-option:focus,.ml-swatch-item:focus,.text-action:focus{border-color:transparent}

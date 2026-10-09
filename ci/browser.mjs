@@ -39,9 +39,12 @@ try{
   await page.waitForSelector("#modal_overlay .ml-switch");
   assert.equal(await page.locator("#modal_overlay .ml-switch").count(),1);
   await page.evaluate(()=>L.hideModal());
+  await page.locator("#page-content").evaluate(el=>el.scrollTop=0);
   if(name==="chromium")await page.screenshot({path:"dist/previews/desktop-light.png"});
   await page.locator("#ml-appearance-button").click();await page.waitForSelector("#ml-appearance");
   assert.equal(await page.locator(".ml-swatch-item").count(),20);
+  assert.equal(await page.locator(".ml-bottom-nav").isVisible(),false);
+  assert.equal(await page.locator("#ml-menu-button").isVisible(),false);
   await page.locator(".ml-choice").filter({hasText:"跟随系统"}).click();
   await page.getByRole("radio",{name:"深色",exact:true}).click();
   await page.waitForSelector(".ml-backdrop",{state:"detached"});
@@ -53,6 +56,8 @@ try{
   await page.locator("#ml-hex").fill("#42A5F5");await page.locator("#ml-hex").dispatchEvent("input");
   await page.locator("#ml-back").click();await page.waitForSelector("#ml-appearance",{state:"detached"});
   assert.equal(await page.locator("#fixture-name").inputValue(),"Unapplied draft");
+  assert.equal(await page.locator(".ml-bottom-nav").isVisible(),true);
+  await page.locator("#page-content").evaluate(el=>el.scrollTop=0);
   await page.setViewportSize({width:412,height:915});
   if(name==="chromium")await page.screenshot({path:"dist/previews/mobile-dark-cards.png"});
   await page.reload();await page.waitForFunction(()=>window.fixtureCheckbox&&document.body.dataset.mlGroup);
