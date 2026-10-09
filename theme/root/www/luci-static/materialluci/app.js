@@ -15,8 +15,8 @@
   input.addEventListener("change",sync);
   try{const descriptor=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"checked"),disabledDescriptor=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"disabled");Object.defineProperty(input,"checked",{configurable:true,get(){return descriptor.get.call(input);},set(value){descriptor.set.call(input,value);sync();}});Object.defineProperty(input,"disabled",{configurable:true,get(){return disabledDescriptor.get.call(input);},set(value){disabledDescriptor.set.call(input,value);sync();}});}catch(_){}
   control.addEventListener("click",event=>{event.preventDefault();if(input.disabled)return;input.checked=!input.checked;input.dispatchEvent(new Event("change",{bubbles:true}));});
-  if(window.MaterialMDCSwitch?.MDCSwitch){try{control._mlMdcSwitch=new MaterialMDCSwitch.MDCSwitch(control);}catch(_){}}
-  sync();return control;
+  const mount=()=>{if(control.isConnected&&!control._mlMdcSwitch&&window.MaterialMDCSwitch?.MDCSwitch){try{control._mlMdcSwitch=new MaterialMDCSwitch.MDCSwitch(control);}catch(_){}}};
+  setTimeout(mount,0);sync();return control;
  }
  const narrow=matchMedia("(max-width: 1023px)");
  let dialog=null,sequence=0,drawerFocus=null,drawerInert=[];
