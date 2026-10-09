@@ -93,6 +93,7 @@ try{
   assert.equal(await page.locator("#maincontent").evaluate(el=>el.inert),false);
   assert.equal(await page.evaluate(()=>document.activeElement.id),"ml-menu-button");
   await page.locator("#fixture-name").focus();assert.equal(await page.locator("#fixture-name").evaluate(el=>getComputedStyle(el).fontSize),"16px");
+  assert.equal(await page.locator("#fixture-name").evaluate(el=>getComputedStyle(el).outlineStyle),"none");
   if(name==="chromium")await page.screenshot({path:"dist/previews/mobile-dark.png"});
   await page.evaluate(async()=>{const ui=await L.require("ui");const field=document.createElement("input");field.id="modal-input";field.type="text";field.value="draft";const flag=new ui.Checkbox("0",{name:"dialogflag"});const actions=document.createElement("div");actions.className="right";const close=document.createElement("button");close.textContent="关闭";close.className="cbi-button";close.onclick=()=>ui.hideModal();actions.append(close);ui.showModal("真实 LuCI 弹窗",[field,flag.render(),actions]);});
   await page.waitForSelector("#modal-input");

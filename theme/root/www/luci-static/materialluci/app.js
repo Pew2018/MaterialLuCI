@@ -100,7 +100,7 @@
  }
  function appearanceEntry(root){
   if(document.getElementById("ml-appearance-entry"))return;
-  const selects=[...root.querySelectorAll("select")];
+  const selects=[...(root.matches?.("select")?[root]:[]),...root.querySelectorAll("select")];
   const select=selects.find(s=>/(^|\.)mediaurlbase$/.test(s.name)||[...s.options].some(o=>o.value.startsWith("/luci-static/")));
   const field=select?.closest(".cbi-value");
   if(!field)return;
@@ -141,7 +141,7 @@
    }
   }
   // Keep original selects and LuCI dropdowns authoritative, including keyboard behavior.
-  appearanceEntry(main);MaterialFeedback.bind(root);
+  appearanceEntry(root);MaterialFeedback.bind(root);
  }
  window.addEventListener("popstate",()=>{if(dialog&&(!history.state||history.state.materialluci!=="dialog"||history.state.id!==dialog.id))finishDialog();setDrawer(false);});
  if(document.querySelector('input[name="luci_password"]'))document.body.classList.add("ml-login");
