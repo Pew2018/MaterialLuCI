@@ -1,1 +1,3 @@
-// Bundle only the official MDC controls used by the theme.\nexport {MDCLinearProgress} from "@material/linear-progress";\nexport {MDCSwitch} from "@material/switch";\n
+// Bundle only the official MDC controls used by the theme.
+export {MDCLinearProgress} from "@material/linear-progress";
+export {MDCSwitch} from "@material/switch";
