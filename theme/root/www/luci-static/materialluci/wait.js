@@ -4,7 +4,7 @@
 (function(){
  if(!window.MaterialMDC?.MDCLinearProgress)return;
  let overlay=null,modal=null,root=null,component=null,frame=0,resizeObserver=null;
- const tasks=new Map(),taskSeq=0;
+ const tasks=new Map();let taskSeq=0;
  const t=(zh,en)=>document.documentElement.lang.startsWith("zh")?zh:en;
  const statusLabel=()=>t("正在处理，请稍候","Processing, please wait");
  function position(){frame=0;if(!root||!modal||!overlay)return;const box=modal.getBoundingClientRect(),outer=overlay.getBoundingClientRect(),padding=innerWidth<600?18:24;root.style.left=(box.left-outer.left+padding)+"px";root.style.top=(box.bottom-outer.top-16)+"px";root.style.width=Math.max(0,box.width-padding*2)+"px";}
