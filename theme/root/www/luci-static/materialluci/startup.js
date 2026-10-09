@@ -3,7 +3,7 @@
 (function(){
  const root=document.documentElement, query=matchMedia("(prefers-color-scheme: dark)");
  const get=(key,fallback)=>{try{return localStorage.getItem("materialluci-"+key)||fallback;}catch(_){return fallback;}};
- const prefs={mode:get("mode","system"),seed:get("seed","#42A5F5"),cards:get("cards","false")==="true",toolbar:get("toolbar","false")==="true",categories:get("categories","false")==="true",icons:get("icons","false")==="true"};
+ const prefs={mode:get("mode","system"),seed:get("seed","#42A5F5"),cards:get("cards","true")==="true",toolbar:get("toolbar","false")==="true",categories:get("categories","false")==="true",icons:get("icons","false")==="true"};
  if(!["system","light","dark"].includes(prefs.mode)) prefs.mode="system";
  if(!/^#[0-9a-f]{6}$/i.test(prefs.seed)) prefs.seed="#42A5F5";
  prefs.seed=prefs.seed.toUpperCase();
