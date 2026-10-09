@@ -9,9 +9,16 @@ if stage.exists(): shutil.rmtree(stage)
 shutil.copytree(ROOT/"theme/root",stage)
 # A single source of truth also invalidates browser caches on package upgrades.
 version=meta["version"].rsplit("-",1)[0]
+epoch=int(os.environ.get("SOURCE_DATE_EPOCH","1791558000"))
+cache=meta["version"]+"-"+str(epoch)
+menu_class="materialluci-menu-v"+version.replace(".","_")+"-"+str(epoch)
 for file in stage.rglob("*"):
  if file.is_file() and file.suffix in (".htm",".js"):
-  file.write_text(file.read_text().replace("@VERSION@",version))
+  file.write_text(file.read_text().replace("@VERSION@",version).replace("@CACHE@",cache).replace("@MENU_CLASS@",menu_class))
+# LuCI uses firmware resource_version for class URLs. A unique theme module
+# name prevents a cached old menu adapter from talking to a new app shell.
+resource_dir=stage/"www/luci-static/resources"
+(resource_dir/"materialluci-menu.js").rename(resource_dir/(menu_class+".js"))
 assets=stage/"www/luci-static/materialluci"
 css=(assets/"base.css").read_text()+(assets/"cascade.css").read_text().replace('@import url("base.css");',"")
 (assets/"cascade.css").write_text(css);(assets/"base.css").unlink()
@@ -57,7 +64,7 @@ assert sorted(n.removeprefix("./") for n in outer.getnames())==["control.tar.gz"
 c=tarfile.open(fileobj=io.BytesIO(outer.extractfile("./control.tar.gz").read()))
 assert b"Architecture: aarch64_cortex-a53\n" in c.extractfile("./control").read()
 d=tarfile.open(fileobj=io.BytesIO(outer.extractfile("./data.tar.gz").read()))
-allowed=("www/luci-static/materialluci/","www/luci-static/resources/materialluci-menu.js","usr/lib/lua/luci/view/themes/materialluci/","etc/uci-defaults/95-materialluci","usr/share/doc/luci-theme-materialluci/")
+allowed=("www/luci-static/materialluci/","www/luci-static/resources/"+menu_class+".js","usr/lib/lua/luci/view/themes/materialluci/","etc/uci-defaults/95-materialluci","usr/share/doc/luci-theme-materialluci/")
 members=list(d)
 actual_dirs={m.name.removeprefix("./").rstrip("/") for m in members if m.isdir()}
 actual_files={m.name.removeprefix("./") for m in members if m.isfile()}

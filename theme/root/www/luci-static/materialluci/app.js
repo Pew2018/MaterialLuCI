@@ -22,6 +22,7 @@
   else{drawerInert.forEach(([el,value])=>el.inert=value);drawerInert=[];sidebar.removeAttribute("role");sidebar.removeAttribute("aria-modal");if(restore&&drawerFocus?.isConnected)drawerFocus.focus({preventScroll:true});}
  }
  function renderMenus(entries){
+  if(!Array.isArray(entries))throw new TypeError("Incompatible menu adapter. Reload the updated theme resources.");
   const host=document.getElementById("ml-menu-tree");host.replaceChildren();
   for(const [i,entry] of entries.entries()){
    const group=node("section",{class:"ml-nav-group"}),link=node("a",{href:entry.url,class:"ml-nav-parent",text:entry.title});
@@ -109,6 +110,14 @@
  }
  function enhance(root){
   const all=selector=>[...(root.matches&&root.matches(selector)?[root]:[]),...root.querySelectorAll(selector)];
+  // Older opkg views use div.btn. Preserve their click handlers and make
+  // keyboard behavior and disabled semantics match real buttons.
+  for(const button of all('div.btn')){
+   if(button.dataset.mlButton)continue;button.dataset.mlButton="true";
+   button.setAttribute("role","button");button.tabIndex=button.hasAttribute("disabled")?-1:0;
+   if(button.hasAttribute("disabled"))button.setAttribute("aria-disabled","true");
+   button.addEventListener("keydown",event=>{if((event.key==="Enter"||event.key===" ")&&!button.hasAttribute("disabled")&&button.getAttribute("aria-disabled")!=="true"){event.preventDefault();button.click();}});
+  }
   // Only explicit boolean LuCI fields get switches; list/group checkboxes remain checkboxes.
   for(const input of all('.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox')){
    if(input.classList.contains("ml-switch")||input.closest(".cbi-dropdown,[role=group],.cbi-section-table,.ml-table-scroll")||input.closest("label"))continue;

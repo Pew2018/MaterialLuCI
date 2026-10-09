@@ -9,7 +9,8 @@ if output.exists():shutil.rmtree(output)
 shutil.copytree(ROOT/"build/stage/www",output)
 upstream=ROOT/"luci-fixture/modules/luci-base/htdocs/luci-static/resources"
 shutil.copytree(upstream,output/"luci-static/resources",dirs_exist_ok=True)
-shutil.copy(ROOT/"build/stage/www/luci-static/resources/materialluci-menu.js",output/"luci-static/resources/materialluci-menu.js")
+for module in (ROOT/"build/stage/www/luci-static/resources").glob("materialluci-menu*.js"):
+ shutil.copy(module,output/"luci-static/resources"/module.name)
 def luaquote(s):return json.dumps(s,ensure_ascii=False)
 def compile_template(text):
  result=[];pos=0
@@ -79,3 +80,20 @@ network_env["requestpath"]=["admin","network","network","devices"]
 network_env["dispatchpath"]=["admin","network","network","devices"]
 index=(output/"index.html").read_text()
 (output/"network.html").write_text(index.replace(json.dumps(env),json.dumps(network_env)))
+
+# Render the actual pinned upstream opkg view, including its injected CSS.
+opkg_env=dict(env)
+opkg_env["requestpath"]=["admin","system","opkg"]
+opkg_env["dispatchpath"]=["admin","system","opkg"]
+opkg_source=ROOT/"luci-fixture/applications/luci-app-opkg/htdocs/luci-static/resources/view/opkg.js"
+view_dir=output/"luci-static/resources/view"
+view_dir.mkdir(parents=True,exist_ok=True)
+shutil.copy(opkg_source,view_dir/"opkg.js")
+available="".join("Package: fixture-package-%02d\nVersion: 1.0-1\nSize: 1234\nDescription: Example package description for layout verification.\n\n"%i for i in range(12))
+installed="Package: fixture-package-00\nVersion: 1.0-1\nStatus: install ok installed\n\n"
+opkg_fixture='<div id="view"><p>Loading package view</p></div><script>document.addEventListener("DOMContentLoaded",function(){L.require("fs").then(function(fs){fs.exec_direct=function(path,args){if(path==="/usr/libexec/opkg-call"&&args[0]==="list-available")return Promise.resolve('+json.dumps(available)+');if(path==="/usr/libexec/opkg-call"&&args[0]==="list-installed")return Promise.resolve('+json.dumps(installed)+');return Promise.reject(new Error("Unexpected write in opkg fixture"));};return L.require("view.opkg");});});</script>'
+code=bootstrap+'\ninclude("header")\nwrite('+luaquote(opkg_fixture)+')\ninclude("footer")'
+renderer.write_text(code)
+html=subprocess.check_output(["lua5.1",str(renderer)]).decode()
+html=html.replace("</head>",runtime.replace(json.dumps(env),json.dumps(opkg_env))+"</head>")
+(output/"opkg.html").write_text(html)

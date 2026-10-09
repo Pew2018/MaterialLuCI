@@ -2,7 +2,7 @@
 (function(){
  const bound=new WeakSet(),pending=new WeakMap();
  function scrolls(el){const s=[];for(let n=el.parentElement;n;n=n.parentElement)if(n.scrollHeight>n.clientHeight||n.scrollWidth>n.clientWidth)s.push([n,n.scrollTop,n.scrollLeft]);return s;}
- function disabled(el){return el.disabled||el.querySelector("input:disabled")||el.closest('[aria-disabled="true"]');}
+ function disabled(el){return el.disabled||el.hasAttribute("disabled")||el.querySelector("input:disabled")||el.closest('[aria-disabled="true"]');}
  function bind(el){
   if(bound.has(el))return;bound.add(el);el.dataset.ripple="control";
   el.addEventListener("pointerdown",e=>{if(!e.isPrimary||e.button!==0||disabled(el))return;pending.set(el,{id:e.pointerId,x:e.clientX,y:e.clientY,scrolls:scrolls(el)});},{passive:true});
@@ -18,7 +18,7 @@
   },{passive:true});
  }
  window.MaterialFeedback={bind(root=document){
-  const selector="button,.ml-switch-hit,.ml-native-button,.ml-sidebar a,.tabs a,.cbi-tabmenu a";
+  const selector="button,div.btn,.ml-switch-hit,.ml-native-button,.ml-sidebar a,.tabs a,.cbi-tabmenu a";
   if(root.matches&&root.matches(selector))bind(root);
   root.querySelectorAll(selector).forEach(bind);
  }};

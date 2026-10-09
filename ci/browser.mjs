@@ -14,6 +14,10 @@ try{
   await page.goto(base);await page.waitForFunction(()=>window.fixtureCheckbox&&window.fixtureSelect&&document.body.dataset.mlMenus==="ready");
   await page.waitForSelector("#real-widget .ml-switch");
   assert.equal(await page.locator(".ml-bottom-nav").count(),0);
+  assert.equal(await page.locator('meta[name="theme-color"]').count(),0);
+  assert(requests.some(url=>/materialluci-menu-v0_2_1-[0-9]+/.test(url)),"versioned menu module not requested");
+  assert(!requests.some(url=>/\\/materialluci-menu\\.js(?:\\?|$)/.test(url)),"stale menu adapter path used");
+
   assert.equal(await page.locator("#ml-appearance-button").count(),0);
   assert.deepEqual(await page.locator(".ml-nav-parent").allTextContents(),["状态","系统","服务","网络","退出"]);
   assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),56);
@@ -68,6 +72,12 @@ try{
   assert.equal(await page.locator(".ifacebox-head").evaluate(el=>getComputedStyle(el).color),"rgb(0, 0, 0)","zone header contrast in dark theme");
   if(name==="chromium"){await page.locator("#fixture-clients").scrollIntoViewIfNeeded();await page.screenshot({path:"dist/previews/desktop-dark-tables.png"});}
 
+  // Exercise firmware environments which only expose requestpath.
+  await page.evaluate(async()=>{
+   const ui=await L.require("ui");const name=[...document.scripts].map(s=>s.src.match(/(materialluci-menu-v[^/?]+)\\.js/)).find(Boolean)?.[1];
+   const module=await L.require(name);const path=L.env.dispatchpath;delete L.env.dispatchpath;module.render(await ui.menu.load());L.env.dispatchpath=path;
+  });
+  assert.deepEqual(await page.locator(".ml-nav-parent").allTextContents(),["状态","系统","服务","网络","退出"]);
   await page.goto(base+"/network.html");await page.waitForFunction(()=>document.body.dataset.mlMenus==="ready");
   assert.deepEqual(await page.locator("#tabmenu a").allTextContents(),["接口","设备","全局网络选项"]);
   assert.equal(await page.locator("#tabmenu li.active a").textContent(),"设备");
@@ -105,6 +115,20 @@ try{
   await page.waitForFunction(()=>!document.body.classList.contains("modal-overlay-active"));
   await page.setViewportSize({width:844,height:390});
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"landscape overflow");
+  await page.goto(base+"/opkg.html");await page.waitForFunction(()=>document.querySelectorAll("#packages .tr").length>2&&document.body.dataset.mlMenus==="ready");
+  assert.equal(await page.locator('#ml-menu-tree a[aria-current=page]').textContent(),"软件包");
+  for(const width of [390,768,1440]){
+   await page.setViewportSize({width,height:900});
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"real opkg page overflow");
+   const install=page.locator('#packages .btn').filter({hasText:"Install"}).first();
+   assert((await install.boundingBox()).width>=88,"opkg action squeezed");
+   assert.equal(await install.evaluate(el=>getComputedStyle(el).whiteSpace),"nowrap");
+   assert.equal(await page.locator('#packages .btn[disabled]').first().getAttribute("aria-disabled"),"true");
+   const field=page.locator('input[name="filter"]'),clear=field.locator('..').locator("button");
+   const a=await field.boundingBox(),b=await clear.boundingBox();
+   assert(a.x+a.width<=b.x+1||a.y+a.height<=b.y+1,"opkg input overlaps clear button");
+  }
+  if(name==="chromium"){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:"dist/previews/opkg-desktop.png"});}
   await page.goto(base+"/login.html");await page.waitForSelector(".ml-login");
   assert.equal(await page.locator('input[name="luci_password"]').getAttribute("autocomplete"),"current-password");
   assert.equal(await page.locator("form").getAttribute("method"),"post");
@@ -156,7 +180,7 @@ try{
   console.log(name+": menu hierarchy, native widgets, field submission, tables, dark states, density, drawers, modals, keyboard viewport and login passed");
  }
 }finally{server.kill();
-for(const file of ["desktop-light.png","desktop-tables.png","desktop-dark-tables.png","mobile-dark.png","mobile-drawer.png","mobile-keyboard.png"]){
+for(const file of ["desktop-light.png","desktop-tables.png","desktop-dark-tables.png","opkg-desktop.png","mobile-dark.png","mobile-drawer.png","mobile-keyboard.png"]){
  const path="dist/previews/"+file;
  if(fs.existsSync(path))console.log("MATERIALLUCI_PREVIEW "+JSON.stringify({file,base64:fs.readFileSync(path).toString("base64")}));
 }

@@ -1,21 +1,21 @@
-# MaterialLuCI Classic Native 0.2.0 安装与回退
+# MaterialLuCI Classic Native 0.2.1 安装与回退
 
 目标：小米 AX3000T / ImmortalWrt 21.02-SNAPSHOT（mediatek/mt7981，aarch64_cortex-a53，Lua LuCI）。
 GitHub Actions artifact 下载文件是 ZIP，ZIP 内只包含目标路由器的 IPK。不要把 ZIP 改名为 `.ipk`；先解压，再把解压得到的 IPK 上传到路由器。
 
 ## 安装
 
-在 Actions 下载 artifact `MaterialLuCI-0.2.0-IPK-in-ZIP-AX3000T-aarch64_cortex-a53`。在 Mac 上双击 ZIP 解压，找到：
+在 Actions 下载 artifact `MaterialLuCI-0.2.1-IPK-in-ZIP-AX3000T-aarch64_cortex-a53`。在 Mac 上双击 ZIP 解压，找到：
 
-`luci-theme-materialluci_0.2.0-1_aarch64_cortex-a53.ipk`
+`luci-theme-materialluci_0.2.1-1_aarch64_cortex-a53.ipk`
 
 请上传这个 `.ipk` 文件本身；不要上传外层 ZIP，也不要上传 macOS 展开 IPK 后显示的 `control.tar.gz`、`data.tar.gz`、`debian-binary`。
 
 把 IPK 上传到路由器的 `/tmp/` 并安装。请在命令中填写你自己的路由器地址和 SSH 端口：
 
-    scp -O -P <你的 SSH 端口> ~/Downloads/luci-theme-materialluci_0.2.0-1_aarch64_cortex-a53.ipk root@<路由器地址>:/tmp/
+    scp -O -P <你的 SSH 端口> ~/Downloads/luci-theme-materialluci_0.2.1-1_aarch64_cortex-a53.ipk root@<路由器地址>:/tmp/
     ssh -p <你的 SSH 端口> root@<路由器地址>
-    opkg install /tmp/luci-theme-materialluci_0.2.0-1_aarch64_cortex-a53.ipk
+    opkg install /tmp/luci-theme-materialluci_0.2.1-1_aarch64_cortex-a53.ipk
 
 安装只注册主题，不自动切换。网页“系统 → 系统 → 语言和界面 / 语言与样式”选择 MaterialLuCI，保存并应用，然后强制刷新浏览器。
 也可以在确认安装成功后执行：

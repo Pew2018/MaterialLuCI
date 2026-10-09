@@ -14,8 +14,6 @@
   root.style.colorScheme=dark?"dark":"light";
   const mapping={seed:"seed",primarySurface:"primary-surface",onPrimary:"on-primary",primaryPressed:"primary-pressed",accentInk:"accent-ink",controlAccent:"control-accent",controlStrong:"control-strong",actionPrimary:"action-fill",onActionPrimary:"on-accent",actionPrimaryPressed:"action-pressed",actionSecondary:"action-tonal",onActionSecondary:"on-action-tonal",actionSecondaryPressed:"tonal-pressed",switchThumb:"switch-thumb",switchTrack:"switch-track",navIcon:"nav-icon",navLabel:"nav-label",swatchForeground:"swatch-foreground"};
   for(const [key,css] of Object.entries(mapping)) root.style.setProperty("--"+css,p[key]);
-  const meta=document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.content=prefs.toolbar?p.primarySurface:(dark?"#121212":"#FFFFFF");
  }
  const api={prefs,apply,set(key,value){if(!(key in prefs))return;if(key==="seed"&&!/^#[0-9a-f]{6}$/i.test(value))return;if(key==="mode"&&!["system","light","dark"].includes(value))return;prefs[key]=key==="seed"?value.toUpperCase():value;try{localStorage.setItem("materialluci-"+key,String(prefs[key]));}catch(_){}apply();window.dispatchEvent(new Event("materialluci:appearance"));}};
  window.MaterialAppearance=api;apply();

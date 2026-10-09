@@ -4,8 +4,10 @@
 return baseclass.extend({
  __init__:function(){ui.menu.load().then(L.bind(this.render,this)).catch(function(e){if(window.MaterialLuCI)MaterialLuCI.menuFailed(e);});},
  render:function(tree){
-  var children=ui.menu.getChildren(tree),mode=null,path=L.env.dispatchpath||[];
-  for(var i=0;i<children.length;i++)if(children[i].name===(L.env.requestpath[0]||'admin'))mode=children[i];
+  var path=Array.isArray(L.env.dispatchpath)&&L.env.dispatchpath.length?L.env.dispatchpath:
+   Array.isArray(L.env.requestpath)?L.env.requestpath:[];
+  var children=ui.menu.getChildren(tree),mode=null;
+  for(var i=0;i<children.length;i++)if(children[i].name===(path[0]||'admin'))mode=children[i];
   if(!mode&&children.length)mode=children[0];if(!mode)return;
   // Preserve LuCI ordering, ACL visibility, names and destinations. Only the
   // first two navigation levels enter the drawer; page tabs stay in tabmenu.
@@ -17,10 +19,11 @@ return baseclass.extend({
   }
   var entries=ui.menu.getChildren(mode).map(function(child){return entry(child,[mode.name],1);});
   if(window.MaterialLuCI)MaterialLuCI.setMenus(entries);
-  this.renderTabs(tree);
+  this.renderTabs(tree,path);
  },
- renderTabs:function(tree){
-  var container=document.getElementById('tabmenu'),path=L.env.dispatchpath,node=tree;
+ renderTabs:function(tree,path){
+  var container=document.getElementById('tabmenu'),node=tree;
+  path=Array.isArray(path)?path:[];
   if(!container)return;
   for(var i=0;i<3&&node;i++)node=node.children&&node.children[path[i]];
   var url=path.slice(0,3);container.textContent='';

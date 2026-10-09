@@ -7,7 +7,7 @@
  <script>
  document.addEventListener("DOMContentLoaded",function(){
   if(document.querySelector('input[name="luci_password"]'))return;
-  if(window.L)L.require("materialluci-menu").catch(function(error){if(window.MaterialLuCI)MaterialLuCI.menuFailed(error);});
+  if(window.L)L.require("@MENU_CLASS@").catch(function(error){if(window.MaterialLuCI)MaterialLuCI.menuFailed(error);});
  });
  </script>
 </body>

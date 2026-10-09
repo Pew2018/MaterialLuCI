@@ -21,17 +21,16 @@
 <head>
  <meta charset="utf-8">
  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
- <meta name="theme-color" content="#FFFFFF">
  <title><%=striptags((boardinfo.hostname or "?") .. ((node and node.title) and " - "..translate(node.title) or ""))%> - MaterialLuCI</title>
- <script src="<%=media%>/palette.js?v=@VERSION@"></script>
- <script src="<%=media%>/startup.js?v=@VERSION@"></script>
- <link rel="stylesheet" href="<%=media%>/cascade.css?v=@VERSION@">
+ <script src="<%=media%>/palette.js?v=@CACHE@"></script>
+ <script src="<%=media%>/startup.js?v=@CACHE@"></script>
+ <link rel="stylesheet" href="<%=media%>/cascade.css?v=@CACHE@">
  <% if node and node.css then %><link rel="stylesheet" href="<%=resource%>/<%=node.css%>"><% end %>
  <% if css then %><style><%=css%></style><% end %>
  <script src="<%=url('admin/translations',luci.i18n.context.lang)%>"></script>
  <script src="<%=resource%>/cbi.js"></script>
- <script defer src="<%=media%>/feedback.js?v=@VERSION@"></script>
- <script defer src="<%=media%>/app.js?v=@VERSION@"></script>
+ <script defer src="<%=media%>/feedback.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/app.js?v=@CACHE@"></script>
 </head>
 <body class="lang_<%=pcdata(luci.i18n.context.lang)%>" data-page="<%=pcdata(table.concat(disp.context.requestpath,'-'))%>">
  <header class="ml-toolbar"><div class="ml-toolbar-inner">

@@ -21,7 +21,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
   req=json.loads(self.rfile.read(int(self.headers.get("Content-Length","0"))))
   def respond(msg):
    params=msg.get("params",[]);method=params[2] if len(params)>2 else ""
-   values={"getFeatures":{},"list":{"entries":[]},"changes":{"changes":{}},"access":{"access":True}}
+   values={"getFeatures":{},"getMountPoints":{"result":[{"mount":"/overlay","size":100000000,"free":80000000}]},"list":{"entries":[]},"changes":{"changes":{}},"access":{"access":True}}
    if method in ("set","add","delete","apply","commit"):raise RuntimeError("Unexpected write in preview")
    return {"jsonrpc":"2.0","id":msg.get("id"),"result":[0,values.get(method,{})]}
   self.send_json([respond(x) for x in req] if isinstance(req,list) else respond(req))

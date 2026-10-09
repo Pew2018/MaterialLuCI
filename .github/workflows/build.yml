@@ -44,7 +44,9 @@ jobs:
           repository: openwrt/luci
           ref: e4c46338b196e486a88b1a75b78e283708c82bc4
           path: luci-fixture
-          sparse-checkout: modules/luci-base/htdocs/luci-static/resources
+          sparse-checkout: |
+            modules/luci-base/htdocs/luci-static/resources
+            applications/luci-app-opkg/htdocs/luci-static/resources
       - name: Compile Lua templates and prepare compatibility preview
         run: python3 ci/prepare.py
       - name: Test desktop and mobile layouts in Chromium and WebKit
@@ -53,7 +55,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: MaterialLuCI-0.2.0-IPK-in-ZIP-AX3000T-aarch64_cortex-a53
-          path: dist/luci-theme-materialluci_0.2.0-1_aarch64_cortex-a53.ipk
+          name: MaterialLuCI-0.2.1-IPK-in-ZIP-AX3000T-aarch64_cortex-a53
+          path: dist/luci-theme-materialluci_0.2.1-1_aarch64_cortex-a53.ipk
           if-no-files-found: error
           retention-days: 30

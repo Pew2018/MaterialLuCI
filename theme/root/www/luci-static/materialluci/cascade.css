@@ -239,3 +239,32 @@ body.modal-overlay-active #modal_overlay>.modal{scroll-padding-top:64px;scroll-p
  .cbi-progressbar{margin-bottom:38px}
  .cbi-progressbar::after{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.4}
 }
+
+/* Real LuCI opkg views inject their own CSS after the theme. Scoped rules
+   preserve the original order while keeping inputs and actions in bounds. */
+#maincontent .controls{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:flex-start;gap:16px;margin:16px 0 24px}
+#maincontent .controls>div{flex:1 1 300px;min-width:0;padding:0;display:flex;flex-wrap:wrap;gap:8px;white-space:normal}
+#maincontent .controls>div:first-child{flex-basis:100%;min-width:0}
+#maincontent .controls>div>label{display:block;flex-basis:100%;min-width:0;font-size:14px}
+#maincontent .controls .control-group{display:flex;align-items:center;flex-wrap:wrap;gap:8px;flex:1 1 auto;width:100%;min-width:0}
+#maincontent .controls .control-group>input{flex:1 1 160px;min-width:0;width:0}
+#maincontent .controls .control-group>.btn{flex:0 0 auto;min-width:88px;white-space:nowrap}
+#maincontent #pager{gap:16px;align-items:center;flex-wrap:nowrap}
+#maincontent #pager>.btn{flex:0 0 88px;min-width:88px}
+#maincontent #pager>.text{flex:1;min-width:0;white-space:normal;text-align:center}
+#packages{table-layout:auto}
+#packages :is(td,th,.td,.th):last-child{width:112px;min-width:112px;white-space:nowrap}
+#packages .btn{min-width:88px;white-space:nowrap}
+body :is(.btn,.cbi-button)[disabled]{background:var(--pressed);color:var(--disabled);border-color:transparent;box-shadow:none;cursor:default;pointer-events:none}
+.network-status-table{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px;align-items:start}
+.network-status-table .ifacebox{width:100%;margin:0}
+.network-status-table .ifacebox-body{height:auto;display:block;padding:12px;line-height:1.5;text-align:left}
+.network-status-table .ifacebadge{float:none;min-width:0;max-width:100%;margin:4px 4px 4px 0;padding:6px;vertical-align:top}
+.ifacebadge.large{min-width:0}
+@media(max-width:599px){
+ #maincontent .controls{gap:16px}
+ #maincontent .controls>div{flex-basis:100%}
+ #maincontent .controls .control-group>.btn{min-width:88px}
+ #maincontent #pager>.btn{flex-basis:48px;min-width:48px}
+ .network-status-table{grid-template-columns:minmax(0,1fr)}
+}
