@@ -25,17 +25,37 @@
   if(!Array.isArray(entries))throw new TypeError("Incompatible menu adapter. Reload the updated theme resources.");
   const host=document.getElementById("ml-menu-tree");host.replaceChildren();
   for(const [i,entry] of entries.entries()){
-   const group=node("section",{class:"ml-nav-group"}),link=node("a",{href:entry.url,class:"ml-nav-parent",text:entry.title});
-   const header=node("div",{class:"ml-nav-row"},[link]);group.append(header);
-   if(entry.active)group.dataset.active="true";
-   if(entry.children?.length){
-    const list=node("div",{id:"ml-nav-children-"+i,class:"ml-nav-children"});list.hidden=!entry.active;
-    const toggle=textButton("⌄",()=>{list.hidden=!list.hidden;toggle.setAttribute("aria-expanded",String(!list.hidden));},"ml-nav-toggle");
-    toggle.setAttribute("aria-label",t("展开或收起：","Expand or collapse: ")+entry.title);
-    toggle.setAttribute("aria-controls",list.id);toggle.setAttribute("aria-expanded",String(!list.hidden));header.append(toggle);
-    for(const child of entry.children){const a=node("a",{href:child.url,text:child.title});if(child.active)a.setAttribute("aria-current","page");list.append(a);}
+   const children=Array.isArray(entry.children)?entry.children:[],
+    expanded=!!entry.active||children.some(child=>child.active),
+    group=node("section",{class:"ml-nav-group"});
+   if(expanded)group.dataset.active="true";
+   if(children.length){
+    const list=node("div",{id:"ml-nav-children-"+i,class:"ml-nav-children"});list.hidden=!expanded;
+    const toggle=node("button",{type:"button",class:"ml-nav-parent","aria-controls":list.id,"aria-expanded":String(expanded),"aria-label":t("展开或收起："+entry.title,"Expand or collapse: "+entry.title)},[
+     node("span",{class:"ml-nav-parent-label",text:entry.title}),
+     node("span",{class:"ml-nav-chevron","aria-hidden":"true",text:"⌄"})
+    ]);
+    toggle.addEventListener("click",()=>{
+     const open=list.hidden;
+     list.hidden=!open;toggle.setAttribute("aria-expanded",String(open));group.dataset.active=String(open);
+    });
+    const header=node("div",{class:"ml-nav-row"},[toggle]);group.append(header);
+    if(entry.url&&!children.some(child=>child.url===entry.url)){
+     const direct=node("a",{href:entry.url,class:"ml-nav-entry-link",text:entry.title});
+     if(entry.active)direct.setAttribute("aria-current","page");
+     list.append(direct);
+    }
+    for(const child of children){
+     const a=node("a",{href:child.url,text:child.title});
+     if(child.active)a.setAttribute("aria-current","page");
+     list.append(a);
+    }
     group.append(list);
-   }else if(entry.active)link.setAttribute("aria-current","page");
+   }else{
+    const link=node("a",{href:entry.url,class:"ml-nav-parent ml-nav-leaf",text:entry.title});
+    if(entry.active)link.setAttribute("aria-current","page");
+    group.append(node("div",{class:"ml-nav-row"},[link]));
+   }
    host.append(group);
   }
   host.querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>setDrawer(false,false)));
