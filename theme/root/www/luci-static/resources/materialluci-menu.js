@@ -2,7 +2,10 @@
 'require baseclass';
 'require ui';
 return baseclass.extend({
- __init__:function(){ui.menu.load().then(L.bind(this.render,this)).catch(function(e){if(window.MaterialLuCI)MaterialLuCI.menuFailed(e);});},
+ __init__:function(){
+  var task=window.MaterialWait&&MaterialWait.start(document.documentElement.lang.startsWith('zh')?'正在加载导航':'Loading navigation',{scope:document.getElementById('ml-menu-tree')||document.body});
+  ui.menu.load().then(L.bind(this.render,this)).catch(function(e){if(window.MaterialLuCI)MaterialLuCI.menuFailed(e);}).then(function(){if(task)task.stop();});
+ },
  render:function(tree){
   var path=Array.isArray(L.env.dispatchpath)&&L.env.dispatchpath.length?L.env.dispatchpath:
    Array.isArray(L.env.requestpath)?L.env.requestpath:[];
