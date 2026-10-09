@@ -68,7 +68,7 @@
   const about=group(t("关于","About"));about.append(node("p",{class:"hint",text:"MaterialLuCI 0.1.0 · Classic Native"}),node("p",{class:"hint",text:t("外观偏好保存在此浏览器，不更改路由器配置。","Preferences are stored in this browser without changing router configuration.")}));
   updateSwatches();MaterialFeedback.bind(host);mode.focus({preventScroll:true});
  }
- function menuBody(entries){const body=node("div",{class:"ml-menu"});for(const entry of entries){if(entry.children&&entry.children.length){const details=node("details",{},[node("summary",{text:entry.title}),menuBody(entry.children)]);if(entry.active)details.open=true;body.append(details);}else if(entry.url){const link=node("a",{href:entry.url},[node("span",{text:entry.title})]);if(entry.active)link.setAttribute("aria-current","page");body.append(link);}}return body;}
+ function menuBody(entries){const body=node("div",{class:"ml-menu"});for(const entry of entries){if(entry.children&&entry.children.length){const details=node("details",{},[node("summary",{text:entry.title}),menuBody(entry.children)]);if(entry.active||entries.length===1)details.open=true;body.append(details);}else if(entry.url){const link=node("a",{href:entry.url},[node("span",{text:entry.title})]);if(entry.active)link.setAttribute("aria-current","page");body.append(link);}}return body;}
  function openMenu(group){
   if(appearancePage){if(history.state&&history.state.materialluci==="appearance")history.back();return;}
   const title={status:t("状态","Status"),network:t("网络","Network"),settings:t("设置","Settings")}[group],entries=menus?menus[group]:null;
