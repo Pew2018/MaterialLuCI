@@ -19,10 +19,12 @@ try{
   assert(!requests.some(url=>new URL(url).pathname.endsWith("/materialluci-menu.js")),"stale menu adapter path used");
 
   assert.equal(await page.locator("#ml-appearance-button").count(),0);
-  assert.deepEqual(await page.locator(".ml-nav-parent").allTextContents(),["状态","系统","服务","网络","退出"]);
+  assert.deepEqual(await page.locator(".ml-nav-parent").evaluateAll(nodes=>nodes.map(n=>n.textContent.trim())),["状态","系统","服务","网络","退出"]);
+  assert.equal(await page.locator(".ml-nav-row .ml-nav-parent").evaluateAll(nodes=>nodes.every(n=>n.tagName==="BUTTON"||n.classList.contains("ml-nav-leaf"))),true);
   assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),56);
   assert((await page.locator("#maincontent").boundingBox()).width>1000);
   assert.equal(await page.locator('#ml-menu-tree a[href="/cgi-bin/luci/admin/network/network"]').count(),1);
+  assert.equal(await page.locator('#ml-menu-tree .ml-nav-parent[aria-controls]').count(),4);
   assert.equal(await page.locator('#ml-menu-tree a[href="/cgi-bin/luci/admin/network/network/devices"]').count(),0);
   assert.equal(await page.locator("#ml-appearance-entry").getAttribute("open"),null);
   assert.equal(await page.locator("#fixture-theme-field + #ml-appearance-entry").count(),1);
@@ -78,7 +80,8 @@ try{
    const ui=await L.require("ui"),module=await L.require(name);
    const path=L.env.dispatchpath;delete L.env.dispatchpath;module.render(await ui.menu.load());L.env.dispatchpath=path;
   },menuName);
-  assert.deepEqual(await page.locator(".ml-nav-parent").allTextContents(),["状态","系统","服务","网络","退出"]);
+  assert.deepEqual(await page.locator(".ml-nav-parent").evaluateAll(nodes=>nodes.map(n=>n.textContent.trim())),["状态","系统","服务","网络","退出"]);
+  assert.equal(await page.locator(".ml-nav-row .ml-nav-parent").evaluateAll(nodes=>nodes.every(n=>n.tagName==="BUTTON"||n.classList.contains("ml-nav-leaf"))),true);
   await page.goto(base+"/network.html");await page.waitForFunction(()=>document.body.dataset.mlMenus==="ready");
   assert.deepEqual(await page.locator("#tabmenu a").allTextContents(),["接口","设备","全局网络选项"]);
   assert.equal(await page.locator("#tabmenu li.active a").textContent(),"设备");
@@ -95,6 +98,10 @@ try{
   await page.waitForFunction(()=>document.getElementById("ml-sidebar").inert===true);
   assert.equal(await page.locator("#ml-sidebar").evaluate(el=>el.inert),true);
   await page.locator("#ml-menu-button").click();
+  const networkGroup=page.locator('.ml-nav-parent[aria-controls]').filter({hasText:"网络"});
+  await networkGroup.focus();await page.keyboard.press("Enter");
+  assert.equal(await networkGroup.getAttribute("aria-expanded"),"false");
+  await page.keyboard.press(" ");assert.equal(await networkGroup.getAttribute("aria-expanded"),"true");
   assert.equal(await page.locator("#ml-menu-button").getAttribute("aria-expanded"),"true");
   assert.equal(await page.locator("#ml-sidebar").getAttribute("aria-modal"),"true");
   assert.equal(await page.locator("#maincontent").evaluate(el=>el.inert),true);
