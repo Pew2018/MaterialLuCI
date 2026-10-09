@@ -1,0 +1,69 @@
+name: Build AX3000T Classic Native
+on:
+  push:
+    branches: [main, "feature/**", "fix/**"]
+    paths-ignore: ["docs/**"]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: materialluci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install build and test tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y lua5.1
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium webkit
+      - name: Validate script syntax
+        run: |
+          for file in theme/root/www/luci-static/materialluci/*.js; do node --check "$file"; done
+          node -e 'new Function(require("fs").readFileSync("theme/root/www/luci-static/resources/materialluci-menu.js","utf8"))'
+          sh -n theme/control/postinst
+          sh -n theme/control/prerm
+          sh -n theme/root/etc/uci-defaults/95-materialluci
+      - name: Check semantic colors
+        run: node ci/colors.cjs
+      - name: Build and inspect target IPK
+        run: |
+          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          python3 scripts/build.py
+      - name: Obtain pinned upstream LuCI for browser compatibility tests
+        uses: actions/checkout@v4
+        with:
+          repository: openwrt/luci
+          ref: e4c46338b196e486a88b1a75b78e283708c82bc4
+          path: luci-fixture
+          sparse-checkout: modules/luci-base/htdocs/luci-static/resources
+      - name: Compile Lua templates and prepare compatibility preview
+        run: python3 ci/prepare.py
+      - name: Test real LuCI widgets in Chromium and WebKit and capture previews
+        run: node ci/browser.mjs
+      - name: Upload target installation package
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MaterialLuCI-0.1.0-AX3000T-aarch64_cortex-a53
+          path: |
+            dist/*.ipk
+            dist/SHA256SUMS
+            dist/package-manifest.json
+            dist/INSTALL.md
+          if-no-files-found: error
+      - name: Upload previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MaterialLuCI-Classic-Native-previews
+          path: dist/previews/
+          if-no-files-found: ignore

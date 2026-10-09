@@ -1,0 +1,18 @@
+#!/bin/sh
+[ -n "$IPKG_INSTROOT" ] && exit 0
+[ "$1" = "upgrade" ] && exit 0
+if [ "$(uci -q get luci.main.mediaurlbase)" = "/luci-static/materialluci" ]; then
+    if [ -f /usr/lib/lua/luci/view/themes/bootstrap_mod/header.htm ]; then
+        uci set luci.main.mediaurlbase='/luci-static/bootstrap_mod'
+    elif [ -f /usr/lib/lua/luci/view/themes/bootstrap/header.htm ]; then
+        uci set luci.main.mediaurlbase='/luci-static/bootstrap'
+    else
+        echo "Select another installed LuCI theme before removing MaterialLuCI." >&2
+        exit 1
+    fi
+fi
+uci -q delete luci.themes.MaterialLuCI
+uci commit luci
+rm -f /tmp/luci-indexcache
+rm -rf /tmp/luci-modulecache
+exit 0

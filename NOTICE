@@ -1,0 +1,20 @@
+MaterialLuCI Classic Native
+Copyright 2026 Patrick (Pew2018).
+
+Bootstrap/Bootstrap Mod compatibility CSS and header template derive from the
+user-provided luci-theme-bootstrap-mod 20220102 installed files:
+Copyright 2008 Steven Barth
+Copyright 2008-2016 Jo-Philipp Wich
+Copyright 2012 David Menting
+Copyright 2020 Lienol
+Licensed under Apache License 2.0.
+
+The login template derives from OpenWrt LuCI openwrt-21.02:
+Copyright 2008 Steven Barth
+Copyright 2008-2012 Jo-Philipp Wich
+https://github.com/openwrt/luci/blob/openwrt-21.02/modules/luci-base/luasrc/view/sysauth.htm
+Licensed under Apache License 2.0.
+
+The appearance color algorithm is reproduced with the user's authorization from
+their supplied TurboIMS Classic WebUI Design Spec v1.0. No IMS or KernelSU
+backend code is included. No MDC or Material Web dependencies are included.

@@ -1,0 +1,35 @@
+<!-- Mock data only. Theme templates and upstream LuCI widgets are real. -->
+<section class="cbi-map">
+<h2>状态</h2><p class="hint">预览示例 · 非路由器实时数据</p>
+<section class="cbi-section"><h3>设备状态</h3>
+<div class="ml-setting-row"><span class="ml-row-copy"><strong>小米 AX3000T</strong><small>系统运行中 · WAN 接口已连接</small></span></div>
+<div class="table"><div class="tr"><div class="td">固件版本</div><div class="td">ImmortalWrt 21.02-SNAPSHOT</div></div><div class="tr"><div class="td">运行时间</div><div class="td">2 天 6 小时</div></div><div class="tr"><div class="td">CPU 温度</div><div class="td">42.8 °C</div></div></div>
+<button type="button" class="text-action"><span>刷新</span></button>
+</section>
+<section class="cbi-section"><h3>资源</h3>
+<div class="table"><div class="tr"><div class="td">平均负载</div><div class="td">0.14, 0.19, 0.10</div></div><div class="tr"><div class="td">已使用内存</div><div class="td"><div class="cbi-progressbar" title="158.51 MiB / 224.78 MiB (70%)"><div style="width:70%"></div></div></div></div></div>
+</section>
+<section class="cbi-section"><h3>控件兼容性</h3>
+<form id="fixture-form">
+<div class="cbi-value"><label class="cbi-value-title" for="fixture-name">设备名称</label><div class="cbi-value-field"><input type="text" id="fixture-name" name="hostname" value="AX3000T"><span class="cbi-value-description">保留未应用的修改。</span></div></div>
+<div class="cbi-value"><label class="cbi-value-title" for="legacy-switch">功能开关</label><div class="cbi-value-field"><input class="cbi-input-checkbox" type="checkbox" id="legacy-switch" name="enabled" value="1" checked><input type="hidden" name="cbi.cbe.fixture.enabled" value="1"></div></div>
+<div class="cbi-value"><span class="cbi-value-title">LuCI 动态开关</span><div class="cbi-value-field" id="real-widget"></div></div>
+<div class="cbi-value"><span class="cbi-value-title">选择项目</span><div class="cbi-value-field" id="real-select"></div></div>
+<div class="cbi-page-actions"><input class="cbi-button cbi-button-apply" type="submit" value="保存并应用"><input class="cbi-button cbi-button-reset" type="reset" value="重置"></div>
+</form>
+</section>
+<section class="cbi-section"><h3>日志</h3><pre>接口 wan：已连接
+主题预览：模拟状态数据
+表单行为：真实 LuCI Checkbox / Select</pre></section>
+</section>
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+ L.require("ui").then(function(ui){
+  window.fixtureCheckbox=new ui.Checkbox("1",{name:"realflag",id:"realflag",hiddenname:"realflag.present"});
+  document.getElementById("real-widget").append(fixtureCheckbox.render());
+  window.fixtureSelect=new ui.Select("auto",{auto:"自动",manual:"手动"},{name:"mode",id:"mode"});
+  document.getElementById("real-select").append(fixtureSelect.render());
+ });
+ document.getElementById("fixture-form").addEventListener("submit",function(e){e.preventDefault();window.fixtureSubmissions=(window.fixtureSubmissions||0)+1;window.fixtureData=Object.fromEntries(new FormData(this));});
+});
+</script>

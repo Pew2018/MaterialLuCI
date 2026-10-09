@@ -1,0 +1,7 @@
+#!/bin/sh
+# Copyright 2026 Patrick (Pew2018). Apache-2.0.
+uci -q batch <<'EOF'
+set luci.themes.MaterialLuCI=/luci-static/materialluci
+commit luci
+EOF
+exit $?

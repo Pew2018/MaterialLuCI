@@ -1,0 +1,12 @@
+{
+  "name": "materialluci-build",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "test": "node ci/browser.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.10",
+    "playwright": "1.55.1"
+  }
+}
