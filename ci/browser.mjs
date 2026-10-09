@@ -16,7 +16,7 @@ try{
   assert.equal(await page.locator(".ml-bottom-nav").count(),0);
   assert.equal(await page.locator('meta[name="theme-color"]').count(),0);
   assert(requests.some(url=>/materialluci-menu-v0_2_1-[0-9]+/.test(url)),"versioned menu module not requested");
-  assert(!requests.some(url=>/\\/materialluci-menu\\.js(?:\\?|$)/.test(url)),"stale menu adapter path used");
+  assert(!requests.some(url=>new URL(url).pathname.endsWith("/materialluci-menu.js")),"stale menu adapter path used");
 
   assert.equal(await page.locator("#ml-appearance-button").count(),0);
   assert.deepEqual(await page.locator(".ml-nav-parent").allTextContents(),["状态","系统","服务","网络","退出"]);
@@ -73,10 +73,11 @@ try{
   if(name==="chromium"){await page.locator("#fixture-clients").scrollIntoViewIfNeeded();await page.screenshot({path:"dist/previews/desktop-dark-tables.png"});}
 
   // Exercise firmware environments which only expose requestpath.
-  await page.evaluate(async()=>{
-   const ui=await L.require("ui");const name=[...document.scripts].map(s=>s.src.match(/(materialluci-menu-v[^/?]+)\\.js/)).find(Boolean)?.[1];
-   const module=await L.require(name);const path=L.env.dispatchpath;delete L.env.dispatchpath;module.render(await ui.menu.load());L.env.dispatchpath=path;
-  });
+  const menuName=new URL(requests.find(url=>url.includes("/materialluci-menu-v"))).pathname.split("/").pop().slice(0,-3);
+  await page.evaluate(async(name)=>{
+   const ui=await L.require("ui"),module=await L.require(name);
+   const path=L.env.dispatchpath;delete L.env.dispatchpath;module.render(await ui.menu.load());L.env.dispatchpath=path;
+  },menuName);
   assert.deepEqual(await page.locator(".ml-nav-parent").allTextContents(),["状态","系统","服务","网络","退出"]);
   await page.goto(base+"/network.html");await page.waitForFunction(()=>document.body.dataset.mlMenus==="ready");
   assert.deepEqual(await page.locator("#tabmenu a").allTextContents(),["接口","设备","全局网络选项"]);
