@@ -1,17 +1,20 @@
 # MaterialLuCI
 
-面向小米 AX3000T / ImmortalWrt 21.02 Lua LuCI 的经典系统工具主题。
+面向小米 AX3000T / ImmortalWrt 21.02 Lua LuCI 的经典 Material 系统工具主题。
 
-第一版 Classic Native 严格以用户提供的 [Classic 设计规范](docs/TurboIMS-Classic-WebUI-Design-Spec-v1.0.md) 为审美基础：
-56 px 顶栏与底导航、平面/2 px 卡片分组、细轨道开关、下划线输入、主次方形按钮、确认点按涟漪、语义强调色与浅/深/系统。
+以用户提供的 [Classic 设计规范](docs/TurboIMS-Classic-WebUI-Design-Spec-v1.0.md) 为视觉基础：
+56px 顶栏、平面分组、小圆角、细轨道开关、下划线输入、主次按钮、克制涟漪和浅色/深色/跟随系统。
 
-- 独立主题目录，保留 LuCI 原配置与 RPC；不覆盖共享核心资源。
-- 当前实现仅 Classic Native，无 MDC/Material Web 依赖。
-- 默认 system / #42A5F5 / 平面 / 额外着色关闭。
-- 菜单动态读取，三入口状态/网络/设置；保留原页面 URL。
-- 所有资源本地，界面偏好只保存在浏览器。
-- GitHub Actions 构建唯一目标 aarch64_cortex-a53 的 .ipk，并做真实上游 LuCI JS 控件浏览器验证。
+0.2 网页适配采用桌面侧栏与手机抽屉。保留原 LuCI 菜单分组、顺序、URL、页面标签和业务控件。
+正文不再限宽 620px，宽表格局部横向滚动。主题外观收纳在原主题选择项后的折叠区。
 
-[安装与回退](docs/INSTALL.md) · [实现记录](docs/V0.1-IMPLEMENTATION.md) · [研究文档](docs/README.md)
+- 独立主题目录，保留 LuCI 配置与 RPC，不覆盖共享核心资源。
+- 当前仅 Classic Native，自绘且无 MDC/Material Web 依赖。
+- 默认 system / #42A5F5 / 平面；所有资源本地，偏好仅存于浏览器。
+- 手机输入法通过可见视口适配弹窗，正文保留自然滚动与浏览器缩放。
+- Actions 仅构建 aarch64_cortex-a53 IPK；下载 ZIP 解压后安装内部 IPK。
 
-预览数据为模拟内容；设备插件、保存应用及整套状态页仍需在目标路由器验证。
+[安装与回退](docs/INSTALL.md) · [0.2 实现与验证边界](docs/V0.2-WEB-ADAPTATION.md) · [研究文档](docs/README.md)
+
+浏览器验证使用模拟数据和固定版真实 LuCI 控件。
+实际设备插件、保存应用及 iOS/Android 真机输入法仍需在路由器确认。

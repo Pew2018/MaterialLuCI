@@ -133,7 +133,7 @@
   }
   // Preserve zone/status background semantics, with readable foreground in either mode.
   for(const head of all('.ifacebox-head[style*="background"]')){
-   const rgb=getComputedStyle(head).backgroundColor.match(/[\\d.]+/g)?.map(Number);
+   const rgb=getComputedStyle(head).backgroundColor.match(/[0-9.]+/g)?.map(Number);
    if(rgb&&rgb.length>=3&&(rgb.length<4||rgb[3]>0)){
     const linear=rgb.slice(0,3).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;});
     const luminance=linear[0]*.2126+linear[1]*.7152+linear[2]*.0722;

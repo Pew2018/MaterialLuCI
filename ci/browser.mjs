@@ -65,6 +65,9 @@ try{
    assert.equal((await colors(b)).color,before.color,selector+" changed foreground");await page.mouse.up();await page.mouse.move(0,0);
   }
   assert.equal(await page.locator("#fixture-startup button:disabled").evaluate(el=>getComputedStyle(el).boxShadow),"none");
+  assert.equal(await page.locator(".ifacebox-head").evaluate(el=>getComputedStyle(el).color),"rgb(0, 0, 0)","zone header contrast in dark theme");
+  if(name==="chromium"){await page.locator("#fixture-clients").scrollIntoViewIfNeeded();await page.screenshot({path:"dist/previews/desktop-dark-tables.png"});}
+
   await page.goto(base+"/network.html");await page.waitForFunction(()=>document.body.dataset.mlMenus==="ready");
   assert.deepEqual(await page.locator("#tabmenu a").allTextContents(),["接口","设备","全局网络选项"]);
   assert.equal(await page.locator("#tabmenu li.active a").textContent(),"设备");
@@ -78,6 +81,7 @@ try{
    assert((await page.locator("#fixture-clients .tr").nth(1).boundingBox()).height<130,"rate columns squeezed vertically");
   }
   await page.setViewportSize({width:390,height:844});await page.evaluate(()=>scrollTo(0,0));
+  await page.waitForFunction(()=>document.getElementById("ml-sidebar").inert===true);
   assert.equal(await page.locator("#ml-sidebar").evaluate(el=>el.inert),true);
   await page.locator("#ml-menu-button").click();
   assert.equal(await page.locator("#ml-menu-button").getAttribute("aria-expanded"),"true");
@@ -135,7 +139,7 @@ try{
   console.log(name+": menu hierarchy, native widgets, field submission, tables, dark states, density, drawers, modals, keyboard viewport and login passed");
  }
 }finally{server.kill();
-for(const file of ["desktop-light.png","desktop-tables.png","mobile-dark.png","mobile-drawer.png","mobile-keyboard.png"]){
+for(const file of ["desktop-light.png","desktop-tables.png","desktop-dark-tables.png","mobile-dark.png","mobile-drawer.png","mobile-keyboard.png"]){
  const path="dist/previews/"+file;
  if(fs.existsSync(path))console.log("MATERIALLUCI_PREVIEW "+JSON.stringify({file,base64:fs.readFileSync(path).toString("base64")}));
 }
