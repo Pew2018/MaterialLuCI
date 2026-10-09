@@ -29,6 +29,9 @@ for name in ("palette","startup","feedback","app","wait"):
 subprocess.run([str(ROOT/"node_modules/.bin/esbuild"),str(ROOT/"theme/mdc-entry.js"),
  "--bundle","--minify","--format=iife","--global-name=MaterialMDC","--target=es2020",
  "--outfile="+str(assets/"mdc-linear-progress.js")],check=True)
+subprocess.run([str(ROOT/"node_modules/.bin/esbuild"),str(ROOT/"theme/mdc-switch-entry.js"),
+ "--bundle","--minify","--format=iife","--global-name=MaterialMDCSwitch","--target=es2020",
+ "--outfile="+str(assets/"mdc-switch.js")],check=True)
 subprocess.run([str(ROOT/"node_modules/.bin/sass"),"--load-path="+str(ROOT/"node_modules"),
  "--style=compressed","--no-source-map","--quiet-deps",str(ROOT/"theme/mdc.scss"),
  str(assets/"mdc-linear-progress.css")],check=True)
