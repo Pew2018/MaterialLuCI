@@ -1,2 +1,1 @@
-@use "@material/linear-progress";
-@include linear-progress.core-styles;
+@use "@material/linear-progress";\n@use "@material/switch/styles";\n@include linear-progress.core-styles;\n
