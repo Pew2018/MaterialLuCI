@@ -42,7 +42,7 @@
     const header=node("div",{class:"ml-nav-row"},[toggle]);group.append(header);
     if(entry.url&&!children.some(child=>child.url===entry.url)){
      const direct=node("a",{href:entry.url,class:"ml-nav-entry-link",text:entry.title});
-     if(entry.active)direct.setAttribute("aria-current","page");
+     if(entry.active&&!children.some(child=>child.active))direct.setAttribute("aria-current","page");
      list.append(direct);
     }
     for(const child of children){
