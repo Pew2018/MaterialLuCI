@@ -31,7 +31,7 @@ try{
   assert.equal(await page.locator('input[name=optionA]').getAttribute("role"),null);
   assert.equal(await page.locator('input[name=optionB]').getAttribute("role"),null);
   await page.locator("#fixture-name").fill("Unapplied draft");
-  await page.locator("#legacy-switch").uncheck();
+  await page.locator("#legacy-switch + .mdc-switch").click();
   await page.locator("#real-widget .ml-switch-hit .mdc-switch").click();
   assert.equal(await page.evaluate(()=>fixtureCheckbox.getValue()),"0");
   await page.evaluate(()=>fixtureCheckbox.setValue("1"));
