@@ -26,7 +26,7 @@ h4{font-size:14px;font-weight:500}
 body button.ml-icon-button{width:48px;height:48px;min-width:48px;min-height:48px;border:0;border-radius:0;padding:12px;margin:0;background:transparent;color:inherit;box-shadow:none;display:inline-flex;align-items:center;justify-content:center;--button-bg:transparent;--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed)}
 .ml-icon-button svg{width:24px;height:24px;fill:currentColor}
 :root[data-toolbar=true] .ml-toolbar{background:var(--toolbar-surface,var(--primary-surface));color:var(--on-toolbar,var(--on-primary))}
-:root[data-toolbar=false][data-icons=true] .ml-icon-button{color:var(--accent-ink)}
+:root[data-toolbar=false][data-icons=true] .ml-icon-button:not(.ml-toolbar-inner .ml-icon-button){color:var(--accent-ink)}
 #indicators{font-size:11px;display:flex;gap:4px;flex:none}
 #indicators [data-indicator]{text-shadow:none;white-space:nowrap;border-radius:2px;padding:2px 4px;background:var(--log);color:var(--muted)!important}
 .ml-layout{display:grid;grid-template-columns:var(--sidebar-width) minmax(0,1fr);align-items:start}
