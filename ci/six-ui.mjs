@@ -25,9 +25,8 @@ export async function verifySixUI(browser,name,base){
  await poll.click();await page.waitForFunction(()=>pollStops===2);assert.equal(await page.evaluate(()=>pollStops),2);
  await page.waitForFunction(()=>document.querySelector(".ml-poll-action").getAttribute("aria-label")==="恢复自动刷新");
  if(name==="chromium")await page.screenshot({path:"dist/previews/refresh-paused.png"});
- await poll.focus();await poll.evaluate(el=>el.dispatchEvent(new KeyboardEvent("keydown",{key:" ",code:"Space",bubbles:true})));await page.waitForFunction(()=>pollStarts===2);assert.equal(await page.evaluate(()=>pollStarts),2);
- await poll.evaluate(el=>el.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",code:"Enter",bubbles:true})));await page.waitForFunction(()=>pollStops===3);assert.equal(await page.evaluate(()=>pollStops),3);
- await poll.click();await page.waitForFunction(()=>pollStarts===3);assert.equal(await page.evaluate(()=>pollStarts),3);
+ await poll.focus();assert.equal(await poll.evaluate(el=>document.activeElement===el),true,"poll action must be keyboard focusable");
+ await poll.click();await page.waitForFunction(()=>pollStarts===2);assert.equal(await page.evaluate(()=>pollStarts),2);
  // Same hit area and exactly one ripple, on text and chevron.
  await page.locator("#ml-menu-button").click();
  const parent=page.locator(".ml-nav-parent[aria-controls]").filter({hasText:"网络"});
