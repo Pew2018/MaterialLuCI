@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Read the actual IPK payload; never infer its identity from a working tree."""
-import argparse, hashlib, io, json, pathlib, tarfile, zipfile
+import argparse, hashlib, io, json, pathlib, tarfile, zipfile, re
 p=argparse.ArgumentParser()
 p.add_argument("input");p.add_argument("--sha",required=True);p.add_argument("--run",required=True)
 p.add_argument("--candidate",action="store_true");p.add_argument("--out",required=True);p.add_argument("--extract")
@@ -48,6 +48,8 @@ if a.candidate:
  checks["commit_and_all_resource_hashes_verified"]=True
 manifest={"source_sha":a.sha,"actions_run_id":a.run,"ipk":name,
  "ipk_sha256":hashlib.sha256(raw).hexdigest(),"checks":checks,
+ "resource_cache":re.search(r"\\?v=([^\\\"\\s<>]+)",header).group(1),
+ "header_sha256":hashlib.sha256(header.encode()).hexdigest(),
  "files":{n:{"bytes":len(b),"sha256":hashlib.sha256(b).hexdigest()} for n,b in sorted(files.items())},
  "header":header}
 out=pathlib.Path(a.out);out.parent.mkdir(parents=True,exist_ok=True);out.write_text(json.dumps(manifest,indent=2))

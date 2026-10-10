@@ -1,7 +1,8 @@
 # Six UI repairs — package evidence and router acceptance
 
 Baseline: e7188f7df2d979899e78e151aebb94f7528c4b83
-User-tested run: 38020573064
+Latest successful run at task start: 38020573064
+The router's installed run/commit identity remains unconfirmed.
 IPK: luci-theme-materialluci_0.3.0-1_aarch64_cortex-a53.ipk
 IPK SHA-256: d440da682b965aea381100b1f8d69b2a0b154ceaf42ea45840165a6ca22aa41f
 Audit run: 38021609622 (40461f6ef331b140b67e241f3bde501bd7c44640).
@@ -13,7 +14,7 @@ No connected router URL/session or iPhone was available for this change.
 All six items remain **待验证 on a real router**. iPhone Safari chrome and
 home-screen display remain **待验证 on a physical iPhone**.
 CI uses extracted IPK assets, compiled Lua templates, and pinned upstream
-LuCI JS. Device/RPC/menu data are read-only fixtures; screenshots are
+LuCI JS. The preview also supplies the native ui.itemlist compatibility alias on the LuCI prototype for dependency modules. Device/RPC/menu data are read-only fixtures; screenshots are
 compatibility evidence, not router or iPhone acceptance.
 
 Baseline package inspection confirms the expected header, CSS, app, wait,
@@ -88,3 +89,7 @@ Official references:
 https://developer.apple.com/videos/play/wwdc2021/10029/
 https://webkit.org/blog/11989/new-webkit-features-in-safari-15/
 https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html
+
+## CI verification record
+
+Run 38022575212, commit 1e64f4af9241cd1f5774ef912ad6aab4be3400f2: passed extracted-IPK assertions, per-resource HTTP byte/hash checks, mobile/desktop Chromium and WebKit, official MDC/native field events, actual upstream network/wireless renderers and realtime load SVG. Screenshot contact sheets were visually reviewed. This is CI evidence only. Later build identity is always in that run's package-audit.json and Actions summary.

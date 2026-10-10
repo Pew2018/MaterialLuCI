@@ -41,7 +41,9 @@ jobs:
           sh -n theme/root/etc/uci-defaults/95-materialluci
       - name: Check semantic colors
         run: node ci/colors.cjs
-      - name: Download the user-tested baseline IPK
+      - name: Download task-start baseline IPK (optional after artifact expiry)
+        id: baseline
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: MaterialLuCI-0.3.0-IPK-in-ZIP-AX3000T-aarch64_cortex-a53
@@ -49,6 +51,7 @@ jobs:
           github-token: ${{ github.token }}
           path: build/baseline
       - name: Audit baseline package identity and actual resources
+        if: steps.baseline.outcome == 'success'
         run: |
           python3 ci/ipk-audit.py build/baseline/*.ipk --sha e7188f7df2d979899e78e151aebb94f7528c4b83 --run 38020573064 --out dist/previews/baseline-ipk.json
       - name: Build and inspect target IPK
@@ -75,6 +78,20 @@ jobs:
           git rev-parse HEAD > dist/previews/commit.txt
           sha256sum build/stage/www/luci-static/materialluci/*.js build/stage/www/luci-static/materialluci/*.css build/stage/www/luci-static/materialluci/icons/*.svg > dist/previews/assets.sha256
           node ci/browser.mjs
+      - name: Write package identity and validation summary
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib
+          p=pathlib.Path("build/package-audit.json")
+          if p.exists():
+              d=json.loads(p.read_text())
+              with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as out:
+                  out.write("## Actual IPK identity\n\n")
+                  for key in ("source_sha","actions_run_id","ipk","ipk_sha256","resource_cache","header_sha256"):
+                      out.write("- "+key+": `"+str(d.get(key,""))+"`\n")
+                  out.write("\nPreview tests use extracted IPK resources and pinned LuCI with mocked read-only data. Real router and iPhone Safari: **待验证**.\n")
+          PY
       - name: Produce screenshot contact sheets for visual review
         if: always()
         run: node ci/contact-sheet.mjs
