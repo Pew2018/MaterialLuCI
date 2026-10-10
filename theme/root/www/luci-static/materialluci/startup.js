@@ -12,6 +12,9 @@
   root.dataset.theme=dark?"dark":"light";root.dataset.cards=String(prefs.cards);
   root.dataset.toolbar=String(prefs.toolbar);root.dataset.categories=String(prefs.categories);root.dataset.icons=String(prefs.icons);
   root.style.colorScheme=dark?"dark":"light";
+  // A single unconditional hint follows the chosen page mode, never the seed.
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content",dark?"#121212":"#FAFAFA");
+  root.style.setProperty("--browser-surface",dark?"#121212":"#FAFAFA");
   const mapping={seed:"seed",primarySurface:"primary-surface",onPrimary:"on-primary",primaryPressed:"primary-pressed",accentInk:"accent-ink",controlAccent:"control-accent",controlStrong:"control-strong",actionPrimary:"action-fill",onActionPrimary:"on-accent",actionPrimaryPressed:"action-pressed",actionSecondary:"action-tonal",onActionSecondary:"on-action-tonal",actionSecondaryPressed:"tonal-pressed",switchThumb:"switch-thumb",switchTrack:"switch-track",navIcon:"nav-icon",navLabel:"nav-label",swatchForeground:"swatch-foreground"};
   for(const [key,css] of Object.entries(mapping)) root.style.setProperty("--"+css,p[key]);
  }

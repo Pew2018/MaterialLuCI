@@ -116,7 +116,7 @@
     // A parent row is only an expander. Preserve a distinct parent route
     // as a clearly named child destination instead of a second group-title link.
     if(entry.url&&!children.some(child=>child.url===entry.url)){
-     const direct=node("a",{href:entry.url,class:"ml-nav-entry-link",text:t("概览","Overview")});
+     const direct=node("a",{href:entry.url,class:"ml-nav-entry-link",text:entry.title+" · "+t("概览","Overview")});
      if(entry.active&&!children.some(child=>child.active))direct.setAttribute("aria-current","page");
      list.append(direct);
     }
@@ -198,11 +198,18 @@
 
   updateSwatches();MaterialFeedback.bind(host);
  }
+ function allFields(root){
+  const selector='[id],[name]';
+  return [...(root.matches?.(selector)?[root]:[]),...root.querySelectorAll(selector)];
+ }
  function appearanceEntry(root){
-  if(document.getElementById("ml-appearance-entry"))return;
+  if(document.getElementById("ml-appearance-entry")?.isConnected)return;
   const selects=[...(root.matches?.("select")?[root]:[]),...root.querySelectorAll("select")];
-  const select=selects.find(s=>/(^|\.)mediaurlbase$/.test(s.name)||[...s.options].some(o=>o.value.startsWith("/luci-static/")));
-  const field=select?.closest(".cbi-value");
+  const select=selects.find(s=>/(^|[._])mediaurlbase$/.test(s.name||s.id)||[...s.options].some(o=>o.value.startsWith("/luci-static/")));
+  // JS form.ListValue uses widget.cbid.*._mediaurlbase; firmware forks may
+  // render a rich dropdown or hidden value instead of a native select.
+  const identified=allFields(root).find(el=>/(^|[._])mediaurlbase$/.test(el.name||el.id));
+  const field=(select||identified)?.closest(".cbi-value");
   if(!field)return;
   const details=node("details",{id:"ml-appearance-entry",class:"ml-appearance-entry",open:"true"},[node("summary",{text:t("主题外观（此浏览器）","Theme appearance (this browser)")})]);
   const desktop=matchMedia("(min-width:1024px)");
@@ -249,11 +256,19 @@
   // Re-evaluate semantic sections after dynamic rendering. A map and #view
   // are layout containers; only their leaf content groups own surfaces.
   main.classList.remove("ml-card-surface");
-  main.querySelectorAll(".ml-card-surface").forEach(el=>el.classList.remove("ml-card-surface"));
-  const candidates=[...main.querySelectorAll(".cbi-section,fieldset,section:not(.cbi-map):not(.ml-group),.network-status-table,.cbi-map > [data-tab]")].filter(section=>!section.closest("#ml-appearance,.modal,.cbi-value,table,.table"));
-  for(const section of candidates){
-   if(candidates.some(child=>child!==section&&section.contains(child)))continue;
-   section.classList.add("ml-card-surface");
+  // Select a complete semantic group, rather than only its deepest child.
+  // Status sections contain a title, device boxes AND associated tables.
+  const candidates=[...main.querySelectorAll(".cbi-section,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table")]
+   .filter(section=>!section.closest("#ml-appearance,.modal,.cbi-value,table,.table")&&section.id!=="view");
+  const surfaces=new Set(candidates.filter(section=>!candidates.some(parent=>parent!==section&&parent.contains(section))));
+  main.querySelectorAll(".ml-card-surface").forEach(el=>{if(!surfaces.has(el))el.classList.remove("ml-card-surface");});
+  for(const section of surfaces)if(!section.classList.contains("ml-card-surface"))section.classList.add("ml-card-surface");
+  // Identify plots structurally, across every realtime view and vendor route.
+  // Do not depend on URL spelling or the serialized inline background color.
+  for(const svg of all("#view svg")){
+   if(!svg.querySelector("polyline,polygon"))continue;
+   const plot=svg.parentElement;
+   if(plot&&plot!==main&&plot.id!=="view")plot.classList.add("ml-chart-surface");
   }
 
   // Preserve zone/status background semantics, with readable foreground in either mode.

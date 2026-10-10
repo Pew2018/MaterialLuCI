@@ -54,7 +54,7 @@ export async function verifySixUI(browser,name,base){
  await page.setViewportSize({width:1280,height:900});
  await page.waitForFunction(()=>document.querySelector("#ml-appearance-entry")?.open);
  assert.equal(await page.locator("#ml-appearance").evaluate(el=>getComputedStyle(el).display),"grid");
- assert.equal(await page.locator("#ml-appearance-entry>summary").evaluate(el=>getComputedStyle(el).display),"none");
+ assert.equal(await page.locator("#ml-appearance-entry>summary").evaluate(el=>getComputedStyle(el).pointerEvents),"none");
  assert.equal(await page.locator(".ml-mode-option").count(),3);
  const desktopBg=await page.locator(".ml-sidebar").evaluate(el=>getComputedStyle(el).backgroundColor);
  const canvasBg=await page.locator("body").evaluate(el=>getComputedStyle(el).backgroundColor);
@@ -92,7 +92,7 @@ export async function verifySixUI(browser,name,base){
   document.body.dataset.page="admin-status-load";
   let view=document.getElementById("view");
   if(!view){view=document.createElement("div");view.id="view";document.getElementById("maincontent").append(view);}
-  view.insertAdjacentHTML("afterbegin",'<div id="graph-fixture" style="width:100%;height:120px;border:1px solid #000;background:#fff"><svg><line style="stroke:black;stroke-width:1"/><text style="fill:#eee">Graph label</text></svg></div>');
+  view.insertAdjacentHTML("afterbegin",'<div id="graph-fixture" style="width:100%;height:120px;border:1px solid #000;background:#fff"><svg><polyline points="0,0 10,10"/><line style="stroke:black;stroke-width:1"/><text style="fill:#eee">Graph label</text></svg></div>');
  });
  const graph=page.locator("#graph-fixture");
  assert.equal(await graph.evaluate(el=>getComputedStyle(el).backgroundColor),"rgb(255, 255, 255)");
@@ -107,11 +107,11 @@ export async function verifySixUI(browser,name,base){
   if(name==="chromium"&&cards){await page.locator("#rate-fixture").scrollIntoViewIfNeeded();await page.screenshot({path:"dist/previews/rate-"+theme+".png"});}
  }
  await page.evaluate(()=>{MaterialAppearance.set("toolbar",true);MaterialAppearance.set("cards",true);});
- assert.equal(await page.locator('meta[name="theme-color"]').count(),2);
- assert.equal(await page.locator('meta[name="apple-mobile-web-app-status-bar-style"]').count(),0);
- assert.deepEqual(await page.locator('meta[name="theme-color"]').evaluateAll(nodes=>nodes.map(n=>n.content)),["#FAFAFA","#121212"]);
+ assert.equal(await page.locator('meta[name="theme-color"]').count(),1);
+ assert.equal(await page.locator('meta[name="apple-mobile-web-app-status-bar-style"]').getAttribute("content"),"default");
+ assert.deepEqual(await page.locator('meta[name="theme-color"]').evaluateAll(nodes=>nodes.map(n=>n.content)),["#121212"]);
  assert(!await page.locator('meta[name="viewport"]').getAttribute("content").then(v=>v.includes("viewport-fit=cover")));
- assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),56);
+ assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),64);
  const inventory=await page.locator('input[type="checkbox"]').evaluateAll(nodes=>nodes.map(input=>({
   name:input.name,converted:input.classList.contains("ml-switch-source"),
   instance:!!input.parentElement.querySelector(".mdc-switch")?._mlMdcSwitch,
@@ -136,16 +136,16 @@ export async function verifySixUI(browser,name,base){
    load:()=>fixtureReady,render:()=>E("section",{class:"cbi-section"},[E("h3","状态视图已载入"),E("p","模拟网络数据")]),addFooter:()=>null
   });
  });
- await page.waitForSelector("#view > .ml-progress-host .ml-task-progress");
+ await page.waitForSelector(".ml-view-progress .ml-task-progress");
  assert.equal(await page.locator("#view > .spinning").count(),1);
- const progress=page.locator("#view .mdc-linear-progress__primary-bar");
+ const progress=page.locator(".ml-view-progress .mdc-linear-progress__primary-bar");
  await progress.scrollIntoViewIfNeeded();
- await page.waitForFunction(()=>{const el=document.querySelector("#view .mdc-linear-progress__primary-bar");return el?.getAnimations().some(a=>typeof a.currentTime==="number"&&a.playState==="running");});
+ await page.waitForFunction(()=>{const el=document.querySelector(".ml-view-progress .mdc-linear-progress__primary-bar");return el?.getAnimations().some(a=>typeof a.currentTime==="number"&&a.playState==="running");});
  const start=await progress.evaluate(el=>el.getAnimations()[0]?.currentTime);
  await page.waitForTimeout(160);assert(await progress.evaluate((el,t)=>el.getAnimations()[0]?.currentTime>t,start),"body progress animation frozen");
  if(name==="chromium")await page.screenshot({path:"dist/previews/status-loading.png"});
  await page.evaluate(()=>resolveView());await page.waitForSelector("#view > .spinning",{state:"detached"});
- assert.equal(await page.locator("#view .ml-task-progress").count(),0);
+ assert.equal(await page.locator(".ml-view-progress .ml-task-progress").count(),0);
  if(name==="chromium")await page.screenshot({path:"dist/previews/status-loaded.png"});
  await page.evaluate(()=>{
   window.fixtureFail=new Promise((resolve,reject)=>window.rejectView=reject);
@@ -153,10 +153,10 @@ export async function verifySixUI(browser,name,base){
    load:()=>fixtureFail,render:()=>E("p","unexpected"),addFooter:()=>null
   }).catch(e=>{window.expectedViewError=e.message;});
  });
- await page.waitForSelector("#view .ml-task-progress");
+ await page.waitForSelector(".ml-view-progress .ml-task-progress");
  await page.evaluate(()=>rejectView(new Error("模拟载入失败")));
- await page.waitForSelector("#view .ml-task-progress",{state:"detached"});
- assert(await page.locator("#view [role=alert]").textContent().then(v=>v.includes("失败")));
+ await page.waitForSelector(".ml-view-progress .ml-task-progress",{state:"detached"});
+ assert.equal(await page.locator("#view > .spinning").count(),1,"theme must not rewrite LuCI failure content");
  await page.evaluate(async()=>{await fixtureFailedPromise;document.getElementById("view").replaceChildren();});
  assert.equal(await page.locator(".ml-task-progress").count(),0);
 

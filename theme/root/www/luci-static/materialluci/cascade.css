@@ -388,9 +388,49 @@ body .ml-mode-option[aria-checked=true]{background:var(--action-tonal);color:var
 #maincontent .ifacebox .ifacebox-body{background:transparent!important}
 #maincontent .ifacebadge{border-color:transparent!important;padding:2px}
 #maincontent .network-status-table{background:transparent!important}
-body[data-page$="-load"] #view div[style*="background:#fff"]{
- background:var(--card)!important;border:1px solid var(--divider)!important
-}
-body[data-page$="-load"] #view svg line[style*="stroke:black"]{stroke:var(--divider)!important}
-body[data-page$="-load"] #view svg text{fill:var(--muted)!important;text-shadow:none!important}
 :root[data-cards=true] .ml-card-surface :is(.ifacebox,.ifacebadge){background:transparent!important}
+
+/* Browser boundary surfaces are neutral even when the page toolbar is colored.
+   The MD1 toolbar content stays 56px; an 8px neutral edge precedes it. */
+html{background:var(--browser-surface,var(--page));overscroll-behavior-y:contain}
+body{background:var(--page)}
+body .ml-toolbar,:root[data-toolbar=true] body .ml-toolbar{
+ height:64px;padding-top:8px;background:var(--browser-surface,var(--page))
+}
+:root[data-toolbar=true] .ml-toolbar-inner{background:var(--primary-surface);color:var(--on-primary)}
+.ml-sidebar{top:64px;height:calc(100dvh - 64px)}
+body::after{content:"";position:fixed;bottom:0;left:0;right:0;height:env(safe-area-inset-bottom,0px);background:var(--browser-surface,var(--page));pointer-events:none;z-index:40}
+@media(max-width:1023px){.ml-sidebar{top:var(--ml-vv-top);height:var(--ml-vv-height)}}
+:root{--divider:rgba(0,0,0,.12);--status-surface:#f5f5f5;--status-active:#e3f2fd;--status-active-ink:#174564}
+:root[data-theme=dark]{--divider:rgba(255,255,255,.12);--status-surface:#262626;--status-active:#263943;--status-active-ink:#b9def5}
+#maincontent :is(.ifacebox,.ifacebox-body,.ifacebadge){color:var(--ink)!important;border-radius:2px;text-shadow:none!important}
+#maincontent .ifacebox .ifacebox-head{background:var(--status-surface);border-bottom:1px solid var(--divider);padding:8px 12px;color:var(--ink)}
+#maincontent .ifacebox .ifacebox-head.active:not([style]){background:var(--status-active);color:var(--status-active-ink)}
+#maincontent .ifacebox .ifacebox-body{padding:12px;line-height:1.6}
+#maincontent .ifacebadge img{flex:none;object-fit:contain}
+:root[data-theme=dark] #maincontent .ifacebadge img{background:#e0e0e0;border-radius:2px;padding:1px}
+#maincontent :is(table,.table,tr,.tr,td,.td,th,.th){background-color:transparent}
+#maincontent :is(.cbi-map-descr,.cbi-section-descr){background:transparent}
+#maincontent .ml-chart-surface{background:var(--surface)!important;border:1px solid var(--divider)!important;color:var(--ink);min-width:0;max-width:100%;overflow:hidden}
+#maincontent .ml-chart-surface svg{display:block;max-width:100%;background:transparent}
+#maincontent .ml-chart-surface svg line{stroke:var(--divider)!important}
+#maincontent .ml-chart-surface svg text{fill:var(--muted)!important;text-shadow:none!important}
+#maincontent .ml-chart-surface svg rect{fill:transparent!important}
+#maincontent .ml-view-progress{display:block!important;position:relative;z-index:1;width:100%;height:4px;min-height:4px;margin:8px 0 12px;overflow:hidden}
+#maincontent .ml-view-progress .mdc-linear-progress{height:4px;display:block}
+#ml-appearance-entry,#ml-appearance-entry .ml-group{min-width:0}
+#ml-appearance-entry>summary{color:var(--ink);font-size:16px;font-weight:500}
+#ml-appearance .ml-setting-row{flex-wrap:wrap}
+#ml-appearance .ml-mode-options{flex:1 1 100%;min-width:0}
+@media(min-width:1024px){
+ #ml-appearance-entry>summary{display:list-item;list-style:none;pointer-events:none}
+ #ml-appearance{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 32px}
+ #ml-appearance>.ml-group:first-child{display:block;grid-column:auto}
+ #ml-appearance .ml-group+.ml-group{margin-top:0}
+ #ml-appearance .ml-swatches{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(min-width:1600px){#ml-appearance{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1023px){#ml-appearance{padding:8px 0 20px}}
+@media(hover:hover){body .ml-sidebar button.ml-nav-parent:hover{background:var(--hover)}}
+@media(hover:none){body .ml-sidebar button.ml-nav-parent:hover{background:transparent}}
+:root[data-toolbar=true] #indicators .ml-poll-action{color:var(--on-primary)!important;background:transparent}

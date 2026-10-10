@@ -97,3 +97,19 @@ renderer.write_text(code)
 html=subprocess.check_output(["lua5.1",str(renderer)]).decode()
 html=html.replace("</head>",runtime.replace(json.dumps(env),json.dumps(opkg_env))+"</head>")
 (output/"opkg.html").write_text(html)
+
+# Actual upstream network/wireless renderers and realtime load view, with
+# deterministic read-only data. Theme assets always come from the IPK.
+status=ROOT/"luci-fixture/modules/luci-mod-status/htdocs/luci-static/resources"
+shutil.copytree(status,output/"luci-static/resources",dirs_exist_ok=True)
+shutil.copy(ROOT/"ci/upstream-view.js",view_dir/"materialluci-preview.js")
+fixture='<div id="view"></div><script>document.addEventListener("DOMContentLoaded",function(){L.require("view.materialluci-preview");});</script>'
+code=bootstrap+'\ninclude("header")\nwrite('+luaquote(fixture)+')\ninclude("footer")'
+renderer.write_text(code)
+html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime+"</head>")
+(output/"upstream.html").write_text(html)
+fixture='<div id="view"></div><script>document.addEventListener("DOMContentLoaded",function(){L.require("view.status.load");});</script>'
+code=bootstrap+'\ninclude("header")\nwrite('+luaquote(fixture)+')\ninclude("footer")'
+renderer.write_text(code)
+html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime+"</head>")
+(output/"realtime.html").write_text(html)

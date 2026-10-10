@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
 import fs from "node:fs";
 import {verifySixUI} from "./six-ui.mjs";
+import {verifyUpstreamPages} from "./upstream-pages.mjs";
 const server=spawn("python3",["ci/server.py"],{stdio:"inherit"}),base="http://127.0.0.1:8765";
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 fs.mkdirSync("dist/previews",{recursive:true});
@@ -15,14 +16,14 @@ try{
   await page.goto(base);await page.waitForFunction(()=>window.fixtureCheckbox&&window.fixtureSelect&&document.body.dataset.mlMenus==="ready");
   await page.waitForSelector("#real-widget .ml-switch-hit .mdc-switch");
   assert.equal(await page.locator(".ml-bottom-nav").count(),0);
-  assert.deepEqual(await page.locator('meta[name="theme-color"]').evaluateAll(nodes=>nodes.map(n=>n.content)),["#FAFAFA","#121212"]);
+  assert.deepEqual(await page.locator('meta[name="theme-color"]').evaluateAll(nodes=>nodes.map(n=>n.content)),["#FAFAFA"]);
   assert(requests.some(url=>/materialluci-menu-v0_3_0-[0-9]+/.test(url)),"versioned menu module not requested");
   assert(!requests.some(url=>new URL(url).pathname.endsWith("/materialluci-menu.js")),"stale menu adapter path used");
 
   assert.equal(await page.locator("#ml-appearance-button").count(),0);
   assert.deepEqual(await page.locator(".ml-nav-parent").evaluateAll(nodes=>nodes.map(n=>(n.querySelector(".ml-nav-parent-label")||n).textContent.trim())),["状态","系统","服务","网络","退出"]);
   assert.equal(await page.locator(".ml-nav-row .ml-nav-parent").evaluateAll(nodes=>nodes.every(n=>n.tagName==="BUTTON"||n.classList.contains("ml-nav-leaf"))),true);
-  assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),56);
+  assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),64);
   assert((await page.locator("#maincontent").boundingBox()).width>1000);
   assert.equal(await page.locator('#ml-menu-tree a[href="/cgi-bin/luci/admin/network/network"]').count(),1);
   assert.equal(await page.locator('#ml-menu-tree .ml-nav-parent[aria-controls]').count(),4);
@@ -262,7 +263,7 @@ try{
   await keyboard.evaluate(()=>{fixtureViewport.height=844;fixtureViewport.dispatchEvent(new Event("resize"));});
   await keyboard.waitForFunction(()=>getComputedStyle(document.documentElement).getPropertyValue("--ml-keyboard-space")==="0px");
   assert.equal(await keyboard.locator("#keyboard-last-field").inputValue(),"last draft");
-  await keyboard.close();await verifySixUI(browser,name,base);await browser.close();
+  await keyboard.close();await verifySixUI(browser,name,base);await verifyUpstreamPages(browser,name,base);await browser.close();
   console.log(name+": menu hierarchy, native widgets, field submission, tables, dark states, density, drawers, modals, keyboard viewport and login passed");
  }
 }finally{server.kill();

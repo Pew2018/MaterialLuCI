@@ -21,8 +21,10 @@
 <head>
  <meta charset="utf-8">
  <meta name="viewport" content="width=device-width,initial-scale=1">
- <meta name="theme-color" content="#FAFAFA" media="(prefers-color-scheme: light)">
- <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
+ <meta name="theme-color" content="#FAFAFA">
+ <meta name="apple-mobile-web-app-status-bar-style" content="default">
+ <meta name="materialluci-build" content="@COMMIT@">
+ <meta name="materialluci-cache" content="@CACHE@">
  <title><%=striptags((boardinfo.hostname or "?") .. ((node and node.title) and " - "..translate(node.title) or ""))%> - MaterialLuCI</title>
  <script src="<%=media%>/palette.js?v=@CACHE@"></script>
  <script src="<%=media%>/startup.js?v=@CACHE@"></script>

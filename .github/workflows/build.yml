@@ -55,7 +55,7 @@ jobs:
         run: |
           export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
           python3 scripts/build.py
-          python3 ci/ipk-audit.py dist/*.ipk --sha "$GITHUB_SHA" --run "$GITHUB_RUN_ID" --out build/package-audit.json --extract build/unpacked
+          python3 ci/ipk-audit.py dist/*.ipk --sha "$GITHUB_SHA" --run "$GITHUB_RUN_ID" --out build/package-audit.json --extract build/unpacked --candidate
       - name: Obtain pinned upstream LuCI for browser compatibility tests
         uses: actions/checkout@v4
         with:
@@ -65,6 +65,7 @@ jobs:
           sparse-checkout: |
             modules/luci-base/htdocs/luci-static/resources
             applications/luci-app-opkg/htdocs/luci-static/resources
+            modules/luci-mod-status/htdocs/luci-static/resources
       - name: Compile Lua templates and prepare compatibility preview
         run: python3 ci/prepare.py
       - name: Test desktop and mobile layouts in Chromium and WebKit
@@ -78,8 +79,8 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: MaterialLuCI-0.3.0-IPK-in-ZIP-AX3000T-aarch64_cortex-a53
-          path: dist/luci-theme-materialluci_0.3.0-1_aarch64_cortex-a53.ipk
+          name: MaterialLuCI-0.3.0-2-IPK-${{ github.sha }}-AX3000T
+          path: dist/*.ipk
           if-no-files-found: error
           retention-days: 30
 

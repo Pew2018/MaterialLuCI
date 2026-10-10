@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Build and verify an OpenWrt 21.02 resource-only IPK for the AX3000T."""
-import io, json, tarfile, gzip, pathlib, shutil, subprocess, os
+import io, json, tarfile, gzip, pathlib, shutil, subprocess, os, hashlib
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 meta=json.loads((ROOT/"theme/package.json").read_text())
 assert meta["architecture"]=="aarch64_cortex-a53" and meta["target"]=="mediatek/mt7981"
@@ -10,11 +10,12 @@ shutil.copytree(ROOT/"theme/root",stage)
 # A single source of truth also invalidates browser caches on package upgrades.
 version=meta["version"].rsplit("-",1)[0]
 epoch=int(os.environ.get("SOURCE_DATE_EPOCH","1791558000"))
-cache=meta["version"]+"-"+str(epoch)
+commit=os.environ.get("GITHUB_SHA") or subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip()
+cache=meta["version"]+"-"+commit[:12]
 menu_class="materialluci-menu-v"+version.replace(".","_")+"-"+str(epoch)
 for file in stage.rglob("*"):
  if file.is_file() and file.suffix in (".htm",".js"):
-  file.write_text(file.read_text().replace("@VERSION@",version).replace("@CACHE@",cache).replace("@MENU_CLASS@",menu_class))
+  file.write_text(file.read_text().replace("@COMMIT@",commit).replace("@VERSION@",version).replace("@CACHE@",cache).replace("@MENU_CLASS@",menu_class))
 # LuCI uses firmware resource_version for class URLs. A unique theme module
 # name prevents a cached old menu adapter from talking to a new app shell.
 resource_dir=stage/"www/luci-static/resources"
@@ -56,6 +57,9 @@ def archive(items,directories=()):
    info.uid=info.gid=0;info.uname=info.gname="root";info.mtime=epoch
    tar.addfile(info,io.BytesIO(data))
  return gzip.compress(buf.getvalue(),mtime=0)
+identity={"commit":commit,"cache":cache,"run_id":os.environ.get("GITHUB_RUN_ID"),
+ "files":{str(p.relative_to(stage)):hashlib.sha256(p.read_bytes()).hexdigest() for p in stage.rglob("*") if p.is_file() and p.suffix in (".js",".css",".svg",".htm")}}
+(assets/"build.json").write_text(json.dumps(identity,sort_keys=True))
 items=[(str(p.relative_to(stage)),p.read_bytes(),p.stat().st_mode&0o777) for p in stage.rglob("*") if p.is_file()]
 directories=[(str(p.relative_to(stage)),p.stat().st_mode&0o777) for p in stage.rglob("*") if p.is_dir()]
 size=sum(len(data) for _,data,_ in items)
