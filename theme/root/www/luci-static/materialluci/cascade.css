@@ -339,3 +339,9 @@ body .mdc-switch>span{z-index:auto}
 :root[data-theme=dark]{--switch-off-thumb:#bdbdbd;--switch-off-track:rgba(255,255,255,.30);--switch-disabled-thumb:#757575}
 
 body .mdc-switch>.mdc-switch__handle-track{position:absolute}
+
+body .ml-switch-hit .mdc-switch{width:48px;min-width:48px;justify-content:center}
+body .ml-switch-hit .mdc-switch>.mdc-switch__track{width:36px}
+body .ml-switch-hit .mdc-switch>.mdc-switch__handle-track{width:16px;left:6px;transition-duration:150ms}
+body .ml-switch-hit .mdc-switch>.mdc-switch__focus-ring-wrapper{position:absolute}
+body .ml-switch-hit .mdc-switch .mdc-switch__icons{visibility:hidden}

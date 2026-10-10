@@ -15,10 +15,11 @@
    node("span",{class:"mdc-switch__handle-track"},[node("span",{class:"mdc-switch__handle"},[
     node("span",{class:"mdc-switch__shadow"},[node("span",{class:"mdc-elevation-overlay"})]),
     node("span",{class:"mdc-switch__ripple"}),
-    node("span",{class:"mdc-switch__icons","aria-hidden":"true"}),
-    node("span",{class:"mdc-switch__focus-ring-wrapper","aria-hidden":"true"},[node("span",{class:"mdc-switch__focus-ring"})])
-   ])])
+    node("span",{class:"mdc-switch__icons","aria-hidden":"true"})
+   ])]),
+   node("span",{class:"mdc-switch__focus-ring-wrapper","aria-hidden":"true"},[node("span",{class:"mdc-switch__focus-ring"})])
   ]);
+  control.querySelector(".mdc-switch__icons").innerHTML='<svg class="mdc-switch__icon mdc-switch__icon--on" viewBox="0 0 24 24"><path d="M19.69 5.23 8.96 15.96 4.73 11.73 2.96 13.5 8.96 19.5 21.46 7z"/></svg><svg class="mdc-switch__icon mdc-switch__icon--off" viewBox="0 0 24 24"><path d="M20 13H4v-2h16z"/></svg>';
   let instance;
   try{instance=new MaterialMDCSwitch.MDCSwitch(control);control._mlMdcSwitch=instance;}
   catch(error){console.error("MaterialLuCI: MDCSwitch initialization failed",error);control.hidden=true;return control;}
@@ -204,7 +205,7 @@
    button.addEventListener("keydown",event=>{if((event.key==="Enter"||event.key===" ")&&!button.hasAttribute("disabled")&&button.getAttribute("aria-disabled")!=="true"){event.preventDefault();button.click();}});
   }
   // Only explicit boolean LuCI fields get switches; list/group checkboxes remain checkboxes.
-  for(const input of all('.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox')){
+  for(const input of all('.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox,.cbi-value-field input[type="checkbox"]')){
    if(input.classList.contains("ml-switch")||input.closest(".cbi-dropdown,[role=group]"))continue;
    const field=input.closest(".cbi-value-field");
    if(!field||field.querySelectorAll("input[type=checkbox]").length!==1)continue;
@@ -272,6 +273,7 @@
   const inset=narrow.matches&&editing&&(!vv||Math.abs(vv.scale-1)<.05)?Math.max(0,innerHeight-h-top):0;
   // Add scroll room for the final form field only while an editor is focused.
   root.style.setProperty("--ml-keyboard-space",inset>100?inset+"px":"0px");
+  window.dispatchEvent(new Event("materialluci:viewport"));
 
  }
  function queueViewport(){if(!viewportFrame)viewportFrame=requestAnimationFrame(viewport);}

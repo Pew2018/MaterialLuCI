@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 export async function verifySixUI(browser,name,base){
  const page=await browser.newPage({viewport:{width:390,height:844}});
  const errors=[];page.on("pageerror",e=>errors.push(e.message));
@@ -102,6 +103,14 @@ export async function verifySixUI(browser,name,base){
  assert(await page.locator("#view [role=alert]").textContent().then(v=>v.includes("失败")));
  await page.evaluate(async()=>{await fixtureFailedPromise;document.getElementById("view").replaceChildren();});
  assert.equal(await page.locator(".ml-task-progress").count(),0);
+
+ const inventory=await page.locator('input[type="checkbox"]').evaluateAll(nodes=>nodes.map(input=>({
+  name:input.name,converted:input.classList.contains("ml-switch-source"),
+  instance:!!input.parentElement.querySelector(".mdc-switch")?._mlMdcSwitch,
+  checked:input.checked,disabled:input.disabled
+ })));
+ fs.writeFileSync("dist/previews/switch-inventory-"+name+".json",JSON.stringify(inventory,null,2));
+ assert(inventory.every(item=>!item.converted||item.instance),"converted checkbox lacks MDC instance");
  // Resource URLs come from the freshly built package, with a cache suffix.
  const urls=await page.locator('script[src*="/materialluci/"],link[href*="/materialluci/"]').evaluateAll(nodes=>nodes.map(el=>el.src||el.href));
  assert(urls.every(url=>new URL(url).searchParams.has("v")));

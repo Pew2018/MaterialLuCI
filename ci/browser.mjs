@@ -189,7 +189,7 @@ try{
   const progressBox=await page.locator("#ml-mdc-wait-progress").boundingBox(),busyBox=await page.locator("#modal_overlay>.modal").boundingBox();
   assert(busyBox.width>=320,"short mobile status dialog collapsed");
   assert(await page.locator("#modal_overlay>.modal>h4").evaluate(el=>{const s=getComputedStyle(el);return el.getBoundingClientRect().height-parseFloat(s.paddingTop)-parseFloat(s.paddingBottom)<35;}),"short dialog title wraps");
-  assert(progressBox.x>=busyBox.x&&progressBox.x+progressBox.width<=busyBox.x+busyBox.width+1);
+  assert(progressBox.x>=busyBox.x&&progressBox.x+progressBox.width<=busyBox.x+busyBox.width+1,JSON.stringify({engine:name,progressBox,busyBox}));
   assert(progressBox.y>=busyBox.y&&progressBox.y+progressBox.height<=busyBox.y+busyBox.height+1,"progress outside modal on reduced mobile viewport");
   if(name==="chromium")await page.screenshot({path:"dist/previews/mdc-wait-mobile.png"});
   await page.emulateMedia({reducedMotion:"reduce"});
