@@ -32,7 +32,8 @@ export async function verifyMaintenance(browser,name,base){
     form.append(action);main.replaceChildren(title,description,rule,form);
     MaterialLuCI.enhance(main);
    });
-   await legacy.waitForFunction(()=>document.getElementById("maincontent").classList.contains("ml-card-surface"));
+   const legacyLayout=await legacy.evaluate(()=>{const main=document.getElementById("maincontent");return {page:main.dataset.mlPage,route:document.body.dataset.page,card:main.classList.contains("ml-card-surface"),children:[...main.children].map(el=>el.tagName.toLowerCase()),view:!!main.querySelector("#view")};});
+   assert.equal(legacyLayout.card,true,"legacy reboot surface: "+JSON.stringify(legacyLayout));
    assert.equal(await legacy.locator("#maincontent").getAttribute("data-ml-page"),"reboot","legacy data-page route fallback");
    assert.equal(await legacy.locator("#maincontent hr").evaluate(el=>getComputedStyle(el).display),"none");
    assert.equal(await legacy.locator("#legacy-reboot-action").getAttribute("name"),"reboot");
