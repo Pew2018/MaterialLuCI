@@ -48,7 +48,7 @@ if a.candidate:
  checks["commit_and_all_resource_hashes_verified"]=True
 manifest={"source_sha":a.sha,"actions_run_id":a.run,"ipk":name,
  "ipk_sha256":hashlib.sha256(raw).hexdigest(),"checks":checks,
- "resource_cache":re.search(r"\\?v=([^\\\"\\s<>]+)",header).group(1),
+ "resource_cache":re.search(r'[?]v=([^"]+)',header).group(1),
  "header_sha256":hashlib.sha256(header.encode()).hexdigest(),
  "files":{n:{"bytes":len(b),"sha256":hashlib.sha256(b).hexdigest()} for n,b in sorted(files.items())},
  "header":header}
