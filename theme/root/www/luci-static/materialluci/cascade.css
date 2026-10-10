@@ -305,3 +305,12 @@ body.modal-overlay-active #modal_overlay>.modal.ml-has-progress{padding-bottom:3
 
 /* Short LuCI status dialogs need the same usable mobile width as forms. */
 @media(max-width:599px){body.modal-overlay-active #modal_overlay>.modal{width:100%;max-width:480px}}
+
+/* poll-status is a LuCI action, not a status-count badge. */
+#indicators{align-items:center}
+#indicators .ml-poll-action{display:inline-flex;align-items:center;justify-content:center;min-width:48px;min-height:48px;padding:0 10px;border:0;border-radius:2px;background:transparent;color:inherit!important;font-size:14px;font-weight:500;line-height:1.2;cursor:pointer}
+#indicators .ml-poll-action[data-paused=true]{text-decoration:underline;text-underline-offset:4px}
+#indicators .ml-poll-action:active{background:var(--pressed)}
+#indicators .ml-poll-action:focus-visible{outline:2px solid currentColor!important;outline-offset:-4px}
+@media(hover:hover){#indicators .ml-poll-action:hover{background:var(--hover)}}
+:root[data-toolbar=true] #indicators .ml-poll-action:hover,:root[data-toolbar=true] #indicators .ml-poll-action:active{background:rgba(255,255,255,.16)}

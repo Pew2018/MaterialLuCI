@@ -18,6 +18,23 @@
   const mount=()=>{if(control.isConnected&&!control._mlMdcSwitch&&window.MaterialMDCSwitch?.MDCSwitch){try{control._mlMdcSwitch=new MaterialMDCSwitch.MDCSwitch(control);}catch(_){}}};
   setTimeout(mount,0);sync();return control;
  }
+
+ // Keep LuCI's span and first text node: ui.showIndicator updates them in place.
+ // Only poll-status is an automatic-refresh action; other indicators keep their semantics.
+ const indicators=document.getElementById("indicators"),pollBound=new WeakSet();
+ function syncPollIndicator(){
+  const el=indicators?.querySelector('[data-indicator="poll-status"][data-clickable]');
+  if(!el)return;
+  const paused=el.getAttribute("data-style")==="inactive";
+  el.classList.add("ml-poll-action");el.setAttribute("role","button");el.tabIndex=0;
+  el.setAttribute("aria-label",paused?t("恢复自动刷新","Resume automatic refresh"):t("暂停自动刷新","Pause automatic refresh"));
+  el.title=paused?t("已暂停自动刷新","Automatic refresh paused"):t("正在自动刷新","Automatic refresh running");
+  el.dataset.paused=String(paused);
+  if(!pollBound.has(el)){pollBound.add(el);el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();if(!e.repeat)el.click();}});MaterialFeedback.bind(el);}
+ }
+ if(indicators)new MutationObserver(syncPollIndicator).observe(indicators,{childList:true,subtree:true,attributes:true,attributeFilter:["data-style","data-clickable"]});
+ syncPollIndicator();
+
  const narrow=matchMedia("(max-width: 1023px)");
  let dialog=null,sequence=0,drawerFocus=null,drawerInert=[];
  const focusables=el=>[...el.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled):not([type=hidden]),select:not(:disabled),textarea:not(:disabled),summary,[tabindex="0"]')].filter(n=>n.getClientRects().length&&!n.closest("[inert]"));
