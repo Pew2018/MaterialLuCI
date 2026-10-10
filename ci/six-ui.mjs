@@ -15,8 +15,8 @@ export async function verifySixUI(browser,name,base){
  await page.waitForFunction(()=>document.querySelector(".ml-poll-action")?.getAttribute("aria-label")==="恢复自动刷新");
  await poll.click();await page.waitForFunction(()=>testPoll.active());assert.equal(await page.evaluate(()=>testPoll.active()),true);
  // Real LuCI polling and real indicator span, never a replacement handler.
- await page.evaluate(async()=>{window.testPollFn=()=>Promise.resolve();testPoll.add(testPollFn,30);testPoll.start();});
- await page.waitForFunction(()=>document.querySelector(".ml-poll-action")?.getAttribute("role")==="button");
+ await page.evaluate(async()=>{window.testPollFn=()=>Promise.resolve();testPoll.add(testPollFn,30);testPoll.start();document.querySelector('#indicators [data-indicator="poll-status"]')?.removeAttribute("data-style");});
+ await page.waitForFunction(()=>document.querySelector(".ml-poll-action")?.getAttribute("aria-label")==="暂停自动刷新");
  assert.equal(await poll.getAttribute("aria-label"),"暂停自动刷新");
  assert((await poll.boundingBox()).height>=48);
  await page.evaluate(async()=>{const ui=await L.require("ui");ui.showIndicator("uci-changes","未保存更改",()=>{});});
