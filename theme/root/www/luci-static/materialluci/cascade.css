@@ -795,3 +795,13 @@ body #maincontent[data-ml-page="reboot"].ml-card-surface>h2{padding-top:0}
  body[data-page="reboot"] #maincontent :is(button.cbi-button,input.cbi-button,input[type="button"]),
  body #maincontent[data-ml-page="reboot"] :is(button.cbi-button,input.cbi-button,input[type="button"]){width:100%;min-width:0}
 }
+
+/* File upload remains a native picker, with the adjacent action sharing its row. */
+body input[type="file"]{
+ width:auto;max-width:100%;min-width:0;min-height:40px;padding:4px 0;border:0;border-bottom:0;border-radius:0;background:transparent;color:var(--ink);-webkit-text-fill-color:var(--ink);font:inherit
+}
+body input[type="file"]::file-selector-button{
+ min-height:40px;margin:0 10px 0 0;padding:8px 12px;border:1px solid transparent;border-radius:2px;background:var(--action-tonal);color:var(--on-action-tonal);font:inherit;font-weight:500;cursor:pointer
+}
+body input[type="file"]:focus-visible{outline:2px solid var(--control-strong);outline-offset:2px}
+body :is(.cbi-button-action.important,.cbi-button-positive.important,.cbi-button-apply,.cbi-input-apply){border-color:transparent}
