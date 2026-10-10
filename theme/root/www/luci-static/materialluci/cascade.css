@@ -466,3 +466,5 @@ body .ml-text-field>.cbi-button-add{flex:none;align-self:center;position:relativ
 
 /* The official button primary default must not color collapsed navigation. */
 body .ml-sidebar button.mdc-button:not(:disabled){color:var(--button-ink)}
+
+@media(min-width:1280px){#ml-appearance [data-group=material] .ml-swatches{grid-template-columns:repeat(6,minmax(0,1fr))}}

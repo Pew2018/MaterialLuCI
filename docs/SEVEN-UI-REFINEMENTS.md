@@ -29,3 +29,5 @@ After installation, open /luci-static/materialluci/build.json with a unique quer
 Regression checks also caught focus loss when decorating an already focused legacy input; initialization now waits for its natural blur. Modal progress positioning now synchronizes immediately on viewport/geometry events, then checks again on the next animation frame, avoiding stale desktop coordinates during WebKit resizing.
 
 Full-size Actions screenshots exposed MDC default filled-state specificity overriding the intended transparent MD1 field surface, and sibling group specificity suppressing paired dividers. Semantic modifier selectors now win those rules; tests assert actual computed transparent field surfaces and capture light/dark input and reset states. This is a CSS priority fix, not a claim about the installed router cache.
+
+At desktop widths of 1280px and above the 12 Material colors use six columns, pairing their two rows with the eight OnePlus colors in four columns. Smaller desktop widths keep four columns for readable labels. Collapsed MDC navigation buttons explicitly use neutral ink; only expanded groups use accent ink.
