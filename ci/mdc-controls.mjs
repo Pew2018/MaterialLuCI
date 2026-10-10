@@ -57,6 +57,44 @@ export async function verifyMDCControls(browser,name,base){
  await page.screenshot({path:"dist/previews/mdc-controls-"+name+"-desktop-dialog.png"});
  await page.locator("#mdc-real-modal-close").click();await page.waitForFunction(()=>!document.getElementById("modal_overlay")._mlMdcDialog);
  assert.equal(await page.evaluate(()=>nativeModalInput.value),"preserved edit");
+
+
+ // LuCI's native split dropdown keeps its own selection handler and arrow.
+ await page.evaluate(async()=>{
+  const ui=await L.require("ui");
+  window.realActionMenu=new ui.Dropdown("apply",{apply:"保存并应用",unchecked:"无需检查直接应用"},{id:"mdc-action-menu",optional:false});
+  const node=realActionMenu.render();node.classList.add("btn","cbi-button","cbi-button-apply");
+  document.getElementById("migration-widgets").append(node);
+ });
+ const actionArrow=page.locator("#mdc-action-menu>.open");
+ assert.equal(await actionArrow.evaluate(el=>getComputedStyle(el).borderLeftColor),"rgba(0, 0, 0, 0)","legacy split button seam");
+ await actionArrow.click();
+ await page.waitForFunction(()=>document.getElementById("mdc-action-menu").hasAttribute("open"));
+ await page.locator('#mdc-action-menu>ul.dropdown>li[data-value="unchecked"]').click();
+ assert.equal(await page.evaluate(()=>realActionMenu.getValue()),"unchecked","native dropdown selection changed");
+ await page.screenshot({path:"dist/previews/mdc-action-menu-"+name+".png"});
+ // Actual upstream apply status API: short notices must not inherit MDC's
+ // full-height wrapper or the legacy alert left border. No fabricated modal.
+ for(const width of [1440,390])for(const dark of [false,true]){
+  await page.setViewportSize({width,height:900});
+  await page.evaluate(async dark=>{
+   MaterialAppearance.set("mode",dark?"dark":"light");
+   const ui=await L.require("ui");
+   ui.changes.displayStatus("notice",E("p","配置已应用。"));
+  },dark);
+  await page.waitForFunction(()=>document.getElementById("modal_overlay")._mlMdcDialog?.isOpen);
+  await page.waitForTimeout(180);
+  const box=await page.locator("#modal_overlay>.modal").boundingBox();
+  assert(box.height>40&&box.height<180,"short apply notice stretched to "+box.height);
+  assert(box.width>=280&&box.width<=560,"short notice width "+box.width);
+  assert(box.x>=0&&box.x+box.width<=width+1,"notice clipped horizontally");
+  assert.equal(await page.locator("#modal_overlay>.modal").evaluate(el=>getComputedStyle(el).borderLeftWidth),"0px","legacy accent edge remains");
+  assert.equal(await page.locator("#modal_overlay>.modal").evaluate(el=>getComputedStyle(el).flexGrow),"0");
+  await page.screenshot({path:"dist/previews/mdc-status-"+name+"-"+width+"-"+(dark?"dark":"light")+".png"});
+  await page.evaluate(async()=>{const ui=await L.require("ui");ui.changes.displayStatus(false);});
+  await page.waitForFunction(()=>!document.getElementById("modal_overlay")._mlMdcDialog);
+ }
+ await page.evaluate(()=>MaterialAppearance.set("mode","light"));
  // Theme helper: original history, choice action, Escape and focus restoration.
  await page.setViewportSize({width:390,height:844});
  await page.evaluate(()=>{window.choiceChanges=[];MaterialLuCI.choose("选择模式",[["one","第一项"],["two","第二项"]],"one",key=>choiceChanges.push(key));});

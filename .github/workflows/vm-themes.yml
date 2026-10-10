@@ -20,7 +20,7 @@ jobs:
         include:
           - label: feature
             branch: feature/classic-native-v1
-            source: 0e88eeec549e363462d32f814671a3ee2ed3671c
+            source: ${{ github.sha }}
           - label: backup
             branch: archive/classic-native-v1-20261010-mdc-baseline
             source: 6fcd2782065055b7cafeb2da072affd2e35d88cf

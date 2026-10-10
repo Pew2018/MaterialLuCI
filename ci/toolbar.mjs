@@ -5,6 +5,8 @@ export async function verifyToolbar(browser,name,base){
  const seeds=["#42A5F5","#CC6F4E","#E6A545","#7DC22F","#26C6DA","#F06292","#808080","#FFFFFF","#000000","#FFFF00"];
  for(const width of [390,1440]){
   await page.setViewportSize({width,height:900});
+  assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),width>=1024?56:64);
+  assert.equal(await page.locator(".ml-toolbar").evaluate(el=>getComputedStyle(el).paddingTop),width>=1024?"0px":"8px");
   for(const dark of [false,true])for(const colored of [false,true])for(const seed of seeds){
    await page.evaluate(({dark,colored,seed})=>{MaterialAppearance.set("mode",dark?"dark":"light");MaterialAppearance.set("seed",seed);MaterialAppearance.set("toolbar",colored);MaterialAppearance.set("icons",true);},{dark,colored,seed});
    const check=async(minimum)=>page.evaluate(minimum=>{

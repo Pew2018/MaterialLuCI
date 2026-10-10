@@ -25,7 +25,7 @@ try{
   assert.equal(await page.locator("#ml-appearance-button").count(),0);
   assert.deepEqual(await page.locator(".ml-nav-parent").evaluateAll(nodes=>nodes.map(n=>(n.querySelector(".ml-nav-parent-label")||n).textContent.trim())),["状态","系统","服务","网络","退出"]);
   assert.equal(await page.locator(".ml-nav-row .ml-nav-parent").evaluateAll(nodes=>nodes.every(n=>n.tagName==="BUTTON"||n.classList.contains("ml-nav-leaf"))),true);
-  assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),64);
+  assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),56);
   assert((await page.locator("#maincontent").boundingBox()).width>1000);
   assert.equal(await page.locator('#ml-menu-tree a[href="/cgi-bin/luci/admin/network/network"]').count(),1);
   assert.equal(await page.locator('#ml-menu-tree .ml-nav-parent[aria-controls]').count(),4);

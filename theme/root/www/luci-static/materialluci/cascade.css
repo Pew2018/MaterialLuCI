@@ -366,7 +366,7 @@ body .ml-switch-hit .mdc-switch .mdc-switch__icons{visibility:hidden}
 :root[data-cards=true] .ml-card-surface :is(.ifacebox,.ifacebadge){background:transparent!important}
 
 /* Browser boundary surfaces are neutral even when the page toolbar is colored.
-   The MD1 toolbar content stays 56px; an 8px neutral edge precedes it. */
+   Mobile keeps its neutral browser boundary; desktop has no artificial gap. */
 html{background:var(--browser-surface,var(--page));overscroll-behavior-y:contain}
 body{background:var(--page)}
 body .ml-toolbar,:root[data-toolbar=true] body .ml-toolbar{
@@ -375,6 +375,10 @@ body .ml-toolbar,:root[data-toolbar=true] body .ml-toolbar{
 :root[data-toolbar=true] .ml-toolbar-inner{background:var(--toolbar-surface,var(--primary-surface));color:var(--on-toolbar,var(--on-primary))}
 .ml-sidebar{top:64px;height:calc(100dvh - 64px)}
 body::after{content:"";position:fixed;bottom:0;left:0;right:0;height:env(safe-area-inset-bottom,0px);background:var(--browser-surface,var(--page));pointer-events:none;z-index:40}
+@media(min-width:1024px){
+ body .ml-toolbar,:root[data-toolbar=true] body .ml-toolbar{height:56px;padding-top:0}
+ .ml-sidebar{top:56px;height:calc(100dvh - 56px)}
+}
 @media(max-width:1023px){.ml-sidebar{top:var(--ml-vv-top);height:var(--ml-vv-height)}}
 :root{--divider:rgba(0,0,0,.12);--status-surface:#f5f5f5;--status-active:#e3f2fd;--status-active-ink:#174564}
 :root[data-theme=dark]{--divider:rgba(255,255,255,.12);--status-surface:#262626;--status-active:#263943;--status-active-ink:#b9def5}
@@ -540,3 +544,21 @@ body .ml-mdc-feedback:is(.cbi-button-negative,.cbi-button-remove,.cbi-input-remo
 body .ml-native-button.mdc-button:not(:disabled){display:inline-flex;align-items:center;justify-content:center;font:inherit;color:inherit;border-radius:2px}
 
 body .ml-mdc-selection.mdc-form-field>label{margin:0;padding:0}
+
+/* LuCI owns one modal node, reused as MDC container/surface/content.
+   Undo the wrapper's full-height and content flex sizing on that node. */
+body #modal_overlay>.modal.mdc-dialog__container{
+ height:auto;min-height:0;flex:none;align-self:center;width:fit-content;max-width:min(560px,100%)
+}
+body #modal_overlay>.modal.mdc-dialog__content{flex-grow:0}
+body #modal_overlay>.modal.alert-message{
+ border:0;background:var(--surface);padding:20px 24px;box-sizing:border-box
+}
+/* Configuration tables and package logs retain the established wide layout. */
+body #modal_overlay>.modal:is(.cbi-modal,.uci-dialog):not(.alert-message),
+body #modal_overlay>.modal:has(.cbi-map,.cbi-section,.cbi-tblsection,pre):not(.alert-message){max-width:min(900px,100%)}
+@media(max-width:599px){
+ body #modal_overlay>.modal.mdc-dialog__container{width:100%;max-width:480px}
+}
+/* Keep LuCI's separate apply/menu targets without its legacy white seam. */
+body .cbi-dropdown:is(.btn,.cbi-button)>.open{border-left-color:transparent;background:transparent;color:inherit}
