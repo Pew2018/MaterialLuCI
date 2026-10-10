@@ -95,27 +95,6 @@ input[disabled],textarea[disabled],select[disabled]{opacity:1;color:var(--disabl
 input[type=checkbox],input[type=radio]{accent-color:var(--control-accent);width:18px;height:18px}
 .ml-switch-hit{width:48px;height:48px;flex:none;display:inline-grid;place-items:center;vertical-align:middle;border:0;padding:0;position:relative}
 input.ml-switch-source{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;opacity:0!important;pointer-events:none!important;clip:rect(0 0 0 0)!important}
-body .ml-switch-hit .mdc-switch{width:52px;height:48px;min-height:48px;padding:14px 6px;border:0;border-radius:0;background:transparent;color:var(--control-accent);box-shadow:none;display:inline-flex;align-items:center;justify-content:center;position:relative}
-body .ml-switch-hit .mdc-switch .mdc-switch__track{width:32px;height:14px;border-radius:7px;background:rgba(0,0,0,.38);opacity:1}
-body .ml-switch-hit .mdc-switch .mdc-switch__handle-track{width:20px;height:20px;top:14px;left:6px}
-body .ml-switch-hit .mdc-switch .mdc-switch__handle{width:20px;height:20px;border:1px solid #757575;border-radius:50%;background:#fafafa;box-shadow:0 1px 2px rgba(0,0,0,.28)}
-body .ml-switch-hit .mdc-switch.mdc-switch--selected .mdc-switch__track{background:var(--switch-track)}
-body .ml-switch-hit .mdc-switch.mdc-switch--selected .mdc-switch__handle{background:var(--switch-thumb);border-color:var(--switch-thumb)}
-body .ml-switch-hit .mdc-switch:hover .mdc-switch__handle{box-shadow:0 1px 3px rgba(0,0,0,.38)}
-body .ml-switch-hit .mdc-switch:active .mdc-switch__handle{box-shadow:0 2px 5px rgba(0,0,0,.42)}
-body .ml-switch-hit .mdc-switch:focus-visible{outline:2px solid var(--control-strong);outline-offset:2px}
-body .ml-switch-hit .mdc-switch:disabled{cursor:default;opacity:1}
-body .ml-switch-hit .mdc-switch:disabled .mdc-switch__track{background:rgba(0,0,0,.20)}
-body .ml-switch-hit .mdc-switch:disabled.mdc-switch--selected .mdc-switch__track{background:var(--switch-track)}
-body .ml-switch-hit .mdc-switch:disabled .mdc-switch__handle{background:#bdbdbd;border-color:#9e9e9e;box-shadow:none}
-:root[data-theme=dark] body .ml-switch-hit .mdc-switch .mdc-switch__track{background:rgba(255,255,255,.32)}
-:root[data-theme=dark] body .ml-switch-hit .mdc-switch .mdc-switch__handle{background:#bdbdbd;border-color:#9e9e9e}
-:root[data-theme=dark] body .ml-switch-hit .mdc-switch:disabled .mdc-switch__track{background:rgba(255,255,255,.20)}
-:root[data-theme=dark] body .ml-switch-hit .mdc-switch:disabled.mdc-switch--selected .mdc-switch__track{background:rgba(255,255,255,.30)}
-:root[data-theme=dark] body .ml-switch-hit .mdc-switch:disabled .mdc-switch__handle{background:#6f6f6f;border-color:#858585}
-@media (prefers-reduced-motion:reduce){
- body .ml-switch-hit .mdc-switch,.ml-nav-chevron{transition:none!important}
-}
 
 body :is(.btn,.cbi-button,button){
  --button-bg:var(--action-tonal);--button-hover-bg:var(--tonal-pressed);--button-pressed-bg:var(--tonal-pressed);--button-ink:var(--on-action-tonal);
@@ -347,3 +326,14 @@ body .ml-sidebar button.ml-nav-parent:hover{background:var(--hover)}
  .ml-task-progress .mdc-linear-progress__secondary-bar{display:none}
  .ml-task-progress .mdc-linear-progress__bar-inner{transform:scaleX(1)}
 }
+
+/* Official MDC controls own pseudo surfaces and motion. Only reset generic
+   LuCI button geometry; colors/dimensions are compiled via switch.theme(). */
+body .ml-switch-hit .mdc-switch,
+body .ml-switch-hit .mdc-switch:hover,
+body .ml-switch-hit .mdc-switch:active,
+body .ml-switch-hit .mdc-switch:disabled{width:36px;height:48px;min-height:48px;min-width:36px;padding:0;margin:0;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible;color:var(--ink)}
+body .mdc-switch>span{z-index:auto}
+.cbi-checkbox:has(.ml-switch-source)>label:empty{display:none}
+:root{--switch-off-thumb:#fafafa;--switch-off-track:rgba(0,0,0,.38);--switch-disabled-thumb:#bdbdbd}
+:root[data-theme=dark]{--switch-off-thumb:#bdbdbd;--switch-off-track:rgba(255,255,255,.30);--switch-disabled-thumb:#757575}

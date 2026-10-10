@@ -8,16 +8,54 @@
  const zh=document.documentElement.lang.startsWith("zh"),t=(cn,en)=>zh?cn:en;
  const node=(tag,attrs={},children=[])=>{const el=document.createElement(tag);for(const [key,val] of Object.entries(attrs)){if(key==="text")el.textContent=val;else if(key==="class")el.className=val;else el.setAttribute(key,String(val));}for(const child of children)el.append(child);return el;};
  const textButton=(text,fn,cls="text-action")=>{const b=node("button",{type:"button",class:cls},[node("span",{text})]);b.addEventListener("click",fn);return b;};
+ const switches=new Map();
  function switchControl(input,label){
-  const control=node("button",{type:"button",class:"mdc-switch",role:"switch","aria-label":label,"aria-checked":String(!!input.checked)},[node("span",{class:"mdc-switch__track"}),node("span",{class:"mdc-switch__handle-track"},[node("span",{class:"mdc-switch__handle"},[node("span",{class:"mdc-switch__shadow"}),node("span",{class:"mdc-switch__ripple"}),node("span",{class:"mdc-switch__icons","aria-hidden":"true"},[node("span",{class:"mdc-switch__icon mdc-switch__icon--on"}),node("span",{class:"mdc-switch__icon mdc-switch__icon--off"})])]),node("span",{class:"mdc-switch__focus-ring-wrapper","aria-hidden":"true"},[node("span",{class:"mdc-switch__focus-ring"})])])]);
-  const sync=()=>{const selected=!!input.checked,disabled=!!input.disabled;control.classList.toggle("mdc-switch--selected",selected);control.setAttribute("aria-checked",String(selected));control.disabled=disabled;control.setAttribute("aria-disabled",String(disabled));};
-  input.classList.add("ml-switch-source");input.setAttribute("tabindex","-1");input.setAttribute("aria-hidden","true");
-  input.addEventListener("change",sync);
-  try{const descriptor=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"checked"),disabledDescriptor=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"disabled");Object.defineProperty(input,"checked",{configurable:true,get(){return descriptor.get.call(input);},set(value){descriptor.set.call(input,value);sync();}});Object.defineProperty(input,"disabled",{configurable:true,get(){return disabledDescriptor.get.call(input);},set(value){disabledDescriptor.set.call(input,value);sync();}});}catch(_){}
-  control.addEventListener("click",event=>{event.preventDefault();if(input.disabled)return;input.checked=!input.checked;input.dispatchEvent(new Event("change",{bubbles:true}));});
-  const mount=()=>{if(control.isConnected&&!control._mlMdcSwitch&&window.MaterialMDCSwitch?.MDCSwitch){try{control._mlMdcSwitch=new MaterialMDCSwitch.MDCSwitch(control);}catch(_){}}};
-  setTimeout(mount,0);sync();return control;
+  const control=node("button",{type:"button",class:"mdc-switch "+(input.checked?"mdc-switch--selected":"mdc-switch--unselected"),role:"switch","aria-label":label,"aria-checked":String(!!input.checked)},[
+   node("span",{class:"mdc-switch__track"}),
+   node("span",{class:"mdc-switch__handle-track"},[node("span",{class:"mdc-switch__handle"},[
+    node("span",{class:"mdc-switch__shadow"},[node("span",{class:"mdc-elevation-overlay"})]),
+    node("span",{class:"mdc-switch__ripple"}),
+    node("span",{class:"mdc-switch__icons","aria-hidden":"true"}),
+    node("span",{class:"mdc-switch__focus-ring-wrapper","aria-hidden":"true"},[node("span",{class:"mdc-switch__focus-ring"})])
+   ])])
+  ]);
+  let instance;
+  try{instance=new MaterialMDCSwitch.MDCSwitch(control);control._mlMdcSwitch=instance;}
+  catch(error){console.error("MaterialLuCI: MDCSwitch initialization failed",error);control.hidden=true;return control;}
+  const original={tabindex:input.getAttribute("tabindex"),hidden:input.getAttribute("aria-hidden")};
+  // Checkbox is the sole saved-field authority. Only MDC writes its classes/ARIA.
+  const sync=()=>{instance.selected=!!input.checked;instance.disabled=!!input.disabled;};
+  input.classList.add("ml-switch-source");input.tabIndex=-1;input.setAttribute("aria-hidden","true");
+  input.addEventListener("change",sync);input.addEventListener("input",sync);
+  const descriptors={};
+  for(const key of ["checked","disabled"]){
+   if(Object.getOwnPropertyDescriptor(input,key))continue;
+   const descriptor=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,key);
+   Object.defineProperty(input,key,{configurable:true,get(){return descriptor.get.call(this);},set(value){descriptor.set.call(this,value);sync();}});
+   descriptors[key]=true;
+  }
+  const attrs=new MutationObserver(sync);attrs.observe(input,{attributes:true,attributeFilter:["checked","disabled"]});
+  // MDC's click listener is registered first. Native click preserves LuCI's
+  // click/update/change/dependency events exactly once, including cancellation.
+  control.addEventListener("click",event=>{
+   event.preventDefault();event.stopPropagation();
+   if(input.disabled){sync();return;}
+   input.click();sync();
+  });
+  const reset=()=>setTimeout(sync,0);
+  document.addEventListener("reset",reset,true);
+  switches.set(input,{control,destroy(){
+   attrs.disconnect();instance.destroy();document.removeEventListener("reset",reset,true);
+   input.removeEventListener("change",sync);input.removeEventListener("input",sync);
+   for(const key of Object.keys(descriptors))delete input[key];
+   input.classList.remove("ml-switch","ml-switch-source");
+   for(const [key,value] of [["tabindex",original.tabindex],["aria-hidden",original.hidden]])if(value===null)input.removeAttribute(key);else input.setAttribute(key,value);
+   control.remove();switches.delete(input);
+  }});
+  sync();return control;
  }
+ new MutationObserver(()=>{for(const [input,entry] of switches)if(!input.isConnected||!entry.control.isConnected)entry.destroy();}).observe(document.body,{childList:true,subtree:true});
+ window.addEventListener("pagehide",()=>{for(const entry of [...switches.values()])entry.destroy();});
 
  // Keep LuCI's span and first text node: ui.showIndicator updates them in place.
  // Only poll-status is an automatic-refresh action; other indicators keep their semantics.
@@ -167,7 +205,7 @@
   }
   // Only explicit boolean LuCI fields get switches; list/group checkboxes remain checkboxes.
   for(const input of all('.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox')){
-   if(input.classList.contains("ml-switch")||input.closest(".cbi-dropdown,[role=group],.cbi-section-table,.ml-table-scroll")||input.closest("label"))continue;
+   if(input.classList.contains("ml-switch")||input.closest(".cbi-dropdown,[role=group],.cbi-section-table,.ml-table-scroll"))continue;
    const field=input.closest(".cbi-value-field");
    if(!field||field.querySelectorAll("input[type=checkbox]").length!==1)continue;
    input.classList.add("ml-switch");

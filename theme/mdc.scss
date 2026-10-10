@@ -1,3 +1,38 @@
 @use "@material/linear-progress";
 @use "@material/switch/styles";
+@use "@material/switch" as switch;
 @include linear-progress.core-styles;
+
+/* v14 defaults use icons and dark OFF thumbs. MD1 adaptation uses the
+   official 36x14 track / 20px thumb with neutral OFF and accent ON. */
+body .ml-switch-hit .mdc-switch {
+ @include switch.theme((
+  track-width: 36px, track-height: 14px, track-shape: 7px,
+  handle-width: 20px, handle-height: 20px, handle-shape: 10px,
+  state-layer-size: 48px, handle-surface-color: var(--surface),
+  selected-handle-color: var(--switch-thumb),
+  selected-hover-handle-color: var(--switch-thumb),
+  selected-focus-handle-color: var(--switch-thumb),
+  selected-pressed-handle-color: var(--switch-thumb),
+  selected-track-color: var(--switch-track),
+  selected-hover-track-color: var(--switch-track),
+  selected-focus-track-color: var(--switch-track),
+  selected-pressed-track-color: var(--switch-track),
+  selected-hover-state-layer-color: var(--control-accent),
+  selected-focus-state-layer-color: var(--control-accent),
+  selected-pressed-state-layer-color: var(--control-accent),
+  unselected-handle-color: var(--switch-off-thumb),
+  unselected-hover-handle-color: var(--switch-off-thumb),
+  unselected-focus-handle-color: var(--switch-off-thumb),
+  unselected-pressed-handle-color: var(--switch-off-thumb),
+  unselected-track-color: var(--switch-off-track),
+  unselected-hover-track-color: var(--switch-off-track),
+  unselected-focus-track-color: var(--switch-off-track),
+  unselected-pressed-track-color: var(--switch-off-track),
+  disabled-selected-handle-color: var(--switch-thumb),
+  disabled-unselected-handle-color: var(--switch-disabled-thumb),
+  disabled-selected-track-color: var(--switch-track),
+  disabled-unselected-track-color: var(--switch-off-track),
+  disabled-handle-opacity: .5, disabled-track-opacity: .5
+ ));
+}

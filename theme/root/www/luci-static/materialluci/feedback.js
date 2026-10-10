@@ -18,7 +18,7 @@
   },{passive:true});
  }
  window.MaterialFeedback={bind(root=document){
-  const selector="button:not(.mdc-switch),div.btn,.ml-poll-action,.ml-switch-hit,.ml-native-button,.ml-sidebar a,.tabs a,.cbi-tabmenu a";
+  const selector="button:not(.mdc-switch),div.btn,.ml-poll-action,.ml-native-button,.ml-sidebar a,.tabs a,.cbi-tabmenu a";
   if(root.matches&&root.matches(selector))bind(root);
   root.querySelectorAll(selector).forEach(bind);
  }};
