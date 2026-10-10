@@ -98,7 +98,8 @@ export async function verifyUpstreamPages(browser,name,base){
    const file=document.createElement("input");file.type="file";file.id="audit-file";form.append(file);
    const button=document.createElement("button");button.type="button";button.id="audit-button";button.className="cbi-button";button.style.width="176px";const label=document.createElement("span");label.textContent="一个需要换行的 English action label";button.append(label);form.append(button);
    const submit=document.createElement("input");submit.type="submit";submit.id="audit-submit";submit.className="cbi-button cbi-button-apply";submit.value="提交";form.append(submit);
-   const reset=document.createElement("input");reset.type="reset";reset.id="audit-reset";reset.className="cbi-button";reset.value="重置";form.append(reset);
+   const reset=document.createElement("input");reset.type="reset";reset.id="audit-reset";reset.className="cbi-button";reset.value="重置";
+   const actions=document.createElement("div");actions.className="cbi-page-actions";actions.append(submit,reset);form.append(actions);
    const link=document.createElement("a");link.href="#";link.className="btn";link.id="audit-link";link.textContent="链接操作";form.append(link);
    const div=document.createElement("div");div.className="btn";div.id="audit-div-button";div.textContent="旧式 div.btn";form.append(div);
    host.append(form);document.getElementById("maincontent").append(host);
@@ -180,9 +181,13 @@ export async function verifyUpstreamPages(browser,name,base){
    assert.equal(buttonStyle.border,"rgba(0, 0, 0, 0)","button border reset");
    assert(buttonStyle.dx<3&&buttonStyle.dy<4,"long mixed-language button label centered: "+JSON.stringify(buttonStyle));
    for(const id of ["audit-submit","audit-reset"]){
-    const style=await page.locator("#"+id).evaluate(el=>({align:getComputedStyle(el).textAlign,border:getComputedStyle(el).borderTopColor}));
+    const style=await page.locator("#"+id).evaluate(el=>({align:getComputedStyle(el).textAlign,border:getComputedStyle(el).borderTopColor,parent:el.parentElement.className,height:el.parentElement.getBoundingClientRect().height}));
     assert.equal(style.align,"center");assert.equal(style.border,"rgba(0, 0, 0, 0)");
+    assert.equal(style.parent,"ml-native-button ml-mdc-feedback mdc-button","native input button uses one visual wrapper");
+    assert(style.height>=48,"native input button wrapper target size");
    }
+   const nativePrimary=await page.locator("#audit-submit").locator("..").evaluate(el=>({background:getComputedStyle(el).backgroundColor,expected:(()=>{const p=document.createElement("span");p.style.backgroundColor="var(--action-fill)";document.body.append(p);const v=getComputedStyle(p).backgroundColor;p.remove();return v;})()}));
+   assert.equal(nativePrimary.background,nativePrimary.expected,"wrapped input submit keeps its primary surface");
    const fileStyle=await page.locator("#audit-file").evaluate(el=>({border:getComputedStyle(el).borderBottomWidth,width:el.getBoundingClientRect().width}));
    assert.equal(fileStyle.border,"0px");assert(fileStyle.width>0);
    await page.locator("#audit-button").focus();
