@@ -702,3 +702,96 @@ body #view:has([data-table])>.right{
  display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:8px;margin:0 0 16px!important;float:none
 }
 body #view:has([data-table])>.right>button.cbi-button{min-height:48px;padding:12px 16px;line-height:20px}
+
+
+/* Shared compatibility fixes for native controls and MDC-enhanced actions. */
+body :is(input:not([type]),input[type="text"],input[type="password"],input[type="number"],input[type="email"],input[type="url"],input[type="tel"],input[type="search"],textarea,select):not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]){
+ color:var(--ink);-webkit-text-fill-color:var(--ink);caret-color:var(--control-accent)
+}
+body :is(input:not([type]),input[type="text"],input[type="password"],input[type="number"],input[type="email"],input[type="url"],input[type="tel"],input[type="search"],textarea,select):is(:disabled,[disabled]){
+ color:var(--disabled);-webkit-text-fill-color:var(--disabled);border-color:var(--disabled);opacity:1
+}
+body :is(input:not([type]),input[type="text"],input[type="password"],input[type="number"],input[type="email"],input[type="url"],input[type="tel"],input[type="search"],textarea,select)[readonly]{
+ color:var(--ink);-webkit-text-fill-color:var(--ink)
+}
+body :is(input:not([type]),input[type="text"],input[type="password"],input[type="number"],input[type="email"],input[type="url"],input[type="tel"],input[type="search"],textarea)::placeholder,
+body :is(input:not([type]),input[type="text"],input[type="password"],input[type="number"],input[type="email"],input[type="url"],input[type="tel"],input[type="search"],textarea)::-webkit-input-placeholder{
+ color:var(--muted);-webkit-text-fill-color:var(--muted);opacity:1
+}
+body :is(input:not([type]),input[type="text"],input[type="password"],input[type="number"],input[type="email"],input[type="url"],input[type="tel"],input[type="search"],textarea):is(:disabled,[disabled])::placeholder,
+body :is(input:not([type]),input[type="text"],input[type="password"],input[type="number"],input[type="email"],input[type="url"],input[type="tel"],input[type="search"],textarea):is(:disabled,[disabled])::-webkit-input-placeholder{
+ color:var(--disabled);-webkit-text-fill-color:var(--disabled);opacity:1
+}
+body :is(input:not([type]),input[type="text"],input[type="password"],input[type="number"],input[type="email"],input[type="url"],input[type="tel"],input[type="search"],textarea,input:-webkit-autofill){
+ caret-color:var(--control-accent)
+}
+body input:-webkit-autofill{
+ -webkit-text-fill-color:var(--ink);caret-color:var(--control-accent);box-shadow:0 0 0 1000px var(--surface) inset
+}
+body select:not(.ml-mdc-native-select),body select:not(.ml-mdc-native-select) option{color:var(--ink)}
+body select:disabled:not(.ml-mdc-native-select),body select:disabled:not(.ml-mdc-native-select) option{color:var(--disabled)}
+
+/* Button content stays centered while the ripple remains an absolute overlay. */
+body :is(button,.btn,.cbi-button,a.btn,a.cbi-button){
+ box-sizing:border-box;text-align:center;vertical-align:middle
+}
+body :is(button,.btn,.cbi-button,a.btn,a.cbi-button).mdc-button:not(.ml-option):not(.ml-swatch-item),
+body .ml-mdc-feedback.mdc-button:not(.ml-option):not(.ml-swatch-item){
+ display:inline-flex;align-items:center;justify-content:center;position:relative;text-align:center
+}
+body .ml-mdc-feedback.mdc-button .mdc-button__label{position:relative;z-index:1;display:inline-flex;align-items:center;justify-content:center;max-width:100%;white-space:inherit;text-align:center;overflow-wrap:anywhere}
+body .ml-mdc-feedback.mdc-button>.mdc-button__ripple,
+body .ml-mdc-feedback.mdc-icon-button>.mdc-icon-button__ripple{pointer-events:none;z-index:0!important}
+body input:is([type="button"],[type="submit"],[type="reset"]){
+ text-align:center;vertical-align:middle;white-space:normal
+}
+body :is(button,.btn,.cbi-button,a.btn,a.cbi-button):focus{
+ border-color:transparent;box-shadow:none
+}
+body :is(button,.btn,.cbi-button,a.btn,a.cbi-button):focus-visible{
+ outline:2px solid var(--control-strong);outline-offset:2px
+}
+body input:is([type="button"],[type="submit"],[type="reset"]):focus{
+ border-color:transparent;box-shadow:none
+}
+body input:is([type="button"],[type="submit"],[type="reset"]):focus-visible{
+ outline:2px solid var(--control-strong);outline-offset:2px
+}
+body :is(button,.btn,.cbi-button,a.btn,a.cbi-button):disabled,
+body input:is([type="button"],[type="submit"],[type="reset"]):disabled{
+ border-color:transparent;box-shadow:none
+}
+body .ml-native-button.mdc-button{
+ display:inline-flex;align-items:center;justify-content:center;position:relative;max-width:100%;min-height:48px;padding:0;border:1px solid transparent;border-radius:2px;background:var(--button-bg);color:var(--button-ink);box-shadow:none;vertical-align:middle
+}
+body .ml-native-button>input:is([type="button"],[type="submit"],[type="reset"]){
+ position:relative;z-index:1;flex:1 1 auto;width:auto;min-width:0;max-width:100%;min-height:48px;margin:0;padding:12px 16px;border:0;border-radius:inherit;background:transparent;color:inherit;box-shadow:none;font:inherit;line-height:20px;text-align:center;white-space:normal
+}
+body .ml-native-button:has(:is(.cbi-button-apply,.cbi-input-apply,.action-primary)){
+ --button-bg:var(--action-fill);--button-ink:var(--on-accent);--mdc-ripple-color:var(--on-accent)
+}
+body .ml-native-button:has(:is(.cbi-button-remove,.cbi-input-remove,.cbi-button-negative)){
+ --button-bg:var(--action-tonal);--button-ink:var(--danger);--mdc-ripple-color:var(--danger)
+}
+body .ml-native-button>.mdc-button__ripple{z-index:0!important}
+
+/* Flat Lua reboot pages have no #view wrapper. Scope the rule to that route. */
+body[data-page$="-reboot"] #maincontent hr,
+body[data-page="reboot"] #maincontent hr,
+body #maincontent[data-ml-page="reboot"] hr{display:none}
+body[data-page$="-reboot"] #maincontent :is(p,.cbi-map-descr),
+body[data-page="reboot"] #maincontent :is(p,.cbi-map-descr),
+body #maincontent[data-ml-page="reboot"] :is(p,.cbi-map-descr){margin:0 0 20px;color:var(--muted);line-height:1.6}
+body[data-page$="-reboot"] #maincontent :is(button.cbi-button,input.cbi-button,input[type="button"]),
+body[data-page="reboot"] #maincontent :is(button.cbi-button,input.cbi-button,input[type="button"]),
+body #maincontent[data-ml-page="reboot"] :is(button.cbi-button,input.cbi-button,input[type="button"]){
+ min-height:48px;min-width:160px;padding:12px 24px;line-height:20px;border-radius:2px
+}
+body[data-page$="-reboot"] #maincontent.ml-card-surface>h2,
+body[data-page="reboot"] #maincontent.ml-card-surface>h2,
+body #maincontent[data-ml-page="reboot"].ml-card-surface>h2{padding-top:0}
+@media(max-width:599px){
+ body[data-page$="-reboot"] #maincontent :is(button.cbi-button,input.cbi-button,input[type="button"]),
+ body[data-page="reboot"] #maincontent :is(button.cbi-button,input.cbi-button,input[type="button"]),
+ body #maincontent[data-ml-page="reboot"] :is(button.cbi-button,input.cbi-button,input[type="button"]){width:100%;min-width:0}
+}
