@@ -621,3 +621,50 @@ body .ml-mdc-selection>.mdc-radio__background .mdc-radio__inner-circle{border-wi
 body .ml-radio.ml-mdc-selection>.mdc-radio__background .mdc-radio__inner-circle{border-width:8px}
 
 body .ml-mdc-menu{overflow-anchor:none}
+
+/* Real-device corrections: MDC's :not(disabled) ink/placeholder selectors
+   out-rank the earlier two-class input rule. Theme every state explicitly. */
+body .ml-text-field.mdc-text-field--filled:not(.mdc-text-field--disabled) .mdc-text-field__input{
+ color:var(--ink);-webkit-text-fill-color:var(--ink);caret-color:var(--control-accent)
+}
+body .ml-text-field.mdc-text-field--filled .mdc-text-field__input::placeholder{
+ color:var(--muted);-webkit-text-fill-color:var(--muted);opacity:1
+}
+body .ml-text-field.mdc-text-field--filled.mdc-text-field--disabled .mdc-text-field__input,
+body .ml-text-field.mdc-text-field--filled.mdc-text-field--disabled .mdc-text-field__input::placeholder{
+ color:var(--disabled);-webkit-text-fill-color:var(--disabled);opacity:1
+}
+body :is(input[type=text],input[type=password],input[type=email],input[type=url],input[type=tel],input[type=search],input[type=number],textarea):not(:disabled){
+ -webkit-text-fill-color:var(--ink);caret-color:var(--control-accent)
+}
+body :is(input,textarea)::placeholder{color:var(--muted);-webkit-text-fill-color:var(--muted);opacity:1}
+body :is(input,textarea):disabled{-webkit-text-fill-color:var(--disabled)}
+body :is(input,textarea):-webkit-autofill{
+ -webkit-text-fill-color:var(--ink);caret-color:var(--control-accent);box-shadow:0 0 0 1000px var(--surface) inset!important
+}
+body .cbi-dropdown:not(.btn):not(.cbi-button)>ul>li[placeholder]{color:var(--muted)}
+
+/* All ordinary form labels align to the 48px field/selection-control frame.
+   SectionValue rows remain full-width presentation containers. */
+body .cbi-value-title{display:flex;align-items:center;min-height:48px;padding:0;line-height:20px}
+body .cbi-value.ml-section-container{display:block;min-height:0;padding:0}
+body .cbi-value.ml-section-container>.cbi-value-field{width:100%;max-width:none}
+body .cbi-value.ml-section-container>.cbi-value-title{width:auto;max-width:none}
+body .cbi-section-descr{margin:0 0 12px}
+body .cbi-value-field :is(button.cbi-button,input.cbi-button):not(.cbi-button-add):not(.cbi-button-up):not(.cbi-button-down){
+ min-height:48px;min-width:160px;max-width:100%;padding:12px 16px;border-radius:2px;line-height:20px;margin:0;text-align:center
+}
+body .cbi-value-field .ml-native-button{max-width:100%}
+body .cbi-value-field :is(.ml-text-field,.ml-mdc-select){vertical-align:top}
+:root[data-cards=true] #view.ml-card-surface>h2{padding-top:0}
+body #maincontent[data-ml-page=reboot] #view>hr{display:none}
+body #maincontent[data-ml-page=reboot] #view>p{margin:0 0 20px;color:var(--muted);line-height:1.6}
+body #maincontent[data-ml-page=reboot] #view>button.cbi-button{
+ min-height:48px;min-width:160px;padding:12px 24px;line-height:20px;border-radius:2px
+}
+@media(max-width:599px){
+ body .cbi-value-title{min-height:0;display:block;margin-bottom:8px;padding:0}
+ body .cbi-value.ml-section-container{padding:0}
+ body .cbi-value-field :is(button.cbi-button,input.cbi-button):not(.cbi-button-add):not(.cbi-button-up):not(.cbi-button-down){width:100%;min-width:0}
+ body #maincontent[data-ml-page=reboot] #view>button.cbi-button{width:100%;min-width:0}
+}

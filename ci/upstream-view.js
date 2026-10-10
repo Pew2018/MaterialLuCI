@@ -27,6 +27,8 @@ return view.extend({
   var hints={getHostnameByMACAddr:()=> 'test station',getIPAddrByMACAddr:()=> '192.0.2.2',getIP6AddrByMACAddr:()=>null};
   var m=new form.JSONMap({theme:{'.type':'theme',_mediaurlbase:'/luci-static/materialluci',enabled:'1',hostname:'AX3000T',password:'secret',notes:'LuCI textarea',servers:['192.0.2.1']}},'Theme settings');
   var s=m.section(form.NamedSection,'theme','theme','Language and Style');
+  var language=s.option(form.ListValue,'lang','语言');
+  language.value('auto','自动');language.value('zh_cn','简体中文 (Chinese Simplified)');
   var design=s.option(form.ListValue,'_mediaurlbase','Design');
   design.value('/luci-static/materialluci','MaterialLuCI');
   var flag=s.option(form.Flag,'enabled','Enabled');

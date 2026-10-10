@@ -69,6 +69,7 @@ jobs:
             modules/luci-base/htdocs/luci-static/resources
             applications/luci-app-opkg/htdocs/luci-static/resources
             modules/luci-mod-status/htdocs/luci-static/resources
+            modules/luci-mod-system/htdocs/luci-static/resources
       - name: Compile Lua templates and prepare compatibility preview
         run: python3 ci/prepare.py
       - name: Test desktop and mobile layouts in Chromium and WebKit

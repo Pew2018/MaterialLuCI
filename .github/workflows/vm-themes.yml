@@ -1,8 +1,7 @@
 name: Build x86_64 VM themes (feature and frozen backup)
 on:
-  push:
-    branches: ["feature/classic-native-v1"]
-    paths: [".github/workflows/**", "ci/**", "theme/**", "scripts/**", "package.json", "package-lock.json"]
+  # Real-device development builds only AX3000T automatically.
+  # VM builds are retained as an explicit manual workflow.
   workflow_dispatch:
 permissions:
   contents: read

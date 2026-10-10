@@ -5,6 +5,8 @@
  sidebar=document.getElementById("ml-sidebar"),toolbar=document.querySelector(".ml-toolbar"),
  menuButton=document.getElementById("ml-menu-button"),scrim=document.getElementById("ml-drawer-scrim");
  if(!main||!appearance)return;
+ const route=window.L?.env?.dispatchpath||window.L?.env?.requestpath||[];
+ main.dataset.mlPage=route[route.length-1]||"";
  const zh=document.documentElement.lang.startsWith("zh"),t=(cn,en)=>zh?cn:en;
  const node=(tag,attrs={},children=[])=>{const el=document.createElement(tag);for(const [key,val] of Object.entries(attrs)){if(key==="text")el.textContent=val;else if(key==="class")el.className=val;else el.setAttribute(key,String(val));}for(const child of children)el.append(child);return el;};
  const textButton=(text,fn,cls="text-action")=>{const b=node("button",{type:"button",class:cls},[node("span",{text})]);b.addEventListener("click",fn);return b;};
@@ -253,19 +255,31 @@
    if(cells>=5)table.classList.add("ml-wide-table");
    table.parentNode.insertBefore(wrapper,table);wrapper.append(table);
   }
-  // Mark semantic page sections for optional card surfaces; never wrap rows or tables.
-  // Re-evaluate semantic sections after dynamic rendering. A map and #view
-  // are layout containers; only their leaf content groups own surfaces.
+  // SectionValue embeds complete sections inside field containers (flash,
+  // backup and vendor pages). Mark those wrappers without moving native nodes.
+  for(const value of main.querySelectorAll(".cbi-value")){
+   const section=[...value.querySelectorAll(".cbi-section,fieldset")].find(el=>el.closest(".cbi-value")===value);
+   value.classList.toggle("ml-section-container",!!section);
+  }
   main.classList.remove("ml-card-surface");
-  // Plots are groups even when upstream wraps them in unnamed divs.
   for(const svg of main.querySelectorAll("#view svg"))if(svg.querySelector("polyline,polygon"))svg.parentElement?.classList.add("ml-chart-surface");
-  // Select a complete semantic group, rather than only its deepest child.
-  // Status sections contain a title, device boxes AND associated tables.
   const candidates=[...main.querySelectorAll(".cbi-section,.cbi-section-node,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table,.ml-chart-surface,#view > .ml-table-scroll,.cbi-map > .ml-table-scroll")]
-   .filter(section=>!section.closest("#ml-appearance,.modal,.cbi-value,table,.table")&&!section.matches(".cbi-section-node:empty")&&section.id!=="view");
+   .filter(section=>{
+    const option=section.closest(".cbi-value");
+    return !section.closest("#ml-appearance,.modal,table,.table")&&
+     (!option||option.classList.contains("ml-section-container"))&&
+     !section.matches(".cbi-section-node:empty")&&section.id!=="view"&&
+     // A container of SectionValues has no surface: each complete subsection does.
+     !section.querySelector(".ml-section-container .cbi-section,.ml-section-container fieldset");
+   });
   const surfaces=new Set(candidates.filter(section=>!candidates.some(parent=>parent!==section&&parent.contains(section))));
+  // Flat views (reboot, SSH keys, firewall status, vendor views) have no CBI
+  // section. Their existing content host owns the surface; never wrap children.
+  const view=main.querySelector("#view");
+  if(view&&view.children.length&&!view.querySelector(":scope > .spinning,.cbi-map,.cbi-section,fieldset,.ml-card-surface")&&!candidates.some(section=>view.contains(section)))surfaces.add(view);
+  for(const map of main.querySelectorAll(".cbi-map"))if(map.querySelector(".cbi-value")&&!map.querySelector(".ml-section-container")&&!candidates.some(section=>map.contains(section)))surfaces.add(map);
   main.querySelectorAll(".ml-card-surface").forEach(el=>{if(!surfaces.has(el))el.classList.remove("ml-card-surface");});
-  for(const section of surfaces)if(!section.classList.contains("ml-card-surface"))section.classList.add("ml-card-surface");
+  for(const section of surfaces)section.classList.add("ml-card-surface");
   // Identify plots structurally, across every realtime view and vendor route.
   // Do not depend on URL spelling or the serialized inline background color.
   for(const svg of all("#view svg")){

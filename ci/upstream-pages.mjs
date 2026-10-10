@@ -88,6 +88,31 @@ export async function verifyUpstreamPages(browser,name,base){
   for(const mode of ["light","dark"]){
    await page.evaluate(v=>MaterialAppearance.set("mode",v),mode);
    assert.equal(await field.evaluate(el=>getComputedStyle(el.closest(".ml-text-field")).backgroundColor),"rgba(0, 0, 0, 0)","MDC default filled color must not override the MD1 surface");
+   const ink=await page.locator("#maincontent").evaluate(el=>getComputedStyle(el).color);
+   for(const input of [field,password,textarea,listInput]){
+    assert.equal(await input.evaluate(el=>getComputedStyle(el).color),ink,"input ink in "+mode);
+    assert.equal(await input.evaluate(el=>getComputedStyle(el).webkitTextFillColor),ink,"WebKit input ink in "+mode);
+    const state=await input.evaluate(el=>{
+     el.placeholder="Default value";const s=getComputedStyle(el,"::placeholder");
+     return {color:s.color,fill:s.webkitTextFillColor,opacity:s.opacity};
+    });
+    const muted=await page.evaluate(()=>{const p=document.createElement("span");p.style.color="var(--muted)";document.body.append(p);const c=getComputedStyle(p).color;p.remove();return c;});
+    assert.equal(state.color,muted,"placeholder color in "+mode);
+    assert.equal(state.fill,muted,"WebKit placeholder fill in "+mode);
+    assert.equal(state.opacity,"1");
+   }
+   await field.evaluate(el=>el.disabled=true);
+   const disabled=await page.evaluate(()=>{const p=document.createElement("span");p.style.color="var(--disabled)";document.body.append(p);const c=getComputedStyle(p).color;p.remove();return c;});
+   assert.equal(await field.evaluate(el=>getComputedStyle(el).color),disabled);
+   assert.equal(await field.evaluate(el=>getComputedStyle(el).webkitTextFillColor),disabled);
+   await field.evaluate(el=>el.disabled=false);
+   if(size==="desktop"){
+    for(const suffix of ["lang","_mediaurlbase"]){
+     const row=page.locator('.cbi-value[data-field$=".'+suffix+'"]');
+     const label=await row.locator(".cbi-value-title").boundingBox(),anchor=await row.locator(".mdc-select__anchor").boundingBox();
+     assert(Math.abs(label.y+label.height/2-anchor.y-anchor.height/2)<1,"language/design label center");
+    }
+   }
    await field.scrollIntoViewIfNeeded();
    await page.screenshot({path:"dist/previews/"+name+"-"+size+"-mdc-textfields-"+mode+".png"});
    await reset.scrollIntoViewIfNeeded();

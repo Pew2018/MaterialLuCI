@@ -113,3 +113,23 @@ code=bootstrap+'\ninclude("header")\nwrite('+luaquote(fixture)+')\ninclude("foot
 renderer.write_text(code)
 html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime+"</head>")
 (output/"realtime.html").write_text(html)
+
+# Actual pinned system renderers, with the lifecycle replaced by baseclass
+# only in CI. No load/execute methods touch a device; handlers are local spies.
+system=ROOT/"luci-fixture/modules/luci-mod-system/htdocs/luci-static/resources"
+shutil.copytree(system,output/"luci-static/resources",dirs_exist_ok=True)
+for name in ("reboot","flash"):
+ source=(system/("view/system/"+name+".js")).read_text()
+ assert "'require view';" in source
+ source=source.replace("'require view';","'require baseclass as view';",1)
+ (view_dir/("materialluci-native-"+name+".js")).write_text(source)
+shutil.copy(ROOT/"ci/maintenance-view.js",view_dir/"materialluci-maintenance.js")
+for name in ("reboot","flash"):
+ maintenance_env=dict(env)
+ maintenance_env["requestpath"]=["admin","system",name]
+ maintenance_env["dispatchpath"]=["admin","system",name]
+ fixture='<div id="view"></div><script>window.maintenanceKind='+json.dumps(name)+';document.addEventListener("DOMContentLoaded",function(){L.require("ui").then(function(ui){ui.instantiateView("materialluci-maintenance");});});</script>'
+ code=bootstrap+'\ninclude("header")\nwrite('+luaquote(fixture)+')\ninclude("footer")'
+ renderer.write_text(code)
+ html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime.replace(json.dumps(env),json.dumps(maintenance_env))+"</head>")
+ (output/(name+".html")).write_text(html)
