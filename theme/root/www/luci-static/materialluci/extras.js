@@ -1,7 +1,7 @@
 "use strict";
 /* Official MDC presentation. Original LuCI nodes and callbacks own data. */
 (function(){
- const {MDCMenu,MDCList,MDCSelect,MDCSnackbar,MDCTooltip}=MaterialMDCControls;
+ const {MDCRipple,MDCMenu,MDCList,MDCSelect,MDCSnackbar,MDCTooltip}=MaterialMDCControls;
  const selects=new Map(),actions=new Map(),tips=new Map();let sequence=0,notice=null,stopped=false;
  const make=(tag,cls,text)=>{const el=document.createElement(tag);el.className=cls;if(text!=null)el.textContent=text;return el;};
  function item(label,value,disabled=false,selected=false){
@@ -10,6 +10,8 @@
   if(disabled)li.setAttribute("aria-disabled","true");
   li.append(make("span","mdc-deprecated-list-item__ripple"),make("span","mdc-deprecated-list-item__text",label));return li;
  }
+ function clearItems(list){for(const li of list.children)li._mlMdcRipple?.destroy();}
+ function replaceItems(list,items){clearItems(list);list.replaceChildren(...items);for(const li of items){li._mlMdcRipple=new MDCRipple(li);li._mlMdcRipple.disabled=li.getAttribute("aria-disabled")==="true";}}
  function portalMenu(root){
   root.classList.add("ml-mdc-menu");document.body.append(root);
   const menu=new MDCMenu(root,undefined,el=>{const list=new MDCList(el);list.disabledItemsFocusable=false;return list;});menu.setIsHoisted(true);menu.setFixedPosition(true);
@@ -58,7 +60,7 @@
    try{
     const options=[...select.options],next=JSON.stringify(options.map(o=>[o.value,o.textContent,o.disabled]));
     if(next!==signature){
-     signature=next;list.replaceChildren(...options.map(o=>item(o.textContent,o.value,o.disabled,o.selected)));
+     signature=next;replaceItems(list,options.map(o=>item(o.textContent,o.value,o.disabled,o.selected)));
      for(const option of options)if(!optionHooks.has(option)){optionHooks.add(option);hook(option,"selected",queue,restore);}
      if(instance){menu.layout();instance.layoutOptions();}
     }
@@ -74,7 +76,7 @@
    }finally{syncing=false;}
   }
   const entry={root,anchor,get menu(){return menu;},get rect(){return anchorRect;},destroy(){
-   observer.disconnect();popup._mlEscapeCleanup?.();instance?.destroy();popup.remove();root.remove();select.classList.remove("ml-mdc-native-select");select._mlMdcSelect=null;
+   observer.disconnect();popup._mlEscapeCleanup?.();clearItems(list);instance?.destroy();popup.remove();root.remove();select.classList.remove("ml-mdc-native-select");select._mlMdcSelect=null;
    select.removeEventListener("input",queue);select.removeEventListener("change",queue);select.removeEventListener("focus",focus);select.removeEventListener("invalid",invalid);
    select.form?.removeEventListener("reset",reset);restore.forEach(fn=>fn());
    for(const [attr,old] of [["tabindex",oldTab],["aria-hidden",oldHidden]])if(old===null)select.removeAttribute(attr);else select.setAttribute(attr,old);
@@ -114,7 +116,7 @@
    if(owner.hasAttribute("disabled")||owner.getAttribute("aria-disabled")==="true")return;
    if(menu.open){menu.open=false;arrow.setAttribute("aria-expanded","false");return;}
    const rows=[...ul.children].filter(li=>li.tagName==="LI");
-   list.replaceChildren(...rows.map(li=>{const el=item(li.textContent,li.getAttribute("data-value")||"",li.hasAttribute("unselectable")||li.getAttribute("aria-disabled")==="true",li.hasAttribute("selected"));el.setAttribute("role","menuitem");el._nativeChoice=li;return el;}));
+   replaceItems(list,rows.map(li=>{const el=item(li.textContent,li.getAttribute("data-value")||"",li.hasAttribute("unselectable")||li.getAttribute("aria-disabled")==="true",li.hasAttribute("selected"));el.setAttribute("role","menuitem");el._nativeChoice=li;return el;}));
    menu.layout();menu.items.forEach((li,i)=>menu.setEnabled(i,li.getAttribute("aria-disabled")!=="true"));
    menu.setAnchorElement(owner);menu.setIsHoisted(true);menu.setFixedPosition(true);menu.open=true;arrow.setAttribute("aria-expanded","true");
   }
@@ -128,7 +130,7 @@
    li.dispatchEvent(new CustomEvent("cbi-dropdown-select",{bubbles:true}));arrow.focus({preventScroll:true});
   });
   popup.addEventListener("MDCMenuSurface:closed",()=>{arrow.setAttribute("aria-expanded",String(menu.open));});
-  actions.set(owner,{open,get rect(){return ownerRect;},destroy(){popup._mlEscapeCleanup?.();menu.destroy();popup.remove();owner.removeEventListener("click",click,true);arrow.removeEventListener("keydown",key);owner._mlMdcMenu=null;for(const a of ["aria-label","aria-haspopup","aria-controls","aria-expanded"])arrow.removeAttribute(a);for(const [a,v] of [["role",oldRole],["tabindex",oldTab]])if(v===null)arrow.removeAttribute(a);else arrow.setAttribute(a,v);actions.delete(owner);}});
+  actions.set(owner,{open,get rect(){return ownerRect;},destroy(){popup._mlEscapeCleanup?.();clearItems(list);menu.destroy();popup.remove();owner.removeEventListener("click",click,true);arrow.removeEventListener("keydown",key);owner._mlMdcMenu=null;for(const a of ["aria-label","aria-haspopup","aria-controls","aria-expanded"])arrow.removeAttribute(a);for(const [a,v] of [["role",oldRole],["tabindex",oldTab]])if(v===null)arrow.removeAttribute(a);else arrow.setAttribute(a,v);actions.delete(owner);}});
  }
  function tooltip(anchor){
   const label=anchor.getAttribute("aria-label")||anchor.title;if(!label)return;
@@ -177,7 +179,7 @@
  document.addEventListener("click",event=>{if(event.target.closest("#ml-appearance .ml-swatch-item,#ml-appearance .ml-mode-option"))feedback(document.documentElement.lang.startsWith("zh")?"已保存此浏览器的主题设置":"Theme preferences saved in this browser");});
  window.addEventListener("pagehide",event=>{if(!event.persisted){stopped=true;observer.disconnect();for(const e of [...selects.values()])e.destroy();for(const e of [...actions.values()])e.destroy();for(const e of [...tips.values()])e.destroy();if(notice){clearTimeout(notice.timer);notice.instance.destroy();notice.root.remove();notice=null;}}});
  window.MaterialExtras={enhance,feedback,menu(anchor,options,value,onChange){
-  const popup=make("div","mdc-menu mdc-menu-surface ml-action-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","menu");list.append(...options.map(([key,label,disabled])=>{const li=item(label,key,disabled,key===value);li.setAttribute("role","menuitem");return li;}));popup.append(list);const menu=portalMenu(popup);escapeFocus(popup,anchor);menu.setAnchorElement(anchor);
+  const popup=make("div","mdc-menu mdc-menu-surface ml-action-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","menu");list.tabIndex=-1;replaceItems(list,options.map(([key,label,disabled])=>{const li=item(label,key,disabled,key===value);li.setAttribute("role","menuitem");return li;}));popup.append(list);const menu=portalMenu(popup);escapeFocus(popup,anchor);menu.setAnchorElement(anchor);
   menu.items.forEach((li,i)=>menu.setEnabled(i,li.getAttribute("aria-disabled")!=="true"));
   popup.addEventListener("MDCMenu:selected",event=>onChange(event.detail.item.dataset.value),{once:true});
   popup.addEventListener("MDCMenuSurface:closed",()=>{popup._mlEscapeCleanup?.();menu.destroy();popup.remove();},{once:true});menu.open=true;return menu;
