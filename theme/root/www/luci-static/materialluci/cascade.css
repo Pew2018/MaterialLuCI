@@ -603,3 +603,7 @@ body .mdc-tooltip__surface{background:#616161;color:#fff;border-radius:2px;font:
 /* Native fallback controls follow the same browser color scheme. */
 :root{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 body select:not(.ml-mdc-native-select){background-color:transparent;color:var(--ink)}
+
+/* MDC paints the selection control; remove WebKit native radio hit slop. */
+body .ml-mdc-selection>input:is(.mdc-checkbox__native-control,.mdc-radio__native-control){appearance:none;-webkit-appearance:none}
+body .ml-mdc-select.mdc-select .mdc-select__ripple::before,body .ml-mdc-select.mdc-select .mdc-select__ripple::after{background-color:var(--control-accent)}
