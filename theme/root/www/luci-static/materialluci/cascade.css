@@ -678,3 +678,7 @@ body #view .ml-chain-scroll>h4{margin:16px 0 10px;line-height:1.5}
 body .cbi-value-field .cbi-dropdown:not(.btn):not(.cbi-button){min-height:48px;vertical-align:top;font:inherit;text-shadow:none}
 body .cbi-value-field .cbi-dropdown:not(.btn):not(.cbi-button)>ul:not(.dropdown){min-height:48px;align-items:center}
 body .cbi-dropdown:not(.btn):not(.cbi-button)>ul>li{font:inherit;text-shadow:none}
+
+@media(max-width:599px),(pointer:coarse){
+ body .ml-text-field.mdc-text-field--filled>.mdc-text-field__input{font-size:16px}
+}
