@@ -250,7 +250,7 @@
   // are layout containers; only their leaf content groups own surfaces.
   main.classList.remove("ml-card-surface");
   main.querySelectorAll(".ml-card-surface").forEach(el=>el.classList.remove("ml-card-surface"));
-  const candidates=[...main.querySelectorAll(".cbi-section,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab]")].filter(section=>!section.closest("#ml-appearance,.modal,.cbi-value,table,.table"));
+  const candidates=[...main.querySelectorAll(".cbi-section,fieldset,section:not(.cbi-map):not(.ml-group),.network-status-table,.cbi-map > [data-tab]")].filter(section=>!section.closest("#ml-appearance,.modal,.cbi-value,table,.table"));
   for(const section of candidates){
    if(candidates.some(child=>child!==section&&section.contains(child)))continue;
    section.classList.add("ml-card-surface");

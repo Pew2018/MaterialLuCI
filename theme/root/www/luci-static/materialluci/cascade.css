@@ -1,6 +1,6 @@
 @import url("base.css");
 /* Classic Material visual language; LuCI business layout remains authoritative. */
-:root{--page:#fff;--surface:#fff;--card:#fff;--ink:#212121;--muted:#707070;--disabled:#bdbdbd;--divider:rgba(0,0,0,.06);--log:#f5f5f5;--danger:#b3261e;--overlay:rgba(0,0,0,.38);--ripple-opacity:.14;--inset-bottom:env(safe-area-inset-bottom,0px);--inset-top:env(safe-area-inset-top,0px);--seed:#42a5f5;--accent-ink:#006db8;--control-accent:#078ae7;--control-strong:#006db8;--primary-surface:#1976d2;--on-primary:#fff;--action-fill:#1976d2;--on-accent:#fff;--action-tonal:#e4f2fe;--on-action-tonal:#006ab3;--nav-icon:#078ae7;--nav-label:#006db8;--switch-thumb:#078ae7;--switch-track:rgba(7,138,231,.5)}
+:root{--page:#fafafa;--surface:#fff;--card:#fff;--ink:#212121;--muted:#707070;--disabled:#bdbdbd;--divider:rgba(0,0,0,.06);--log:#f5f5f5;--danger:#b3261e;--overlay:rgba(0,0,0,.38);--ripple-opacity:.14;--inset-bottom:env(safe-area-inset-bottom,0px);--inset-top:env(safe-area-inset-top,0px);--seed:#42a5f5;--accent-ink:#006db8;--control-accent:#078ae7;--control-strong:#006db8;--primary-surface:#1976d2;--on-primary:#fff;--action-fill:#1976d2;--on-accent:#fff;--action-tonal:#e4f2fe;--on-action-tonal:#006ab3;--nav-icon:#078ae7;--nav-label:#006db8;--switch-thumb:#078ae7;--switch-track:rgba(7,138,231,.5)}
 :root[data-theme=dark]{--page:#121212;--surface:#212121;--card:#212121;--ink:rgba(255,255,255,.87);--muted:rgba(255,255,255,.60);--disabled:rgba(255,255,255,.38);--divider:rgba(255,255,255,.055);--log:#1e1e1e;--danger:#ffb4ab;--overlay:rgba(0,0,0,.48);--ripple-opacity:.18}
 
 :root{--sidebar-width:248px;--toolbar-height:56px;--hover:rgba(0,0,0,.045);--pressed:rgba(0,0,0,.09);--ml-vv-height:100dvh;--ml-vv-width:100vw;--ml-vv-top:0px;--ml-vv-left:0px}
@@ -30,7 +30,7 @@ body button.ml-icon-button{width:48px;height:48px;min-width:48px;min-height:48px
 #indicators{font-size:11px;display:flex;gap:4px;flex:none}
 #indicators [data-indicator]{text-shadow:none;white-space:nowrap;border-radius:2px;padding:2px 4px;background:var(--log);color:var(--muted)!important}
 .ml-layout{display:grid;grid-template-columns:var(--sidebar-width) minmax(0,1fr);align-items:start}
-.ml-sidebar{position:sticky;top:56px;height:calc(100dvh - 56px);overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border-right:1px solid var(--divider);padding:12px 0;z-index:11}
+.ml-sidebar{position:sticky;top:56px;height:calc(100dvh - 56px);overflow-y:auto;overscroll-behavior:contain;background:var(--page);border-right:1px solid rgba(0,0,0,.12);padding:12px 0;z-index:11}
 .ml-sidebar-heading{display:flex;align-items:center;justify-content:space-between;min-height:40px;padding:0 20px 8px;color:var(--muted);font-size:13px}
 #ml-drawer-close,#ml-menu-button{display:none}
 .ml-nav-row{display:flex;align-items:stretch;position:relative;overflow:hidden;isolation:isolate}.ml-nav-row-action{cursor:pointer}.ml-nav-row-action .ml-nav-parent{position:relative;z-index:1}
@@ -57,7 +57,7 @@ body:not(.modal-overlay-active):not(.ml-dialog-open) #page-content{padding-botto
 #maincontent>form{margin:0}
 fieldset{border:0;padding:0;margin:0 0 16px;min-width:0}
 .cbi-map>.cbi-section+.cbi-section,.cbi-map>fieldset+fieldset{margin-top:16px;border-top:1px solid var(--divider)}
-:root[data-cards=true]{--page:#eee}
+:root[data-cards=true]{--page:#fafafa}
 :root[data-theme=dark][data-cards=true]{--page:#121212}
 :root[data-cards=true] .ml-card-surface{background:var(--card);padding:0 18px 16px;margin:0 0 16px;border:1px solid var(--divider);border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
 :root[data-theme=dark][data-cards=true] .ml-card-surface{box-shadow:none}
@@ -377,3 +377,21 @@ body .ml-mode-option[aria-checked=true]{background:var(--action-tonal);color:var
  #ml-appearance .ml-mode-options{width:100%}
  body .ml-mode-option{flex:1 1 auto}
 }
+
+/* Keep the desktop navigation and content on one canvas. Content groups,
+   rather than nested badges, carry the optional card surface. */
+:root[data-theme=dark] .ml-sidebar{border-right-color:rgba(255,255,255,.12)}
+#maincontent .ifacebox,#maincontent .ifacebadge{
+ background-color:transparent!important;background-image:none!important;
+ box-shadow:none!important;text-shadow:none!important
+}
+#maincontent .ifacebox{border-color:var(--divider)}
+#maincontent .ifacebox .ifacebox-body{background:transparent!important}
+#maincontent .ifacebadge{border-color:transparent!important;padding:2px}
+#maincontent .network-status-table{background:transparent!important}
+body[data-page$="-load"] #view div[style*="background:#fff"]{
+ background:var(--card)!important;border:1px solid var(--divider)!important
+}
+body[data-page$="-load"] #view svg line[style*="stroke:black"]{stroke:var(--divider)!important}
+body[data-page$="-load"] #view svg text{fill:var(--muted)!important;text-shadow:none!important}
+:root[data-cards=true] .ml-card-surface :is(.ifacebox,.ifacebadge){background:transparent!important}
