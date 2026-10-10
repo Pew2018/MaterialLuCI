@@ -98,9 +98,33 @@ export async function verifyUpstreamPages(browser,name,base){
      return {color:s.color,fill:s.webkitTextFillColor,opacity:s.opacity};
     });
     const muted=await page.evaluate(()=>{const p=document.createElement("span");p.style.color="var(--muted)";document.body.append(p);const c=getComputedStyle(p).color;p.remove();return c;});
-    assert.equal(state.color,muted,"placeholder color in "+mode);
-    assert.equal(state.fill,muted,"WebKit placeholder fill in "+mode);
-    assert.equal(state.opacity,"1");
+    if(name==="chromium"){
+     assert.equal(state.color,muted,"placeholder color in "+mode);
+     assert.equal(state.fill,muted,"placeholder fill in "+mode);
+     assert.equal(state.opacity,"1");
+    }else{
+     // WebKit getComputedStyle(::placeholder) returns the input style in
+     // this engine. Verify painted glyph pixels instead of that fallback.
+     const saved=await input.evaluate(el=>{const value=el.value;el.value="";el.blur();return value;});
+     const bytes=await input.screenshot({animations:"disabled"});
+     await input.evaluate((el,value)=>{el.value=value;},saved);
+     const painted=await page.evaluate(async({data,mode})=>{
+      const img=new Image();img.src=data;await img.decode();
+      const canvas=document.createElement("canvas");canvas.width=img.width;canvas.height=img.height;
+      const ctx=canvas.getContext("2d");ctx.drawImage(img,0,0);
+      const pixels=ctx.getImageData(0,0,img.width,img.height).data,levels=[];
+      const background=mode==="dark"?30:255;
+      for(let y=4;y<img.height-4;y++)for(let x=2;x<img.width-2;x++){
+       const i=(y*img.width+x)*4,r=pixels[i],g=pixels[i+1],b=pixels[i+2];
+       if(Math.abs(r-g)<4&&Math.abs(g-b)<4&&Math.abs(r-background)>20)levels.push(r);
+      }
+      if(!levels.length)return null;
+      return mode==="dark"?Math.max(...levels):Math.min(...levels);
+     },{data:"data:image/png;base64,"+bytes.toString("base64"),mode});
+     // The strongest glyph pixels must be the muted placeholder, not the
+     // brighter/darker ink of a filled input; allow antialiasing differences.
+     assert(painted!==null&&painted>=(mode==="dark"?145:95)&&painted<=(mode==="dark"?185:140),"painted WebKit placeholder "+mode+": "+painted);
+    }
    }
    await field.evaluate(el=>el.disabled=true);
    const disabled=await page.evaluate(()=>{const p=document.createElement("span");p.style.color="var(--disabled)";document.body.append(p);const c=getComputedStyle(p).color;p.remove();return c;});
@@ -112,6 +136,8 @@ export async function verifyUpstreamPages(browser,name,base){
      const row=page.locator('.cbi-value[data-field$=".'+suffix+'"]');
      const label=await row.locator(".cbi-value-title").boundingBox(),anchor=await row.locator(".mdc-select__anchor").boundingBox();
      assert(Math.abs(label.y+label.height/2-anchor.y-anchor.height/2)<1,"language/design label center");
+     const text=await row.locator(".mdc-select__selected-text").boundingBox();
+     assert(Math.abs(text.y+text.height/2-anchor.y-anchor.height/2)<1,"language/design selected text center");
     }
    }
    await field.scrollIntoViewIfNeeded();
