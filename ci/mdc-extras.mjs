@@ -34,7 +34,7 @@ export async function verifyMDCExtras(browser,name,base){
  await page.evaluate(()=>{extraSelect.disabled=false;extraSelect.value="auto";});
  await page.waitForFunction(()=>!extraSelect._mlMdcSelect.disabled&&extraSelect._mlMdcSelect.value==="auto");
  await anchor.focus();await page.keyboard.press("Enter");await page.waitForSelector(".ml-select-menu.mdc-menu-surface--open");
- await page.keyboard.press("Escape");await page.waitForTimeout(160);assert(await anchor.evaluate(el=>el===document.activeElement),"select did not restore focus");
+ await page.keyboard.press("Escape");await page.waitForFunction(()=>document.querySelector("#real-select .mdc-select__anchor")===document.activeElement);assert(await anchor.evaluate(el=>el===document.activeElement),"select did not restore focus");
  // Native validity and original form-reset behavior remain authoritative.
  await page.evaluate(()=>{extraSelect.required=true;extraSelect.value="";});
  await page.waitForFunction(()=>extraSelect._mlMdcSelect.selectedIndex===-1);

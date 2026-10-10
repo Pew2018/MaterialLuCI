@@ -15,6 +15,14 @@
   const menu=new MDCMenu(root);menu.setIsHoisted(true);menu.setFixedPosition(true);
   menu.wrapFocus=true;menu.hasTypeahead=true;return menu;
  }
+ function escapeFocus(popup,anchor){
+  let restore=false;
+  popup.addEventListener("keydown",event=>{if(event.key==="Escape")restore=true;},true);
+  popup.addEventListener("MDCMenuSurface:closed",()=>{
+   if(restore&&anchor.isConnected&&!anchor.closest('[disabled],[aria-disabled="true"]')&&!document.body.classList.contains("modal-overlay-active"))anchor.focus({preventScroll:true});
+   restore=false;
+  });
+ }
  function simple(select){return !select.multiple&&select.size<=1&&!select.querySelector("optgroup")&&!select.closest(".cbi-dropdown,.cbi-dynlist")&&!select.hasAttribute("data-ml-native");}
  function hook(object,key,queue,restore){
   const old=Object.getOwnPropertyDescriptor(object,key);let proto=object,desc=old;
@@ -69,7 +77,7 @@
   }};
   sync();
   instance=new MDCSelect(root,undefined,undefined,undefined,undefined,el=>{menu=portalMenu(el);return menu;});
-  popup.addEventListener("MDCMenuSurface:opening",()=>{anchorRect=anchor.getBoundingClientRect();});
+  popup.addEventListener("MDCMenuSurface:opening",()=>{anchorRect=anchor.getBoundingClientRect();});escapeFocus(popup,anchor);
   instance.useDefaultValidation=false;root._mlMdcSelect=instance;select._mlMdcSelect=instance;selects.set(select,entry);
   root.addEventListener("MDCSelect:change",()=>{
    if(syncing||select.disabled)return;
@@ -94,10 +102,11 @@
   const popup=make("div","mdc-menu mdc-menu-surface ml-action-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","menu");popup.append(list);
   const menu=portalMenu(popup);popup.id="ml-menu-"+(++sequence);owner._mlMdcMenu=menu;
   const oldRole=arrow.getAttribute("role"),oldTab=arrow.getAttribute("tabindex");arrow.setAttribute("role","button");arrow.tabIndex=0;
+  escapeFocus(popup,arrow);
   arrow.setAttribute("aria-label",document.documentElement.lang.startsWith("zh")?"更多应用选项":"More apply options");arrow.setAttribute("aria-haspopup","menu");arrow.setAttribute("aria-controls",popup.id);arrow.setAttribute("aria-expanded","false");
   function open(event){
-   if(owner.hasAttribute("disabled")||owner.getAttribute("aria-disabled")==="true")return;
    event?.preventDefault();event?.stopImmediatePropagation();
+   if(owner.hasAttribute("disabled")||owner.getAttribute("aria-disabled")==="true")return;
    if(menu.open){menu.open=false;arrow.setAttribute("aria-expanded","false");return;}
    const rows=[...ul.children].filter(li=>li.tagName==="LI");
    list.replaceChildren(...rows.map(li=>{const el=item(li.textContent,li.getAttribute("data-value")||"",li.hasAttribute("unselectable")||li.getAttribute("aria-disabled")==="true",li.hasAttribute("selected"));el.setAttribute("role","menuitem");el._nativeChoice=li;return el;}));
@@ -163,7 +172,7 @@
  document.addEventListener("click",event=>{if(event.target.closest("#ml-appearance .ml-swatch-item,#ml-appearance .ml-mode-option"))feedback(document.documentElement.lang.startsWith("zh")?"已保存此浏览器的主题设置":"Theme preferences saved in this browser");});
  window.addEventListener("pagehide",event=>{if(!event.persisted){stopped=true;observer.disconnect();for(const e of [...selects.values()])e.destroy();for(const e of [...actions.values()])e.destroy();for(const e of [...tips.values()])e.destroy();if(notice){clearTimeout(notice.timer);notice.instance.destroy();notice.root.remove();notice=null;}}});
  window.MaterialExtras={enhance,feedback,menu(anchor,options,value,onChange){
-  const popup=make("div","mdc-menu mdc-menu-surface ml-action-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","menu");list.append(...options.map(([key,label,disabled])=>{const li=item(label,key,disabled,key===value);li.setAttribute("role","menuitem");return li;}));popup.append(list);const menu=portalMenu(popup);menu.setAnchorElement(anchor);
+  const popup=make("div","mdc-menu mdc-menu-surface ml-action-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","menu");list.append(...options.map(([key,label,disabled])=>{const li=item(label,key,disabled,key===value);li.setAttribute("role","menuitem");return li;}));popup.append(list);const menu=portalMenu(popup);escapeFocus(popup,anchor);menu.setAnchorElement(anchor);
   menu.items.forEach((li,i)=>menu.setEnabled(i,li.getAttribute("aria-disabled")!=="true"));
   popup.addEventListener("MDCMenu:selected",event=>onChange(event.detail.item.dataset.value),{once:true});
   popup.addEventListener("MDCMenuSurface:closed",()=>{menu.destroy();popup.remove();},{once:true});menu.open=true;return menu;
