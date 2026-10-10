@@ -190,8 +190,15 @@
    table.parentNode.insertBefore(wrapper,table);wrapper.append(table);
   }
   // Mark semantic page sections for optional card surfaces; never wrap rows or tables.
-  const cardCandidates=new Set([...(root.matches?.("#maincontent")?[root]:[]),...root.querySelectorAll(":scope > section,:scope > fieldset,:scope > .cbi-map > .cbi-section,:scope > .cbi-map > fieldset,:scope > .cbi-map > [data-tab]")]);
-  for(const section of cardCandidates)if(!section.classList.contains("ml-toolbar")&&!section.classList.contains("ml-sidebar"))section.classList.add("ml-card-surface");
+  // Re-evaluate semantic sections after dynamic rendering. A map and #view
+  // are layout containers; only their leaf content groups own surfaces.
+  main.classList.remove("ml-card-surface");
+  main.querySelectorAll(".ml-card-surface").forEach(el=>el.classList.remove("ml-card-surface"));
+  const candidates=[...main.querySelectorAll(".cbi-section,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab]")];
+  for(const section of candidates){
+   if(section.closest("#ml-appearance,.modal,.cbi-value,table,.table")||section.querySelector(".cbi-section,fieldset,section:not(.ml-group)"))continue;
+   section.classList.add("ml-card-surface");
+  }
 
   // Preserve zone/status background semantics, with readable foreground in either mode.
   for(const head of all('.ifacebox-head[style*="background"]')){
