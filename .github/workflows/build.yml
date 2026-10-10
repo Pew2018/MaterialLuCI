@@ -59,7 +59,7 @@ jobs:
         run: |
           mkdir -p dist/previews
           git rev-parse HEAD > dist/previews/commit.txt
-          sha256sum build/stage/www/luci-static/materialluci/* > dist/previews/assets.sha256
+          sha256sum build/stage/www/luci-static/materialluci/*.js build/stage/www/luci-static/materialluci/*.css build/stage/www/luci-static/materialluci/icons/*.svg > dist/previews/assets.sha256
           node ci/browser.mjs
       - name: Upload the single IPK (GitHub downloads artifacts as ZIP)
         if: success()
