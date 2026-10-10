@@ -46,7 +46,7 @@
   const icon=make("span","mdc-select__dropdown-icon");icon.setAttribute("aria-hidden","true");
   icon.innerHTML='<svg class="mdc-select__dropdown-icon-graphic" viewBox="7 10 10 5" focusable="false"><polygon class="mdc-select__dropdown-icon-inactive" points="7 10 12 15 17 10"></polygon><polygon class="mdc-select__dropdown-icon-active" points="7 15 12 10 17 15"></polygon></svg>';
   anchor.append(make("span","mdc-select__ripple"),container,icon,make("span","mdc-line-ripple"));
-  const popup=make("div","mdc-select__menu mdc-menu mdc-menu-surface ml-select-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","listbox");popup.append(list);root.append(anchor,popup);
+  const popup=make("div","mdc-select__menu mdc-menu mdc-menu-surface ml-select-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","listbox");list.tabIndex=-1;popup.append(list);root.append(anchor,popup);
   // Sibling decoration preserves ui.Select.node.firstChild and original label.
   select.after(root);
   const oldTab=select.getAttribute("tabindex"),oldHidden=select.getAttribute("aria-hidden"),restore=[],optionHooks=new WeakSet();
@@ -104,7 +104,7 @@
   if(actions.has(owner)||owner.hasAttribute("multiple")||owner.querySelector("input:not([type=hidden]),script,select"))return;
   const arrow=owner.querySelector(":scope > .open"),ul=owner.querySelector(":scope > ul:not(.preview)");
   if(!arrow||!ul)return;
-  const popup=make("div","mdc-menu mdc-menu-surface ml-action-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","menu");popup.append(list);
+  const popup=make("div","mdc-menu mdc-menu-surface ml-action-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","menu");list.tabIndex=-1;popup.append(list);
   const menu=portalMenu(popup);let ownerRect=null;popup.addEventListener("MDCMenuSurface:opening",()=>{ownerRect=owner.getBoundingClientRect();});popup.id="ml-menu-"+(++sequence);owner._mlMdcMenu=menu;
   const oldRole=arrow.getAttribute("role"),oldTab=arrow.getAttribute("tabindex");arrow.setAttribute("role","button");arrow.tabIndex=0;
   escapeFocus(popup,arrow);

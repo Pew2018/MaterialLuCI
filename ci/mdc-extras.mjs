@@ -64,6 +64,10 @@ export async function verifyMDCExtras(browser,name,base){
  const arrow=page.locator("#extras-action>.open");
  await arrow.click();await page.waitForSelector(".ml-action-menu.mdc-menu-surface--open");await arrow.click();await page.waitForSelector(".ml-action-menu.mdc-menu-surface--open",{state:"detached"});
  await arrow.focus();await page.keyboard.press("Enter");await page.waitForSelector(".ml-action-menu.mdc-menu-surface--open");
+ await page.waitForFunction(()=>!!document.activeElement.closest(".ml-action-menu"));
+ await page.keyboard.press("ArrowDown");assert.equal(await page.evaluate(()=>document.activeElement.dataset.value),"apply");
+ await page.keyboard.press("ArrowDown");assert.equal(await page.evaluate(()=>document.activeElement.dataset.value),"unchecked");
+ await page.keyboard.press("ArrowDown");assert.equal(await page.evaluate(()=>document.activeElement.dataset.value),"apply","keyboard did not skip disabled menu item");
  await page.keyboard.press("Escape");await page.waitForTimeout(160);assert(await arrow.evaluate(el=>el===document.activeElement));
  for(const width of [1440,390]){
   await page.setViewportSize({width,height:844});await arrow.scrollIntoViewIfNeeded();await arrow.click();
@@ -76,7 +80,9 @@ export async function verifyMDCExtras(browser,name,base){
   assert.equal(await page.evaluate(()=>extraAction.getValue()),width===1440?"apply":"unchecked");
   await page.locator('.ml-action-menu.mdc-menu-surface--open [data-value="unchecked"]').click();await page.waitForTimeout(160);
  }
- assert.deepEqual(await page.evaluate(()=>actionCalls),["unchecked","unchecked"],"original action callbacks changed");
+ await arrow.focus();await page.keyboard.press("Enter");await page.waitForFunction(()=>!!document.activeElement.closest(".ml-action-menu"));
+ await page.keyboard.press("ArrowDown");await page.keyboard.press("ArrowDown");await page.keyboard.press("Enter");await page.waitForTimeout(160);
+ assert.deepEqual(await page.evaluate(()=>actionCalls),["unchecked","unchecked","unchecked"],"original action callbacks changed");
  assert(await page.evaluate(()=>document.getElementById("extras-action").firstChild===originalActionFirst&&document.getElementById("extras-action").lastElementChild===originalActionLast));
  await page.evaluate(()=>document.getElementById("extras-action").setAttribute("disabled",""));
  await arrow.click({force:true});assert.equal(await page.locator(".ml-action-menu.mdc-menu-surface--open").count(),0);
