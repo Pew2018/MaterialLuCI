@@ -6,7 +6,11 @@ export async function verifySixUI(browser,name,base){
  await page.goto(base);await page.waitForFunction(()=>window.fixtureCheckbox&&document.body.dataset.mlMenus==="ready");
  // An initially paused LuCI indicator has no native handler; the theme must
  // make that same indicator resume polling without reloading the page.
- await page.evaluate(async()=>{const poll=await L.require("poll");window.testPoll=poll;poll.stop();});
+ await page.evaluate(async()=>{
+  const poll=await L.require("poll"),ui=await L.require("ui");window.testPoll=poll;poll.stop();
+  document.querySelector('#indicators [data-indicator="poll-status"]').remove();
+  ui.showIndicator("poll-status","Paused",null,"inactive");
+ });
  const poll=page.locator('#indicators [data-indicator="poll-status"]');
  await page.waitForFunction(()=>document.querySelector(".ml-poll-action")?.getAttribute("aria-label")==="恢复自动刷新");
  await poll.click();assert.equal(await page.evaluate(()=>testPoll.active()),true);
