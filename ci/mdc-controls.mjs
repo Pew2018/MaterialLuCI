@@ -34,6 +34,7 @@ export async function verifyMDCControls(browser,name,base){
  });
  await page.waitForFunction(()=>document.querySelector("#real-check")._mlMdcSelection&&document.querySelector("#real-radio .cbi-radio")._mlMdcSelection);
  assert(await page.evaluate(()=>originalRadioInputs.every(input=>input.isConnected)&&originalRadioChildren.every((node,i)=>document.querySelector("#real-radio .cbi-radio").childNodes[i]===node)));
+ console.log(name+": selection raw CSS",await page.evaluate(async()=>{const s=await(await fetch(document.querySelector('link[href*="cascade.css"]').href)).text(),i=s.indexOf("body .ml-mdc-selection{");return s.slice(i-120,i+2300);}));
  console.log(name+": selection CSS",await page.evaluate(()=>{const results=[];function visit(rules){for(const r of rules){if(r.selectorText?.includes("ml-mdc-selection"))results.push(r.cssText);if(r.cssRules)visit(r.cssRules);}}for(const sheet of document.styleSheets)visit(sheet.cssRules);return results;}));
  console.log(name+": radio hit geometry",await page.locator("#real-radio .cbi-radio").nth(1).evaluate(el=>[el,...el.children].map(n=>{const r=n.getBoundingClientRect(),s=getComputedStyle(n);return {tag:n.tagName,cls:n.className,x:r.x,y:r.y,width:r.width,height:r.height,position:s.position,display:s.display,margin:s.margin,padding:s.padding,pointerEvents:s.pointerEvents,transform:s.transform};})));
  await page.screenshot({path:"dist/previews/mdc-radio-"+name+".png"});

@@ -1,7 +1,7 @@
 "use strict";
 /* Official MDC presentation. Original LuCI nodes and callbacks own data. */
 (function(){
- const {MDCRipple,MDCMenu,MDCList,MDCSelect,MDCSnackbar,MDCTooltip}=MaterialMDCControls;
+ const {MDCRipple,MDCMenu,DefaultFocusState,MDCList,MDCSelect,MDCSnackbar,MDCTooltip}=MaterialMDCControls;
  const selects=new Map(),actions=new Map(),tips=new Map();let sequence=0,notice=null,stopped=false;
  const make=(tag,cls,text)=>{const el=document.createElement(tag);el.className=cls;if(text!=null)el.textContent=text;return el;};
  function item(label,value,disabled=false,selected=false){
@@ -15,7 +15,9 @@
  function portalMenu(root){
   root.classList.add("ml-mdc-menu");document.body.append(root);
   const menu=new MDCMenu(root,undefined,undefined,el=>{const list=new MDCList(el);list.disabledItemsFocusable=false;return list;});menu.setIsHoisted(true);menu.setFixedPosition(true);
-  menu.wrapFocus=true;menu.hasTypeahead=true;root._mlMdcMenu=menu;return menu;
+  menu.wrapFocus=true;menu.hasTypeahead=true;root._mlMdcMenu=menu;
+  if(root.classList.contains('ml-action-menu')){menu.setDefaultFocusState(DefaultFocusState.NONE);root.addEventListener('MDCMenuSurface:opened',()=>{if(menu.open)root.querySelector('.mdc-deprecated-list')?.focus({preventScroll:true});});}
+  return menu;
  }
  function escapeFocus(popup,anchor){
   let restore=false;
