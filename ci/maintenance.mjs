@@ -23,7 +23,7 @@ export async function verifyMaintenance(browser,name,base){
    await legacy.evaluate(()=>{
     const main=document.getElementById("maincontent");
     window.L.env.dispatchpath=[];window.L.env.requestpath=[];
-    main.dataset.mlPage="";
+    if(main.dataset.mlPage!=="reboot")throw new Error("body[data-page] route fallback must be identified at startup");
     const title=document.createElement("h2");title.textContent="Reboot";
     const description=document.createElement("p");description.textContent="Restart the device and reconnect after it becomes available.";
     const rule=document.createElement("hr"),form=document.createElement("form"),action=document.createElement("input");
