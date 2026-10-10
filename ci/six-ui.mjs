@@ -38,6 +38,21 @@ export async function verifySixUI(browser,name,base){
  await parent.dispatchEvent("pointerup",{pointerId:8,isPrimary:true,button:0,clientX:40,clientY:250,pointerType:"touch"});
  assert.equal(await parent.locator(".tap-ripple").count(),0);
  await page.keyboard.press("Escape");
+ // Appearance settings open by default; desktop reflows and remains expanded.
+ const appearance=page.locator("#ml-appearance-entry");
+ assert(await appearance.evaluate(el=>el.open),"appearance settings should start expanded");
+ assert.equal(await page.locator("#ml-appearance h2").allTextContents().then(xs=>xs.some(x=>x==="关于"||x==="About")),false);
+ if(name==="chromium")await page.screenshot({path:"dist/previews/appearance-mobile.png"});
+ await page.setViewportSize({width:1280,height:900});
+ await page.waitForFunction(()=>document.querySelector("#ml-appearance-entry")?.open);
+ assert.equal(await page.locator("#ml-appearance> .ml-group").evaluate(el=>getComputedStyle(el.parentElement).display),"grid");
+ assert.equal(await page.locator("#ml-appearance-entry>summary").evaluate(el=>getComputedStyle(el).display),"none");
+ assert.equal(await page.locator(".ml-mode-option").count(),3);
+ const desktopBg=await page.locator(".ml-sidebar").evaluate(el=>getComputedStyle(el).backgroundColor);
+ const canvasBg=await page.locator("body").evaluate(el=>getComputedStyle(el).backgroundColor);
+ assert.equal(desktopBg,canvasBg,"desktop sidebar and content canvas should share one background");
+ if(name==="chromium")await page.screenshot({path:"dist/previews/appearance-desktop.png"});
+ await page.setViewportSize({width:390,height:844});
  // Assert official instance state, native events, external setters, reset and disposal.
  const flag=page.locator("#legacy-switch + .mdc-switch");
  await page.evaluate(()=>{window.fieldEvents={click:0,change:0};const input=document.getElementById("legacy-switch");for(const key of ["click","change"])input.addEventListener(key,()=>fieldEvents[key]++);});
@@ -63,6 +78,18 @@ export async function verifySixUI(browser,name,base){
  const rate=page.locator("#rate-fixture .mdc-switch");await rate.click();
  assert.equal(await page.locator('#rate-fixture input').isChecked(),true,"label default double-toggled field");
  assert.equal(await rate.getAttribute("aria-checked"),"true");
+ // Exercise the pinned LuCI load graph's inline-white wrapper in its route scope.
+ await page.evaluate(()=>{
+  document.body.dataset.page="admin-status-load";
+  let view=document.getElementById("view");
+  if(!view){view=document.createElement("div");view.id="view";document.getElementById("maincontent").append(view);}
+  view.insertAdjacentHTML("afterbegin",'<div id="graph-fixture" style="width:100%;height:120px;border:1px solid #000;background:#fff"><svg><line style="stroke:black;stroke-width:1"/><text style="fill:#eee">Graph label</text></svg></div>');
+ });
+ const graph=page.locator("#graph-fixture");
+ assert.equal(await graph.evaluate(el=>getComputedStyle(el).backgroundColor),"rgb(255, 255, 255)");
+ assert.notEqual(await graph.evaluate(el=>getComputedStyle(el).borderTopColor),"rgb(0, 0, 0)");
+ assert.notEqual(await graph.locator("line").evaluate(el=>getComputedStyle(el).stroke),"rgb(0, 0, 0)");
+ if(name==="chromium")await page.screenshot({path:"dist/previews/realtime-chart-light.png"});
  for(const theme of ["light","dark"])for(const cards of [true,false]){
   await page.evaluate(({theme,cards})=>{MaterialAppearance.set("mode",theme);MaterialAppearance.set("cards",cards);}, {theme,cards});
   assert.equal(await page.locator("#maincontent").evaluate(el=>el.classList.contains("ml-card-surface")),false);
@@ -71,7 +98,9 @@ export async function verifySixUI(browser,name,base){
   if(name==="chromium"&&cards){await page.locator("#rate-fixture").scrollIntoViewIfNeeded();await page.screenshot({path:"dist/previews/rate-"+theme+".png"});}
  }
  await page.evaluate(()=>{MaterialAppearance.set("toolbar",true);MaterialAppearance.set("cards",true);});
- assert.equal(await page.locator('meta[name="theme-color"],meta[name="apple-mobile-web-app-status-bar-style"]').count(),0);
+ assert.equal(await page.locator('meta[name="theme-color"]').count(),2);
+ assert.equal(await page.locator('meta[name="apple-mobile-web-app-status-bar-style"]').count(),0);
+ assert.deepEqual(await page.locator('meta[name="theme-color"]').evaluateAll(nodes=>nodes.map(n=>n.content)),["#FAFAFA","#121212"]);
  assert(!await page.locator('meta[name="viewport"]').getAttribute("content").then(v=>v.includes("viewport-fit=cover")));
  assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),56);
  const inventory=await page.locator('input[type="checkbox"]').evaluateAll(nodes=>nodes.map(input=>({

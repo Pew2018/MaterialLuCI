@@ -2,7 +2,7 @@
 /* MDC busy indication with explicit task lifecycles. LuCI owns all business
    operations; this module only mounts and removes presentation feedback. */
 (function(){
- if(!window.MaterialMDC?.MDCLinearProgress)return;
+ if(!window.MaterialMDC?.MDCLinearProgress){console.error("MaterialLuCI: local MDCLinearProgress failed to load; view progress cannot start.");document.documentElement.dataset.mlProgressError="true";return;}
  let overlay=null,modal=null,root=null,component=null,frame=0,resizeObserver=null;
  const tasks=new Map();let taskSeq=0;
  const t=(zh,en)=>document.documentElement.lang.startsWith("zh")?zh:en;
@@ -26,16 +26,16 @@
  function failView(message){
   if(!viewTask)return;
   viewTask.stop();viewTask=null;
-  const busy=viewScope?.querySelector(":scope > .spinning");
+  const busy=viewScope?.querySelector(".spinning");
   if(busy){busy.classList.remove("spinning");busy.setAttribute("role","alert");busy.textContent=t("视图载入失败：","View loading failed: ")+(message||t("请刷新页面重试。","Reload the page to retry."));}
  }
  function syncView(records=[]){
   const scope=document.getElementById("view");
-  if(viewTask&&(!scope||scope!==viewScope||!scope.isConnected||!scope.querySelector(":scope > .spinning"))){viewTask.stop();viewTask=null;}
+  if(viewTask&&(!scope||scope!==viewScope||!scope.isConnected||!scope.querySelector(".spinning"))){viewTask.stop();viewTask=null;}
   // LuCI.error reports rejected load/render promises via a danger notification.
   const error=records.flatMap(r=>[...r.addedNodes]).filter(n=>n.nodeType===1).map(n=>n.matches(".alert-message.danger")?n:n.querySelector(".alert-message.danger")).find(Boolean);
   if(error&&viewTask){failView(error.textContent.trim());return;}
-  const busy=scope?.querySelector(":scope > .spinning"),determinate=scope?.querySelector('.cbi-progressbar,[role="progressbar"][aria-valuenow]');
+  const busy=scope?.querySelector(".spinning"),determinate=[...(scope?.querySelectorAll('.cbi-progressbar,[role="progressbar"][aria-valuenow]')||[])].some(el=>!busy?.contains(el));
   if(viewTask&&determinate){viewTask.stop();viewTask=null;}
   if(busy&&!determinate&&!viewTask){viewScope=scope;viewTask=startTask(t("正在载入视图","Loading view"),{scope});viewTaskNode();}
  }
