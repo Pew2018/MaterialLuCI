@@ -14,7 +14,7 @@
  function replaceItems(list,items){clearItems(list);list.replaceChildren(...items);for(const li of items){li._mlMdcRipple=new MDCRipple(li);li._mlMdcRipple.disabled=li.getAttribute("aria-disabled")==="true";}}
  function portalMenu(root){
   root.classList.add("ml-mdc-menu");document.body.append(root);
-  const menu=new MDCMenu(root,undefined,el=>{const list=new MDCList(el);list.disabledItemsFocusable=false;return list;});menu.setIsHoisted(true);menu.setFixedPosition(true);
+  const menu=new MDCMenu(root,undefined,undefined,el=>{const list=new MDCList(el);list.disabledItemsFocusable=false;return list;});menu.setIsHoisted(true);menu.setFixedPosition(true);
   menu.wrapFocus=true;menu.hasTypeahead=true;root._mlMdcMenu=menu;return menu;
  }
  function escapeFocus(popup,anchor){
