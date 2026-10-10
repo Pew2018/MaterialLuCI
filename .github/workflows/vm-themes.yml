@@ -74,6 +74,7 @@ jobs:
             modules/luci-base/htdocs/luci-static/resources
             applications/luci-app-opkg/htdocs/luci-static/resources
             modules/luci-mod-status/htdocs/luci-static/resources
+            modules/luci-mod-system/htdocs/luci-static/resources
       - name: Compile actual packaged templates
         working-directory: source
         run: python3 ci/prepare.py

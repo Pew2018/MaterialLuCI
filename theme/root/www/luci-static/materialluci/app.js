@@ -248,6 +248,9 @@
   // Includes live status div-tables as well as legacy Lua CBI tables.
   const tables=new Set(all("table,.table"));const ancestor=root.closest?.("table,.table");if(ancestor)tables.add(ancestor);
   for(const table of tables){
+   // Firewall polling and jump links require heading.nextElementSibling and
+   // chain.lastElementChild to remain the original table. Scroll its host.
+   if(table.parentElement.matches("[data-chain]")){table.parentElement.classList.add("ml-chain-scroll");continue;}
    if(table.closest(".ml-table-scroll")||table.parentElement.closest("table,.table"))continue;
    const first=table.querySelector("tr,.tr"),cells=first?[...first.children].filter(c=>c.matches("td,th,.td,.th")).length:0;
    if(cells<3&&!table.classList.contains("cbi-section-table"))continue;
@@ -263,7 +266,7 @@
   }
   main.classList.remove("ml-card-surface");
   for(const svg of main.querySelectorAll("#view svg"))if(svg.querySelector("polyline,polygon"))svg.parentElement?.classList.add("ml-chart-surface");
-  const candidates=[...main.querySelectorAll(".cbi-section,.cbi-section-node,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table,.ml-chart-surface,#view > .ml-table-scroll,.cbi-map > .ml-table-scroll")]
+  const candidates=[...main.querySelectorAll(".cbi-section,.cbi-section-node,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table,#view [data-table],.ml-chart-surface,#view > .ml-table-scroll,.cbi-map > .ml-table-scroll")]
    .filter(section=>{
     const option=section.closest(".cbi-value");
     return !section.closest("#ml-appearance,.modal,table,.table")&&

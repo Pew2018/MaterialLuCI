@@ -123,8 +123,10 @@ for name in ("reboot","flash"):
  assert "'require view';" in source
  source=source.replace("'require view';","'require baseclass as view';",1)
  (view_dir/("materialluci-native-"+name+".js")).write_text(source)
+firewall=(status/"view/status/iptables.js").read_text().replace("'require view';","'require baseclass as view';",1)
+(view_dir/"materialluci-native-firewall.js").write_text(firewall)
 shutil.copy(ROOT/"ci/maintenance-view.js",view_dir/"materialluci-maintenance.js")
-for name in ("reboot","flash"):
+for name in ("reboot","flash","firewall"):
  maintenance_env=dict(env)
  maintenance_env["requestpath"]=["admin","system",name]
  maintenance_env["dispatchpath"]=["admin","system",name]

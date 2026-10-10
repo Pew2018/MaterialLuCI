@@ -3,6 +3,7 @@
 'require fs';
 'require view.materialluci-native-reboot as rebootRenderer';
 'require view.materialluci-native-flash as flashRenderer';
+'require view.materialluci-native-firewall as firewallRenderer';
 /* Real upstream renderers, deterministic data; no device RPC or writes. */
 return view.extend({
  render:function(){
@@ -13,6 +14,18 @@ return view.extend({
   fs.read=function(path){if(path==='/etc/sysupgrade.conf')return Promise.resolve('/etc/config/*\n');return Promise.reject(new Error('Unexpected fixture read: '+path));};
   fs.exec=function(){return Promise.reject(new Error('Device writes prohibited in maintenance fixture'));};
   fs.write=fs.exec;
+  if(window.maintenanceKind==='firewall'){
+   firewallRenderer.pollFirewallLists=function(){};
+   firewallRenderer.handleCounterReset=record;firewallRenderer.handleRestart=record;
+   window.firewallPreview=firewallRenderer;
+   requestAnimationFrame(function(){
+    for(var table of ['Filter','NAT']){
+     var nativeTable=firewallRenderer.createChainSection(false,table,'INPUT','ACCEPT',0,0);
+     firewallRenderer.updateChainSection(nativeTable,[]);
+    }
+   });
+   return firewallRenderer.render(false);
+  }
   if(window.maintenanceKind==='reboot')return rebootRenderer.render({network:[]});
   return flashRenderer.render([{type:'file'},'AX3000T',
    'mtd0: 00100000 00020000 "boot"\nmtd1: 02000000 00020000 "firmware"\nmtd2: 00200000 00020000 "rootfs_data"\n',
