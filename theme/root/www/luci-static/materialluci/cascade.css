@@ -536,3 +536,5 @@ body .ml-dialog-body.mdc-dialog__content{border:0}
 body .ml-mdc-feedback.mdc-button{display:inline-block;min-width:0}
 body .ml-sidebar .ml-mdc-feedback.mdc-button,body .ml-mdc-feedback:is(.ml-option,.ml-swatch-item){display:flex}
 body .ml-mdc-feedback:is(.cbi-button-negative,.cbi-button-remove,.cbi-input-remove){min-width:112px}
+
+body .ml-native-button.mdc-button:not(:disabled){display:inline-flex;align-items:center;justify-content:center;font:inherit;color:inherit;border-radius:2px}
