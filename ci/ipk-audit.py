@@ -59,6 +59,9 @@ if a.candidate:
  assert 'ml-view-progress' in wait and 'MDCLinearProgress' in wait
  assert 'ml-chart-surface' in css and 'body[data-page$="-load"]' not in css
  assert '<svg' in files[assets+"icons/pause.svg"].decode()
+ for rule in ["height:auto;min-height:0;flex:none;align-self:center","flex-grow:0","body #modal_overlay>.modal.alert-message","height:56px;padding-top:0","border-left-color:transparent"]:
+  assert rule in css, "missing packaged modal/toolbar/dropdown correction: "+rule
+ checks["modal_toolbar_dropdown_corrections_packaged"]=True
  checks["commit_and_all_resource_hashes_verified"]=True
 manifest={"source_sha":a.sha,"actions_run_id":a.run,"ipk":name,
  "ipk_sha256":hashlib.sha256(raw).hexdigest(),"checks":checks,
