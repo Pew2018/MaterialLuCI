@@ -113,8 +113,10 @@
      list.hidden=!open;toggle.setAttribute("aria-expanded",String(open));group.dataset.active=String(open);
     });
     const header=node("div",{class:"ml-nav-row ml-nav-row-action"},[toggle]);group.append(header);
+    // A parent row is only an expander. Preserve a distinct parent route
+    // as a clearly named child destination instead of a second group-title link.
     if(entry.url&&!children.some(child=>child.url===entry.url)){
-     const direct=node("a",{href:entry.url,class:"ml-nav-entry-link",text:entry.title});
+     const direct=node("a",{href:entry.url,class:"ml-nav-entry-link",text:t("概览","Overview")});
      if(entry.active&&!children.some(child=>child.active))direct.setAttribute("aria-current","page");
      list.append(direct);
     }
@@ -178,7 +180,11 @@
   const group=title=>{const g=node("section",{class:"ml-group"},[node("h2",{text:title})]);host.append(g);return g;};
   const general=group(t("界面","Appearance"));
   const modeLabels={system:t("跟随系统","System"),light:t("浅色","Light"),dark:t("深色","Dark")};
-  const mode=textButton(modeLabels[appearance.prefs.mode],()=>choose(t("显示模式","Display mode"),Object.entries(modeLabels),appearance.prefs.mode,v=>{appearance.set("mode",v);mode.firstChild.textContent=modeLabels[v];}),"ml-choice");
+  const mode=node("div",{class:"ml-mode-options",role:"radiogroup","aria-label":t("显示模式","Display mode")});
+  for(const [key,label] of Object.entries(modeLabels)){
+   const option=textButton(label,()=>{appearance.set("mode",key);mode.querySelectorAll("[role=radio]").forEach(item=>item.setAttribute("aria-checked",String(item===option)));},"ml-mode-option");
+   option.setAttribute("role","radio");option.setAttribute("aria-checked",String(key===appearance.prefs.mode));mode.append(option);
+  }
   general.append(row(t("显示模式","Display mode"),t("仅改变当前浏览器的界面外观。","Changes appearance in this browser only."),mode));
   general.append(prefSwitch("cards",t("分组卡片","Grouped cards"),t("为设置分组添加小圆角表面。","Use small cornered surfaces for groups.")));
   const palettes=[["OnePlus Classic",[["OnePlus Blue","#42A5F5"],["Golden","#CC6F4E"],["Lemon Yellow","#E6A545"],["Grass Green","#7DC22F"],["Charm Purple","#9575CD"],["Sky Blue","#26C6DA"],["Vigour Red","#F06292"],["Fashion Pink","#BA68C8"]]],["Material Colors",[["Blue","#2196F3"],["Teal","#009688"],["Green","#4CAF50"],["Red","#F44336"],["Orange","#FF9800"],["Purple","#9C27B0"],["Cyan","#00BCD4"],["Indigo","#3F51B5"],["Pink","#E91E63"],["Blue Grey","#607D8B"],["Deep Orange","#FF5722"],["Light Green","#8BC34A"]]]];
@@ -189,7 +195,7 @@
   custom.append(label,hex,error);
   const ranges=group(t("额外着色范围","Additional accent areas"));
   ranges.append(prefSwitch("toolbar",t("顶栏背景","Toolbar background"),t("使用派生主表面和对应文字色。","Use the derived primary surface.")),prefSwitch("categories",t("分组标题","Section headings"),t("使用可读的强调色文字。","Use contrast adjusted accent text.")),prefSwitch("icons",t("导航与返回图标","Navigation and back icons"),t("为中性顶栏图标着色。","Accent icons in the neutral toolbar.")));
-  const about=group(t("关于","About"));about.append(node("p",{class:"hint",text:"MaterialLuCI @VERSION@ · Classic Native"}),node("p",{class:"hint",text:t("外观偏好保存在此浏览器，不更改路由器配置。","Preferences are stored in this browser without changing router configuration.")}));
+
   updateSwatches();MaterialFeedback.bind(host);
  }
  function appearanceEntry(root){
@@ -199,7 +205,11 @@
   const field=select?.closest(".cbi-value");
   if(!field)return;
   const details=node("details",{id:"ml-appearance-entry",class:"ml-appearance-entry",open:"true"},[node("summary",{text:t("主题外观（此浏览器）","Theme appearance (this browser)")})]);
-  field.after(details);details.addEventListener("toggle",()=>{if(details.open)openAppearance(details);});if(details.open)openAppearance(details);
+  const desktop=matchMedia("(min-width:1024px)");
+  const syncDisclosure=()=>{if(desktop.matches)details.open=true;};
+  field.after(details);details.addEventListener("toggle",()=>{if(details.open)openAppearance(details);});
+  if(desktop.addEventListener)desktop.addEventListener("change",syncDisclosure);else desktop.addListener(syncDisclosure);
+  syncDisclosure();if(details.open)openAppearance(details);
  }
  function enhance(root){
   const all=selector=>[...(root.matches&&root.matches(selector)?[root]:[]),...root.querySelectorAll(selector)];
