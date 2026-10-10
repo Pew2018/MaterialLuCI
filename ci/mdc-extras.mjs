@@ -89,6 +89,7 @@ export async function verifyMDCExtras(browser,name,base){
  await page.keyboard.press("ArrowDown");await page.keyboard.press("ArrowDown");await page.keyboard.press("Enter");await page.waitForTimeout(160);
  assert.deepEqual(await page.evaluate(()=>actionCalls),["unchecked","unchecked","unchecked"],"original action callbacks changed");
  assert(await page.evaluate(()=>document.getElementById("extras-action").firstChild===originalActionFirst&&document.getElementById("extras-action").lastElementChild===originalActionLast));
+ await arrow.click();await page.waitForSelector(".ml-action-menu.mdc-menu-surface--open");await page.mouse.move(10,400);await page.mouse.wheel(0,100);await page.waitForSelector(".ml-action-menu.mdc-menu-surface--open",{state:"detached"});
  await page.evaluate(()=>document.getElementById("extras-action").setAttribute("disabled",""));
  await arrow.click({force:true});assert.equal(await page.locator(".ml-action-menu.mdc-menu-surface--open").count(),0);
  // Tooltip leaves the accessible action name and click handler intact.

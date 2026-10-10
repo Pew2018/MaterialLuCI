@@ -178,9 +178,16 @@
   if(relevant&&!pending){pending=true;queueMicrotask(()=>{pending=false;enhance(document);});}
  });
  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["aria-label","title"]});
- function closeMenus(event){for(const e of selects.values()){if(event?.type==="scroll"&&!e.rect)continue;const r=e.anchor.getBoundingClientRect();if(event?.type!=="scroll"||!e.rect||Math.abs(r.top-e.rect.top)>1||Math.abs(r.left-e.rect.left)>1)e.menu.open=false;}for(const [el,e] of actions){if(event?.type==="scroll"&&!e.rect)continue;const r=el.getBoundingClientRect();if(event?.type!=="scroll"||!e.rect||Math.abs(r.top-e.rect.top)>1||Math.abs(r.left-e.rect.left)>1)el._mlMdcMenu.open=false;}for(const el of tips.keys())el._mlMdcTooltip.hide();}
- // Menus close during viewport movement instead of remaining detached from anchors.
- window.addEventListener("resize",closeMenus);document.addEventListener("scroll",event=>{if(!event.target.closest?.(".ml-mdc-menu"))closeMenus(event);},{capture:true,passive:true});
+ function closeMenus(){for(const e of selects.values())e.menu.open=false;for(const el of actions.keys())el._mlMdcMenu.open=false;for(const el of tips.keys())el._mlMdcTooltip.hide();}
+ // User scrolling closes popups. Browser focus/scroll anchoring and LuCI's
+ // programmatic scrolls must not turn a single toggle into close + reopen.
+ window.addEventListener("resize",closeMenus);
+ const userScroll=event=>{if(!event.target.closest?.(".ml-mdc-menu"))closeMenus();};
+ document.addEventListener("wheel",userScroll,{capture:true,passive:true});
+ document.addEventListener("touchmove",userScroll,{capture:true,passive:true});
+ document.addEventListener("keydown",event=>{if(["PageDown","PageUp","Home","End"].includes(event.key)&&!event.target.closest?.(".ml-mdc-menu"))closeMenus();},true);
+ document.addEventListener("pointerdown",event=>{if(event.clientX>=document.documentElement.clientWidth)closeMenus();},true);
+ document.addEventListener("scroll",()=>{for(const el of tips.keys())el._mlMdcTooltip.hide();},{capture:true,passive:true});
  document.addEventListener("change",event=>{if(event.target.closest("#ml-appearance"))feedback(document.documentElement.lang.startsWith("zh")?"已保存此浏览器的主题设置":"Theme preferences saved in this browser");});
  document.addEventListener("click",event=>{if(event.target.closest("#ml-appearance .ml-swatch-item,#ml-appearance .ml-mode-option"))feedback(document.documentElement.lang.startsWith("zh")?"已保存此浏览器的主题设置":"Theme preferences saved in this browser");});
  window.addEventListener("pagehide",event=>{if(!event.persisted){stopped=true;observer.disconnect();for(const e of [...selects.values()])e.destroy();for(const e of [...actions.values()])e.destroy();for(const e of [...tips.values()])e.destroy();if(notice){clearTimeout(notice.timer);notice.instance.destroy();notice.root.remove();notice=null;}}});
