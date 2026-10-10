@@ -20,7 +20,7 @@
 <html lang="<%=pcdata(luci.i18n.context.lang)%>" data-loading="true">
 <head>
  <meta charset="utf-8">
- <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
  <title><%=striptags((boardinfo.hostname or "?") .. ((node and node.title) and " - "..translate(node.title) or ""))%> - MaterialLuCI</title>
  <script src="<%=media%>/palette.js?v=@CACHE@"></script>
  <script src="<%=media%>/startup.js?v=@CACHE@"></script>

@@ -20,7 +20,7 @@ h4{font-size:14px;font-weight:500}
 :root[data-categories=true] :is(h2,h3,legend,.category){color:var(--accent-ink)}
 .cbi-map-descr,.cbi-section-descr,.cbi-value-description,.hint{color:var(--muted);font-size:13px;line-height:1.5}
 .hint{font-size:12px}
-.ml-toolbar{position:sticky;top:0;height:calc(var(--toolbar-height) + var(--inset-top));padding-top:var(--inset-top);background:var(--page);color:var(--ink);border-bottom:1px solid var(--divider);z-index:10}
+.ml-toolbar{position:sticky;top:0;height:var(--toolbar-height);padding-top:0;background:var(--page);color:var(--ink);border-bottom:1px solid var(--divider);z-index:10}
 .ml-toolbar-inner{height:56px;max-width:none;margin:0;display:flex;align-items:center;gap:16px;padding:0 24px}
 .ml-title{font-size:20px;font-weight:500;line-height:1.2;flex:1;margin:0;color:inherit}
 body button.ml-icon-button{width:48px;height:48px;min-width:48px;min-height:48px;border:0;border-radius:0;padding:12px;margin:0;background:transparent;color:inherit;box-shadow:none;display:inline-flex;align-items:center;justify-content:center;--button-bg:transparent;--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed)}
@@ -30,7 +30,7 @@ body button.ml-icon-button{width:48px;height:48px;min-width:48px;min-height:48px
 #indicators{font-size:11px;display:flex;gap:4px;flex:none}
 #indicators [data-indicator]{text-shadow:none;white-space:nowrap;border-radius:2px;padding:2px 4px;background:var(--log);color:var(--muted)!important}
 .ml-layout{display:grid;grid-template-columns:var(--sidebar-width) minmax(0,1fr);align-items:start}
-.ml-sidebar{position:sticky;top:calc(56px + var(--inset-top));height:calc(100dvh - 56px - var(--inset-top));overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border-right:1px solid var(--divider);padding:12px 0;z-index:11}
+.ml-sidebar{position:sticky;top:56px;height:calc(100dvh - 56px);overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border-right:1px solid var(--divider);padding:12px 0;z-index:11}
 .ml-sidebar-heading{display:flex;align-items:center;justify-content:space-between;min-height:40px;padding:0 20px 8px;color:var(--muted);font-size:13px}
 #ml-drawer-close,#ml-menu-button{display:none}
 .ml-nav-row{display:flex;align-items:stretch;position:relative;overflow:hidden;isolation:isolate}.ml-nav-row-action{cursor:pointer}.ml-nav-row-action .ml-nav-parent{position:relative;z-index:1}
@@ -330,3 +330,8 @@ body .ml-sidebar button.ml-nav-parent:hover{background:var(--hover)}
 #maincontent .ifacebadge{background:transparent;border-color:var(--divider)}
 #maincontent .network-status-table{background:transparent}
 :root[data-cards=false] .ml-card-surface{background:transparent;box-shadow:none}
+
+/* Browser owns top safe-area geometry (viewport-fit=auto).
+   Do not extend the accented toolbar into a synthetic system status strip. */
+.ml-toolbar-inner{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+@media(min-width:1024px){.ml-toolbar-inner{padding-left:24px;padding-right:24px}}
