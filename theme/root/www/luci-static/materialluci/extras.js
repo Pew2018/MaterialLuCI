@@ -98,6 +98,7 @@
   function open(event){
    if(owner.hasAttribute("disabled")||owner.getAttribute("aria-disabled")==="true")return;
    event?.preventDefault();event?.stopImmediatePropagation();
+   if(menu.open){menu.open=false;arrow.setAttribute("aria-expanded","false");return;}
    const rows=[...ul.children].filter(li=>li.tagName==="LI");
    list.replaceChildren(...rows.map(li=>{const el=item(li.textContent,li.getAttribute("data-value")||"",li.hasAttribute("unselectable")||li.getAttribute("aria-disabled")==="true",li.hasAttribute("selected"));el.setAttribute("role","menuitem");el._nativeChoice=li;return el;}));
    menu.layout();menu.items.forEach((li,i)=>menu.setEnabled(i,li.getAttribute("aria-disabled")!=="true"));
@@ -113,7 +114,7 @@
    li.dispatchEvent(new CustomEvent("cbi-dropdown-select",{bubbles:true}));arrow.focus({preventScroll:true});
   });
   popup.addEventListener("MDCMenuSurface:closed",()=>{arrow.setAttribute("aria-expanded","false");});
-  actions.set(owner,{destroy(){menu.destroy();popup.remove();owner.removeEventListener("click",click,true);arrow.removeEventListener("keydown",key);owner._mlMdcMenu=null;for(const a of ["aria-label","aria-haspopup","aria-controls","aria-expanded"])arrow.removeAttribute(a);for(const [a,v] of [["role",oldRole],["tabindex",oldTab]])if(v===null)arrow.removeAttribute(a);else arrow.setAttribute(a,v);actions.delete(owner);}});
+  actions.set(owner,{open,destroy(){menu.destroy();popup.remove();owner.removeEventListener("click",click,true);arrow.removeEventListener("keydown",key);owner._mlMdcMenu=null;for(const a of ["aria-label","aria-haspopup","aria-controls","aria-expanded"])arrow.removeAttribute(a);for(const [a,v] of [["role",oldRole],["tabindex",oldTab]])if(v===null)arrow.removeAttribute(a);else arrow.setAttribute(a,v);actions.delete(owner);}});
  }
  function tooltip(anchor){
   const label=anchor.getAttribute("aria-label")||anchor.title;if(!label)return;
@@ -125,6 +126,12 @@
   const instance=new MDCTooltip(root);instance.setShowDelay(500);anchor._mlMdcTooltip=instance;
   tips.set(anchor,{surface,destroy(){instance.destroy();root.remove();anchor._mlMdcTooltip=null;for(const [a,v] of [["aria-describedby",description],["title",title],["data-tooltip-id",data]])if(v===null)anchor.removeAttribute(a);else anchor.setAttribute(a,v);tips.delete(anchor);}});
  }
+ // Run before the surface's later body capture listener so clicking the
+ // native arrow toggles once instead of closing and immediately reopening.
+ document.body.addEventListener("click",event=>{
+  const arrow=event.target.closest?.(".cbi-dropdown.btn>.open,.cbi-dropdown.cbi-button>.open");
+  const entry=arrow&&actions.get(arrow.parentElement);if(entry)entry.open(event);
+ },true);
  function feedback(message){
   if(!notice){
    const root=make("aside","mdc-snackbar ml-preference-snackbar"),surface=make("div","mdc-snackbar__surface"),label=make("div","mdc-snackbar__label");

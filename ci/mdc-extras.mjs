@@ -7,18 +7,17 @@ export async function verifyMDCExtras(browser,name,base){
  assert(await page.evaluate(()=>fixtureSelect.node.firstChild.tagName==="SELECT"),"LuCI Select firstChild contract changed");
  await page.evaluate(()=>{
   window.extraChanges=0;window.extraSelect=document.querySelector("#real-select select");
-  extraSelect.addEventListener("change",()=>extraChanges++);
+  extraSelect.addEventListener("change",()=>{extraChanges++;document.getElementById("real-select").dataset.dependentValue=extraSelect.value;});
   window.extraParent=extraSelect.parentNode;
  });
  const root=page.locator("#real-select .ml-mdc-select"),anchor=root.locator(".mdc-select__anchor");
  const choose=async value=>{
-  await page.evaluate(()=>{window.menuTrace=[];for(const e of ["MDCMenuSurface:opening","MDCMenuSurface:opened","MDCMenuSurface:closing","MDCMenuSurface:closed"])document.addEventListener(e,event=>menuTrace.push([e,event.target.className]));});
-  await anchor.click();
-  console.log(name+" select after click",await page.evaluate(()=>({trace:menuTrace,root:extraSelect._mlMdcSelect.root?.className,menu:document.querySelector(".ml-select-menu")?.outerHTML,selected:extraSelect._mlMdcSelect.value,focus:document.activeElement?.outerHTML})));
+  await page.waitForTimeout(350);await anchor.click();
   await page.locator('.ml-select-menu.mdc-menu-surface--open [data-value="'+value+'"]').click();
   await page.waitForTimeout(160);
  };
  await choose("manual");assert.equal(await page.evaluate(()=>fixtureSelect.getValue()),"manual");assert.equal(await page.evaluate(()=>extraChanges),1,"selection fired multiple native changes");
+ assert.equal(await page.locator("#real-select").getAttribute("data-dependent-value"),"manual","native dependent handler missed selection");
  await page.evaluate(()=>fixtureSelect.setValue("auto"));
  await page.waitForFunction(()=>extraSelect._mlMdcSelect.value==="auto");
  assert.equal(await page.evaluate(()=>extraChanges),1,"programmatic value fired native change");
@@ -36,6 +35,15 @@ export async function verifyMDCExtras(browser,name,base){
  await page.waitForFunction(()=>!extraSelect._mlMdcSelect.disabled&&extraSelect._mlMdcSelect.value==="auto");
  await anchor.focus();await page.keyboard.press("Enter");await page.waitForSelector(".ml-select-menu.mdc-menu-surface--open");
  await page.keyboard.press("Escape");await page.waitForTimeout(160);assert(await anchor.evaluate(el=>el===document.activeElement),"select did not restore focus");
+ // Native validity and original form-reset behavior remain authoritative.
+ await page.evaluate(()=>{extraSelect.required=true;extraSelect.value="";});
+ await page.waitForFunction(()=>extraSelect._mlMdcSelect.selectedIndex===-1);
+ assert.equal(await page.evaluate(()=>extraSelect.checkValidity()),false);
+ await page.waitForFunction(()=>document.querySelector("#real-select .mdc-select__anchor").getAttribute("aria-invalid")==="true");
+ assert(await anchor.evaluate(el=>el===document.activeElement),"invalid native select did not focus the visible control");
+ await page.evaluate(()=>{extraSelect.required=false;extraSelect.value="auto";extraSelect.form?.reset();});
+ await page.waitForFunction(()=>extraSelect._mlMdcSelect.value==="auto");
+ assert.equal(await page.evaluate(()=>extraChanges),2,"validation/reset manufactured a field change");
  // Unconverted multiple/optgroup fields keep native behavior and original identity.
  await page.evaluate(()=>{
   const m=document.createElement("select");m.multiple=true;m.id="extras-multiple";m.add(new Option("多选","multi"));
@@ -54,6 +62,7 @@ export async function verifyMDCExtras(browser,name,base){
   document.getElementById("maincontent").append(node);MaterialExtras.enhance(node);MaterialFeedback.bind(node);
  });
  const arrow=page.locator("#extras-action>.open");
+ await arrow.click();await page.waitForSelector(".ml-action-menu.mdc-menu-surface--open");await arrow.click();await page.waitForSelector(".ml-action-menu.mdc-menu-surface--open",{state:"detached"});
  await arrow.focus();await page.keyboard.press("Enter");await page.waitForSelector(".ml-action-menu.mdc-menu-surface--open");
  await page.keyboard.press("Escape");await page.waitForTimeout(160);assert(await arrow.evaluate(el=>el===document.activeElement));
  for(const width of [1440,390]){
