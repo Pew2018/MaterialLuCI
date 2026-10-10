@@ -91,7 +91,7 @@ export async function verifyUpstreamPages(browser,name,base){
    const form=document.createElement("form");form.id="audit-form";form.addEventListener("submit",event=>{event.preventDefault();window.auditSubmits=(window.auditSubmits||0)+1;});
    const controls=[];
    for(const type of ["","text","password","number","email","url","tel","search"]){
-    const input=document.createElement("input");if(type)input.type=type;input.id="audit-"+(type||"implicit");input.name=input.id;input.placeholder="Placeholder text";input.value=type==="number"?"42":"Existing value";form.append(input);controls.push(input);
+    const input=document.createElement("input");if(type)input.type=type;input.id="audit-"+(type||"implicit");input.name=input.id;input.placeholder="Placeholder text";input.value=type==="number"?"42":type==="email"?"router@example.net":type==="url"?"https://router.example.net":"Existing value";form.append(input);controls.push(input);
    }
    const area=document.createElement("textarea");area.id="audit-textarea";area.name=area.id;area.value="Existing notes";area.placeholder="Textarea placeholder";form.append(area);controls.push(area);
    const select=document.createElement("select");select.id="audit-select";select.name=select.id;select.add(new Option("Selected value","selected"));form.append(select);
@@ -195,6 +195,11 @@ export async function verifyUpstreamPages(browser,name,base){
    assert.equal(await page.locator("#audit-button").evaluate(el=>getComputedStyle(el).borderTopColor),"rgba(0, 0, 0, 0)");
    await page.locator("#audit-button").click();
    assert.equal(await page.evaluate(()=>auditActions),1,"button callback preserved");
+   await page.locator("#audit-email").evaluate(el=>el.value="invalid-email");
+   assert.equal(await page.locator("#audit-email").evaluate(el=>el.validity.valid),false,"native email validation fixture is invalid");
+   await page.locator("#audit-submit").click();
+   assert.equal(await page.evaluate(()=>window.auditSubmits||0),0,"native validation prevents invalid form submit");
+   await page.locator("#audit-email").evaluate(el=>el.value="router@example.net");
    await page.locator("#audit-submit").click();
    assert.equal(await page.evaluate(()=>window.auditSubmits||0),1,"native input submit preserved");
    await page.locator("#audit-div-button").focus();await page.keyboard.press("Enter");
