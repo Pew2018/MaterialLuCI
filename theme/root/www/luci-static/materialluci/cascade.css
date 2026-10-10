@@ -762,7 +762,8 @@ body input:is([type="button"],[type="submit"],[type="reset"]):disabled{
  border-color:transparent;box-shadow:none
 }
 body .ml-native-button.mdc-button{
- display:inline-flex;align-items:center;justify-content:center;position:relative;max-width:100%;min-height:48px;padding:0;border:1px solid transparent;border-radius:2px;background:var(--button-bg);color:var(--button-ink);box-shadow:none;vertical-align:middle
+ --button-bg:var(--action-tonal);--button-ink:var(--on-action-tonal);
+ display:inline-flex;align-items:center;justify-content:center;position:relative;max-width:100%;min-width:112px;min-height:48px;padding:0;border:1px solid transparent;border-radius:2px;background:var(--button-bg);color:var(--button-ink);box-shadow:none;vertical-align:middle
 }
 body .ml-native-button>input:is([type="button"],[type="submit"],[type="reset"]){
  position:relative;z-index:1;flex:1 1 auto;width:auto;min-width:0;max-width:100%;min-height:48px;margin:0;padding:12px 16px;border:0;border-radius:inherit;background:transparent;color:inherit;box-shadow:none;font:inherit;line-height:20px;text-align:center;white-space:normal
