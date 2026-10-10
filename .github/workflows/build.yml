@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: materialluci-${{ github.ref }}
   cancel-in-progress: true
@@ -40,10 +41,21 @@ jobs:
           sh -n theme/root/etc/uci-defaults/95-materialluci
       - name: Check semantic colors
         run: node ci/colors.cjs
+      - name: Download the user-tested baseline IPK
+        uses: actions/download-artifact@v4
+        with:
+          name: MaterialLuCI-0.3.0-IPK-in-ZIP-AX3000T-aarch64_cortex-a53
+          run-id: 38020573064
+          github-token: ${{ github.token }}
+          path: build/baseline
+      - name: Audit baseline package identity and actual resources
+        run: |
+          python3 ci/ipk-audit.py build/baseline/*.ipk --sha e7188f7df2d979899e78e151aebb94f7528c4b83 --run 38020573064 --out dist/previews/baseline-ipk.json
       - name: Build and inspect target IPK
         run: |
           export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
           python3 scripts/build.py
+          python3 ci/ipk-audit.py dist/*.ipk --sha "$GITHUB_SHA" --run "$GITHUB_RUN_ID" --out build/package-audit.json --extract build/unpacked
       - name: Obtain pinned upstream LuCI for browser compatibility tests
         uses: actions/checkout@v4
         with:
@@ -58,6 +70,7 @@ jobs:
       - name: Test desktop and mobile layouts in Chromium and WebKit
         run: |
           mkdir -p dist/previews
+          cp build/package-audit.json dist/previews/package-audit.json
           git rev-parse HEAD > dist/previews/commit.txt
           sha256sum build/stage/www/luci-static/materialluci/*.js build/stage/www/luci-static/materialluci/*.css build/stage/www/luci-static/materialluci/icons/*.svg > dist/previews/assets.sha256
           node ci/browser.mjs

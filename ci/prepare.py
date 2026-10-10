@@ -6,10 +6,10 @@ import pathlib,re,json,subprocess,shutil
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 output=ROOT/"build/preview"
 if output.exists():shutil.rmtree(output)
-shutil.copytree(ROOT/"build/stage/www",output)
+shutil.copytree(ROOT/"build/unpacked/www",output)
 upstream=ROOT/"luci-fixture/modules/luci-base/htdocs/luci-static/resources"
 shutil.copytree(upstream,output/"luci-static/resources",dirs_exist_ok=True)
-for module in (ROOT/"build/stage/www/luci-static/resources").glob("materialluci-menu*.js"):
+for module in (ROOT/"build/unpacked/www/luci-static/resources").glob("materialluci-menu*.js"):
  shutil.copy(module,output/"luci-static/resources"/module.name)
 def luaquote(s):return json.dumps(s,ensure_ascii=False)
 def compile_template(text):
@@ -29,7 +29,7 @@ def compile_template(text):
   pos=m.end()
  result.append("write("+luaquote(text[pos:])+")")
  return "\n".join(result)
-templates=ROOT/"build/stage/usr/lib/lua/luci/view/themes/materialluci"
+templates=ROOT/"build/unpacked/usr/lib/lua/luci/view/themes/materialluci"
 compiled={p.stem:compile_template(p.read_text()) for p in templates.glob("*.htm")}
 bootstrap=r'''
 local function escape(s)
