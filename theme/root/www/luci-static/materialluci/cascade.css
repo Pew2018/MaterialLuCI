@@ -463,3 +463,6 @@ body .ml-sidebar button.mdc-button .mdc-button__label{flex:1;min-width:0;font:in
 body .ml-sidebar button.mdc-button .mdc-button__icon{width:24px;height:24px;margin:0 0 0 12px}
 
 body .ml-text-field>.cbi-button-add{flex:none;align-self:center;position:relative;z-index:1;margin-left:8px}
+
+/* The official button primary default must not color collapsed navigation. */
+body .ml-sidebar button.mdc-button:not(:disabled){color:var(--button-ink)}

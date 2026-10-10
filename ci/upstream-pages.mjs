@@ -130,6 +130,9 @@ export async function verifyUpstreamPages(browser,name,base){
    await toggle.focus();await page.keyboard.press("Enter");
    assert((await page.locator('button.ml-nav-parent[aria-expanded=true]').count())<=1);
    assert.equal(page.url(),address);
+   const ink=await page.locator("#maincontent").evaluate(el=>getComputedStyle(el).color);
+   const closed=await page.locator('button.ml-nav-parent[aria-expanded=false]').evaluateAll(xs=>xs.map(el=>getComputedStyle(el).color));
+   assert(closed.every(color=>color===ink),"MDC button default colored a collapsed parent");
   }
   await parent.click();
   if(size==="mobile")await page.keyboard.press("Escape");
