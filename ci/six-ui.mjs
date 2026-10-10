@@ -94,6 +94,7 @@ export async function verifySixUI(browser,name,base){
   if(!view){view=document.createElement("div");view.id="view";document.getElementById("maincontent").append(view);}
   view.insertAdjacentHTML("afterbegin",'<div id="graph-fixture" style="width:100%;height:120px;border:1px solid #000;background:#fff"><svg><polyline points="0,0 10,10"/><line style="stroke:black;stroke-width:1"/><text style="fill:#eee">Graph label</text></svg></div>');
  });
+ await page.waitForSelector("#graph-fixture.ml-chart-surface");
  const graph=page.locator("#graph-fixture");
  assert.equal(await graph.evaluate(el=>getComputedStyle(el).backgroundColor),"rgb(255, 255, 255)");
  assert.notEqual(await graph.evaluate(el=>getComputedStyle(el).borderTopColor),"rgb(0, 0, 0)");
