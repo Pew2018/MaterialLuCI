@@ -8,3 +8,5 @@ export {MDCMenuSurface,Corner} from "@material/menu-surface";
 export {MDCSelect} from "@material/select";
 export {MDCSnackbar} from "@material/snackbar";
 export {MDCTooltip} from "@material/tooltip";
+
+export {MDCList} from "@material/list";
