@@ -152,7 +152,7 @@ export async function verifyUpstreamPages(browser,name,base){
    }
    await field.evaluate(el=>el.disabled=true);
    const disabled=await page.evaluate(()=>{const p=document.createElement("span");p.style.color="var(--disabled)";document.body.append(p);const c=getComputedStyle(p).color;p.remove();return c;});
-   assert.equal(await field.evaluate(el=>getComputedStyle(el).color),disabled);
+   assert.equal(await field.evaluate(el=>getComputedStyle(el).color),disabled,await field.evaluate(el=>JSON.stringify({disabled:el.disabled,matches:el.matches(":disabled:not(:enabled)"),wrapper:el.closest(".ml-text-field")?.className,style:el.getAttribute("style"),selector:el.matches("body .ml-text-field.mdc-text-field--filled .mdc-text-field__input:disabled:not(:enabled)"),fill:getComputedStyle(el).webkitTextFillColor})));
    assert.equal(await field.evaluate(el=>getComputedStyle(el).webkitTextFillColor),disabled);
    await field.evaluate(el=>el.disabled=false);
    const expectedInk=await page.evaluate(()=>{const p=document.createElement("span");p.style.color="var(--ink)";document.body.append(p);const color=getComputedStyle(p).color;p.remove();return color;});
