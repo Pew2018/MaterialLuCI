@@ -60,9 +60,9 @@
 
  // Keep LuCI's span and first text node: ui.showIndicator updates them in place.
  // Only poll-status is an automatic-refresh action; other indicators keep their semantics.
- const indicators=document.getElementById("indicators"),pollBound=new WeakSet();
+ const indicators=document.getElementById("indicators"),pollBound=new WeakSet(),pollFallback=new WeakSet();
  function syncPollIndicator(){
-  const el=indicators?.querySelector('[data-indicator="poll-status"][data-clickable]');
+  const el=indicators?.querySelector('[data-indicator="poll-status"]');
   if(!el)return;
   const paused=el.getAttribute("data-style")==="inactive";
   el.classList.add("ml-poll-action");el.setAttribute("role","button");el.tabIndex=0;
@@ -70,6 +70,13 @@
   el.title=paused?t("已暂停自动刷新","Automatic refresh paused"):t("正在自动刷新","Automatic refresh running");
   el.dataset.paused=String(paused);
   if(!pollBound.has(el)){pollBound.add(el);el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();if(!e.repeat)el.click();}});MaterialFeedback.bind(el);}
+  // LuCI creates an inactive indicator without a click handler. It does not
+  // retrofit one when polling resumes, so provide the same Poll start/stop
+  // operation only when the native clickable attribute is absent.
+  if(!el.hasAttribute("data-clickable")&&!pollFallback.has(el)){
+   pollFallback.add(el);el.setAttribute("data-clickable","true");
+   el.addEventListener("click",()=>{window.L?.require("poll").then(poll=>poll.active()?poll.stop():poll.start()).catch(error=>console.error("Unable to toggle LuCI polling",error));});
+  }
  }
  if(indicators)new MutationObserver(syncPollIndicator).observe(indicators,{childList:true,subtree:true,attributes:true,attributeFilter:["data-style","data-clickable"]});
  syncPollIndicator();
