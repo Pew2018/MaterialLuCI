@@ -53,7 +53,7 @@ export async function verifySixUI(browser,name,base){
  if(name==="chromium")await page.screenshot({path:"dist/previews/appearance-mobile.png"});
  await page.setViewportSize({width:1280,height:900});
  await page.waitForFunction(()=>document.querySelector("#ml-appearance-entry")?.open);
- assert.equal(await page.locator("#ml-appearance> .ml-group").evaluate(el=>getComputedStyle(el.parentElement).display),"grid");
+ assert.equal(await page.locator("#ml-appearance").evaluate(el=>getComputedStyle(el).display),"grid");
  assert.equal(await page.locator("#ml-appearance-entry>summary").evaluate(el=>getComputedStyle(el).display),"none");
  assert.equal(await page.locator(".ml-mode-option").count(),3);
  const desktopBg=await page.locator(".ml-sidebar").evaluate(el=>getComputedStyle(el).backgroundColor);
