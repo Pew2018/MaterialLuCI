@@ -86,6 +86,29 @@ export async function verifyUpstreamPages(browser,name,base){
    }
   }
   await page.setViewportSize(viewport);
+  const auditBaseline=await page.evaluate(()=>{
+   const host=document.createElement("section");host.className="ml-control-audit";host.id="ml-control-audit";
+   const form=document.createElement("form");form.id="audit-form";form.addEventListener("submit",event=>{event.preventDefault();window.auditSubmits=(window.auditSubmits||0)+1;});
+   const controls=[];
+   for(const type of ["","text","password","number","email","url","tel","search"]){
+    const input=document.createElement("input");if(type)input.type=type;input.id="audit-"+(type||"implicit");input.name=input.id;input.placeholder="Placeholder text";input.value=type==="number"?"42":"Existing value";form.append(input);controls.push(input);
+   }
+   const area=document.createElement("textarea");area.id="audit-textarea";area.name=area.id;area.value="Existing notes";area.placeholder="Textarea placeholder";form.append(area);controls.push(area);
+   const select=document.createElement("select");select.id="audit-select";select.name=select.id;select.add(new Option("Selected value","selected"));form.append(select);
+   const file=document.createElement("input");file.type="file";file.id="audit-file";form.append(file);
+   const button=document.createElement("button");button.type="button";button.id="audit-button";button.className="cbi-button";button.style.width="176px";const label=document.createElement("span");label.textContent="一个需要换行的 English action label";button.append(label);form.append(button);
+   const submit=document.createElement("input");submit.type="submit";submit.id="audit-submit";submit.className="cbi-button cbi-button-apply";submit.value="提交";form.append(submit);
+   const reset=document.createElement("input");reset.type="reset";reset.id="audit-reset";reset.className="cbi-button";reset.value="重置";form.append(reset);
+   const link=document.createElement("a");link.href="#";link.className="btn";link.id="audit-link";link.textContent="链接操作";form.append(link);
+   const div=document.createElement("div");div.className="btn";div.id="audit-div-button";div.textContent="旧式 div.btn";form.append(div);
+   host.append(form);document.getElementById("maincontent").append(host);
+   const bareColor=getComputedStyle(controls[0]).color;
+   MaterialLuCI.enhance(host);
+   window.auditActions=0;button.addEventListener("click",()=>window.auditActions++);
+   return {bareColor,ink:getComputedStyle(document.querySelector("#maincontent")).color,count:controls.length};
+  });
+  assert.equal(auditBaseline.bareColor,auditBaseline.ink,"unwrapped implicit text input has theme ink before MDC enhancement");
+  await page.waitForFunction(()=>document.querySelectorAll("#ml-control-audit .ml-text-field").length===9&&document.querySelector("#audit-select + .ml-mdc-select"));
   for(const mode of ["light","dark"]){
    await page.evaluate(v=>MaterialAppearance.set("mode",v),mode);
    assert.equal(await field.evaluate(el=>getComputedStyle(el.closest(".ml-text-field")).backgroundColor),"rgba(0, 0, 0, 0)","MDC default filled color must not override the MD1 surface");
@@ -131,6 +154,46 @@ export async function verifyUpstreamPages(browser,name,base){
    assert.equal(await field.evaluate(el=>getComputedStyle(el).color),disabled);
    assert.equal(await field.evaluate(el=>getComputedStyle(el).webkitTextFillColor),disabled);
    await field.evaluate(el=>el.disabled=false);
+   const expectedInk=await page.evaluate(()=>{const p=document.createElement("span");p.style.color="var(--ink)";document.body.append(p);const color=getComputedStyle(p).color;p.remove();return color;});
+   const auditText=page.locator("#ml-control-audit input:not([type=submit]):not([type=reset]):not([type=file])");
+   assert.equal(await auditText.count(),8);
+   for(let i=0;i<8;i++){
+    const control=auditText.nth(i);
+    assert.equal(await control.evaluate(el=>getComputedStyle(el).color),expectedInk,"native/MDC text input ink "+i+" in "+mode);
+    assert.equal(await control.evaluate(el=>getComputedStyle(el).webkitTextFillColor),expectedInk,"native/MDC text fill "+i+" in "+mode);
+   }
+   const auditArea=page.locator("#audit-textarea");
+   assert.equal(await auditArea.evaluate(el=>getComputedStyle(el).color),expectedInk,"textarea ink "+mode);
+   assert.equal(await page.locator("#audit-select + .ml-mdc-select .mdc-select__selected-text").evaluate(el=>getComputedStyle(el).color),expectedInk,"MDC select ink "+mode);
+   await page.locator("#audit-text").evaluate(el=>el.disabled=true);
+   const disabledInk=await page.evaluate(()=>{const p=document.createElement("span");p.style.color="var(--disabled)";document.body.append(p);const color=getComputedStyle(p).color;p.remove();return color;});
+   assert.equal(await page.locator("#audit-text").evaluate(el=>getComputedStyle(el).color),disabledInk,"disabled ink "+mode);
+   await page.locator("#audit-text").evaluate(el=>el.disabled=false);
+   await page.locator("#audit-email").evaluate(el=>el.readOnly=true);
+   assert.equal(await page.locator("#audit-email").evaluate(el=>getComputedStyle(el).color),expectedInk,"readonly ink "+mode);
+   await page.locator("#audit-email").evaluate(el=>el.readOnly=false);
+   await page.locator("#audit-url").evaluate(el=>el.setAttribute("aria-invalid","true"));
+   assert.equal(await page.locator("#audit-url").evaluate(el=>getComputedStyle(el).color),expectedInk,"invalid input remains readable "+mode);
+   const buttonStyle=await page.locator("#audit-button").evaluate(el=>{const s=getComputedStyle(el),b=el.getBoundingClientRect(),t=el.querySelector(".mdc-button__label").getBoundingClientRect();return {display:s.display,align:s.alignItems,justify:s.justifyContent,textAlign:s.textAlign,border:s.borderTopColor,dx:Math.abs(t.x+t.width/2-b.x-b.width/2),dy:Math.abs(t.y+t.height/2-b.y-b.height/2)};});
+   assert.equal(buttonStyle.display,"inline-flex","MDC button flex layout");
+   assert.equal(buttonStyle.align,"center");assert.equal(buttonStyle.justify,"center");assert.equal(buttonStyle.textAlign,"center");
+   assert.equal(buttonStyle.border,"rgba(0, 0, 0, 0)","button border reset");
+   assert(buttonStyle.dx<3&&buttonStyle.dy<4,"long mixed-language button label centered: "+JSON.stringify(buttonStyle));
+   for(const id of ["audit-submit","audit-reset"]){
+    const style=await page.locator("#"+id).evaluate(el=>({align:getComputedStyle(el).textAlign,border:getComputedStyle(el).borderTopColor}));
+    assert.equal(style.align,"center");assert.equal(style.border,"rgba(0, 0, 0, 0)");
+   }
+   const fileStyle=await page.locator("#audit-file").evaluate(el=>({border:getComputedStyle(el).borderBottomWidth,width:el.getBoundingClientRect().width}));
+   assert.equal(fileStyle.border,"0px");assert(fileStyle.width>0);
+   await page.locator("#audit-button").focus();
+   assert.equal(await page.locator("#audit-button").evaluate(el=>getComputedStyle(el).borderTopColor),"rgba(0, 0, 0, 0)");
+   await page.locator("#audit-button").click();
+   assert.equal(await page.evaluate(()=>auditActions),1,"button callback preserved");
+   await page.locator("#audit-submit").click();
+   assert.equal(await page.evaluate(()=>auditSubmits),1,"native input submit preserved");
+   await page.locator("#audit-div-button").focus();await page.keyboard.press("Enter");
+   assert.equal(await page.locator("#audit-div-button").getAttribute("role"),"button","legacy div.btn role retained");
+   if(name==="chromium")await page.screenshot({path:"dist/previews/"+name+"-"+size+"-shared-controls-"+mode+".png",fullPage:true});
    if(size==="desktop"){
     for(const suffix of ["lang","_mediaurlbase"]){
      const row=page.locator('.cbi-value[data-field$=".'+suffix+'"]');
