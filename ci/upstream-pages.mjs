@@ -196,7 +196,7 @@ export async function verifyUpstreamPages(browser,name,base){
    await page.locator("#audit-button").click();
    assert.equal(await page.evaluate(()=>auditActions),1,"button callback preserved");
    await page.locator("#audit-submit").click();
-   assert.equal(await page.evaluate(()=>auditSubmits),1,"native input submit preserved");
+   assert.equal(await page.evaluate(()=>window.auditSubmits||0),1,"native input submit preserved");
    await page.locator("#audit-div-button").focus();await page.keyboard.press("Enter");
    assert.equal(await page.locator("#audit-div-button").getAttribute("role"),"button","legacy div.btn role retained");
    if(name==="chromium")await page.screenshot({path:"dist/previews/"+name+"-"+size+"-shared-controls-"+mode+".png",fullPage:true});
