@@ -651,7 +651,7 @@ body .cbi-value.ml-section-container{display:block;min-height:0;padding:0}
 body .cbi-value.ml-section-container>.cbi-value-field{width:100%;max-width:none}
 body .cbi-value.ml-section-container>.cbi-value-title{width:auto;max-width:none}
 body .cbi-section-descr{margin:0 0 12px}
-body .cbi-value-field :is(button.cbi-button,input.cbi-button):not(.cbi-button-add):not(.cbi-button-up):not(.cbi-button-down){
+body .cbi-value-field :is(button.cbi-button,input.cbi-button):not(.ml-text-field *):not(.cbi-button-add):not(.cbi-button-up):not(.cbi-button-down){
  min-height:48px;min-width:160px;max-width:100%;padding:12px 16px;border-radius:2px;line-height:20px;margin:0;text-align:center
 }
 body .cbi-value-field .ml-native-button{max-width:100%}
@@ -665,7 +665,7 @@ body #maincontent[data-ml-page=reboot] #view>button.cbi-button{
 @media(max-width:599px){
  body .cbi-value-title{min-height:0;display:block;margin-bottom:8px;padding:0}
  body .cbi-value.ml-section-container{padding:0}
- body .cbi-value-field :is(button.cbi-button,input.cbi-button):not(.cbi-button-add):not(.cbi-button-up):not(.cbi-button-down){width:100%;min-width:0}
+ body .cbi-value-field :is(button.cbi-button,input.cbi-button):not(.ml-text-field *):not(.cbi-button-add):not(.cbi-button-up):not(.cbi-button-down){width:100%;min-width:0}
  body #maincontent[data-ml-page=reboot] #view>button.cbi-button{width:100%;min-width:0}
 }
 

@@ -46,6 +46,7 @@ export async function verifyUpstreamPages(browser,name,base){
   const password=page.locator('input[id$=".password"]');
   const reveal=password.locator("..").locator("button");
   assert(await password.evaluate(el=>el.nextElementSibling.tagName==="BUTTON"));
+  assert((await reveal.boundingBox()).width<=64,"password reveal must remain an icon-sized auxiliary control");
   await reveal.click();assert.equal(await password.getAttribute("type"),"text");
   await reveal.click();assert.equal(await password.getAttribute("type"),"password");
   await field.evaluate(el=>el.disabled=true);

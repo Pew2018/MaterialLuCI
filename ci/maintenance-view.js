@@ -8,7 +8,7 @@
 return view.extend({
  render:function(){
   window.maintenanceCalls=[];
-  var record=function(){var ev=arguments[arguments.length-1];maintenanceCalls.push(ev.currentTarget.textContent.trim());};
+  var record=function(){var ev=Array.prototype.slice.call(arguments).find(function(arg){return arg&&arg.currentTarget;});maintenanceCalls.push(ev.currentTarget.textContent.trim());};
   rebootRenderer.handleReboot=record;
   for(var key of ['handleBackup','handleFirstboot','handleRestore','handleBlock','handleSysupgrade','handleBackupList','handleBackupSave'])flashRenderer[key]=record;
   fs.read=function(path){if(path==='/etc/sysupgrade.conf')return Promise.resolve('/etc/config/*\n');return Promise.reject(new Error('Unexpected fixture read: '+path));};
