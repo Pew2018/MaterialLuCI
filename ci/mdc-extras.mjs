@@ -89,7 +89,7 @@ export async function verifyMDCExtras(browser,name,base){
  // Tooltip leaves the accessible action name and click handler intact.
  const toggle=page.locator("#ml-menu-button");
  await toggle.focus();await page.waitForTimeout(650);
- assert.equal(await toggle.getAttribute("aria-label"),"Menu");
+ assert(["菜单","Menu"].includes(await toggle.getAttribute("aria-label")),"localized accessible menu name was lost");
  assert(await toggle.evaluate(el=>!!el._mlMdcTooltip));
  await page.screenshot({path:"dist/previews/extras-"+name+"-tooltip.png"});
  await toggle.click();await page.waitForFunction(()=>document.body.classList.contains("ml-drawer-open"));await page.locator("#ml-drawer-close").click();
