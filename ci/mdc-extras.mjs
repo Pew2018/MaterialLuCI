@@ -62,7 +62,7 @@ export async function verifyMDCExtras(browser,name,base){
   document.getElementById("maincontent").append(node);MaterialExtras.enhance(node);MaterialFeedback.bind(node);
  });
  const arrow=page.locator("#extras-action>.open");
- await arrow.click();await page.waitForSelector(".ml-action-menu.mdc-menu-surface--open");await arrow.click();await page.waitForSelector(".ml-action-menu.mdc-menu-surface--open",{state:"detached"});
+ await arrow.click();await page.waitForSelector(".ml-action-menu.mdc-menu-surface--open");await arrow.click();await page.waitForSelector(".ml-action-menu.mdc-menu-surface--open",{state:"detached"});await page.waitForSelector(".ml-action-menu.mdc-menu-surface--animating-closed",{state:"detached"});
  await arrow.focus();await page.keyboard.press("Enter");await page.waitForSelector(".ml-action-menu.mdc-menu-surface--open");
  await page.waitForFunction(()=>!!document.activeElement.closest(".ml-action-menu"));
  assert(await page.locator('.ml-action-menu [data-value="apply"]').evaluate(el=>!!el._mlMdcRipple),"official menu ripple was not initialized");

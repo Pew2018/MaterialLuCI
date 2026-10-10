@@ -144,10 +144,11 @@ try{
   assert.equal(await page.locator("#modal_overlay>.modal").evaluate(el=>el.lastChild.tagName),"P","adapter changed the business modal children");
   await page.evaluate(()=>{
    window.fixtureProgressRoot=document.querySelector("#ml-mdc-wait-progress");
-   window.fixtureProgressAnimation=fixtureProgressRoot.querySelector(".mdc-linear-progress__primary-bar").getAnimations().find(a=>a.effect.getTiming().iterations===Infinity);
+   window.fixtureProgressAnimation=fixtureProgressRoot.querySelector(".mdc-linear-progress__primary-bar").getAnimations().find(a=>/indeterminate/.test(a.animationName));
    window.fixtureProgressTime=fixtureProgressAnimation.currentTime;
   });
   await page.waitForFunction(()=>typeof fixtureProgressAnimation.currentTime==="number"&&fixtureProgressAnimation.currentTime>fixtureProgressTime,null,{timeout:5000});
+  console.log(name+": progress animation",await page.evaluate(()=>({connected:fixtureProgressRoot.isConnected,css:getComputedStyle(fixtureProgressRoot.querySelector(".mdc-linear-progress__primary-bar")).animation,all:fixtureProgressRoot.querySelector(".mdc-linear-progress__primary-bar").getAnimations().map(a=>({name:a.animationName,state:a.playState,time:a.currentTime,timing:a.effect.getTiming()})),chosen:{name:fixtureProgressAnimation.animationName,state:fixtureProgressAnimation.playState,time:fixtureProgressAnimation.currentTime}})));
   assert(await page.evaluate(()=>fixtureProgressAnimation.playState==="running"),"indeterminate animation is not running");
   await page.evaluate(()=>fixtureUI.changes.displayStatus("notice spinning",E("p","正在等待配置被应用… 29")));
   await page.waitForTimeout(100);
