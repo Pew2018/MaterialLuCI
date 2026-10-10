@@ -99,6 +99,12 @@ export async function verifyMDCExtras(browser,name,base){
  await page.screenshot({path:"dist/previews/extras-"+name+"-snackbar.png"});
  await page.locator("#real-select").scrollIntoViewIfNeeded();await anchor.click();
  await page.screenshot({path:"dist/previews/extras-"+name+"-select-dark.png"});await page.keyboard.press("Escape");
+ // Accent text must remain readable on raised menus/dialogs, including
+ // their white pressed overlay. Saved seeds are never modified.
+ for(const seed of ["#42A5F5","#CC6F4E","#E6A545","#7DC22F","#9575CD","#26C6DA","#F06292","#BA68C8","#FFFFFF","#000000"]){
+  const ratio=await page.evaluate(seed=>{const p=MaterialPalette.generate(seed,true);return {seed:p.seed,raised:MaterialPalette.contrast(p.accentInk,"#2D2D2D"),pressed:MaterialPalette.contrast(p.accentInk,"#424242")};},seed);
+  assert.equal(ratio.seed,seed);assert(ratio.raised>=4.5&&ratio.pressed>=4.5,"raised accent contrast "+seed);
+ }
  // Semantic card coverage includes standalone groups and plots, never rows.
  await page.evaluate(()=>{
   const group=document.createElement("div");group.id="extras-standalone";group.className="cbi-section-node";group.innerHTML="<h3>独立设置分组</h3><p>内容</p>";

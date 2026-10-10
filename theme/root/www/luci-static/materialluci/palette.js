@@ -104,10 +104,11 @@ function toolbarColors(primary) {
 }
 function generateThemePalette(seed, dark) {
   const rgb=rgbForHex(seed);
-  const surface=dark ? [33,33,33] : [255,255,255];
-  const card=dark ? [32,32,32] : [250,250,250];
+  const surface=dark ? [30,30,30] : [255,255,255];
+  const card=dark ? [30,30,30] : [250,250,250];
   const page=dark ? [18,18,18] : [238,238,238];
-  const backgrounds=[surface,card,page];
+  // Raised surfaces and their pressed state also carry accent text.
+  const backgrounds=dark ? [surface,card,page,[45,45,45],[66,66,66]] : [surface,card,page];
   const primary=primarySurfaceForRgb(rgb,dark);
   const onPrimary=foregroundForRgb(primary).color;
   const primaryPressed=pressedSurface(primary,onPrimary,dark);
