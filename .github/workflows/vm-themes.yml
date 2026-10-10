@@ -81,6 +81,7 @@ jobs:
       - name: Test packaged resources on desktop and mobile Chromium and WebKit
         working-directory: source
         run: |
+          export GITHUB_SHA="$(git rev-parse HEAD)"
           mkdir -p dist/previews
           cp build/package-audit.json build/vm-target-audit.json dist/previews/
           git rev-parse HEAD > dist/previews/commit.txt
