@@ -28,7 +28,7 @@ jobs:
         timeout-minutes: 5
         run: npm install --no-audit --no-fund
       - name: Install Chromium and WebKit test engines
-        timeout-minutes: 5
+        timeout-minutes: 10
         run: npx playwright install --with-deps chromium webkit
       - name: Validate script syntax
         run: |
