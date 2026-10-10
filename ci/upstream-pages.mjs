@@ -38,7 +38,7 @@ export async function verifyUpstreamPages(browser,name,base){
   assert.equal(await field.inputValue(),"router-external");
   await field.focus();
   await page.waitForFunction(()=>document.querySelector('input[id$=".hostname"]').closest(".ml-text-field").querySelector(".mdc-line-ripple").classList.contains("mdc-line-ripple--active"));
-  const textarea=page.locator("textarea");
+  const textarea=page.locator("textarea.cbi-input-textarea");
   assert(await textarea.evaluate(el=>el.parentElement.firstElementChild===el&&!!el.parentElement._mlMdcTextField));
   await page.evaluate(()=>previewTextarea.getUIElement("theme").setValue("retained notes"));
   assert.equal(await textarea.inputValue(),"retained notes");
