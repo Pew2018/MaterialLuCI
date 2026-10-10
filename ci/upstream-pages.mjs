@@ -191,6 +191,7 @@ export async function verifyUpstreamPages(browser,name,base){
    assert.equal(nativePrimary.background,nativePrimary.expected,"wrapped input submit keeps its primary surface");
    const fileStyle=await page.locator("#audit-file").evaluate(el=>({border:getComputedStyle(el).borderBottomWidth,width:el.getBoundingClientRect().width}));
    assert.equal(fileStyle.border,"0px");assert(fileStyle.width>0);
+   await page.evaluate(()=>{window.auditActions=0;window.auditSubmits=0;});
    await page.locator("#audit-button").focus();
    assert.equal(await page.locator("#audit-button").evaluate(el=>getComputedStyle(el).borderTopColor),"rgba(0, 0, 0, 0)");
    await page.locator("#audit-button").click();
