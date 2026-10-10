@@ -811,5 +811,5 @@ body :is(.cbi-button-action.important,.cbi-button-positive.important,.cbi-button
 body .ml-text-field.mdc-text-field--filled .mdc-text-field__input:disabled:not(:enabled),
 body .ml-text-field.mdc-text-field--filled .mdc-text-field__input:disabled:not(:enabled)::placeholder,
 body .ml-text-field.mdc-text-field--filled .mdc-text-field__input:disabled:not(:enabled)::-webkit-input-placeholder{
- color:var(--disabled);-webkit-text-fill-color:var(--disabled);opacity:1
+ color:var(--disabled)!important;-webkit-text-fill-color:var(--disabled)!important;opacity:1
 }
