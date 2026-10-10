@@ -40,6 +40,9 @@ export async function verifyMDCControls(browser,name,base){
  await page.screenshot({path:"dist/previews/mdc-radio-"+name+".png"});
  await page.locator("#real-radio .cbi-radio").nth(1).locator(":scope > span:not(.mdc-radio__background):not(.mdc-radio__ripple):not(.mdc-radio__focus-ring)").first().click();
  assert.equal(await page.evaluate(()=>realRadio.getValue()),"two");
+ assert.equal(await page.locator("#real-radio .mdc-radio__background").nth(1).evaluate(el=>getComputedStyle(el).position),"absolute","MDC selection layout selector was lost");
+ assert.equal(await page.locator("#real-radio .cbi-radio").nth(1).evaluate(el=>getComputedStyle(el).padding),"0px");
+ await page.waitForFunction(()=>getComputedStyle(document.querySelectorAll("#real-radio .mdc-radio__inner-circle")[1]).transform.startsWith("matrix(0.5"),null,{timeout:3000});
  assert.deepEqual(await page.evaluate(()=>selectionEvents),{click:1,change:1});
  await page.locator("#real-check label").first().click();assert.equal(await page.evaluate(()=>realCheck.getValue()),"1");
  assert.deepEqual(await page.evaluate(()=>selectionEvents),{click:2,change:2});

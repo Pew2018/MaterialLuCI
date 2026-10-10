@@ -499,7 +499,7 @@ body .ml-native-button>.mdc-button__ripple{z-index:2!important}
 body .ml-mdc-feedback .mdc-button__label{font:inherit;letter-spacing:inherit;text-transform:none}
 body .ml-mdc-feedback.mdc-icon-button{vertical-align:middle}
 body #indicators .ml-poll-action.mdc-icon-button{overflow:hidden}
-body .ml-mdc-select.mdc-selection{
+body .ml-mdc-selection{
  position:relative;width:auto;height:auto;padding:0;margin:0;box-sizing:border-box;font:inherit;letter-spacing:normal;color:inherit;vertical-align:baseline;
  --mdc-theme-primary:var(--control-accent);--mdc-theme-secondary:var(--control-accent);
  --mdc-checkbox-selected-icon-color:var(--control-accent);--mdc-checkbox-selected-checkmark-color:var(--surface);
@@ -507,16 +507,16 @@ body .ml-mdc-select.mdc-selection{
  --mdc-radio-selected-icon-color:var(--control-accent);--mdc-radio-unselected-icon-color:var(--muted);
  --mdc-radio-disabled-selected-icon-color:var(--disabled);--mdc-radio-disabled-unselected-icon-color:var(--disabled)
 }
-body .ml-mdc-select.mdc-selection>input.mdc-checkbox__native-control,body .ml-mdc-select.mdc-selection>input.mdc-radio__native-control{
+body .ml-mdc-selection>input.mdc-checkbox__native-control,body .ml-mdc-selection>input.mdc-radio__native-control{
  position:static;inset:auto;width:18px;height:18px;opacity:0;z-index:auto;cursor:inherit
 }
-body .ml-mdc-select.mdc-selection>.mdc-checkbox__background,body .ml-mdc-select.mdc-selection>.mdc-radio__background{
+body .ml-mdc-selection>.mdc-checkbox__background,body .ml-mdc-selection>.mdc-radio__background{
  position:absolute;left:var(--ml-selection-left,0px);top:var(--ml-selection-top,0px);width:18px;height:18px;pointer-events:none
 }
-body .ml-mdc-select.mdc-selection>.mdc-checkbox__ripple,body .ml-mdc-select.mdc-selection>.mdc-radio__ripple{
+body .ml-mdc-selection>.mdc-checkbox__ripple,body .ml-mdc-selection>.mdc-radio__ripple{
  left:calc(var(--ml-selection-left,0px) - 15px);top:calc(var(--ml-selection-top,0px) - 15px);width:48px;height:48px;pointer-events:none
 }
-body .ml-mdc-select.mdc-selection:focus-within>.mdc-checkbox__background,body .ml-mdc-select.mdc-selection:focus-within>.mdc-radio__background{outline:2px solid var(--control-strong);outline-offset:2px}
+body .ml-mdc-selection:focus-within>.mdc-checkbox__background,body .ml-mdc-selection:focus-within>.mdc-radio__background{outline:2px solid var(--control-strong);outline-offset:2px}
 body .ml-radio.ml-mdc-selection{width:16px;height:16px;border:0;flex:none;display:inline-block!important}
 body .ml-radio.ml-mdc-selection::after{display:none}
 body .ml-radio.ml-mdc-selection>input{position:absolute;inset:0;width:16px;height:16px;margin:0;pointer-events:none}
@@ -543,7 +543,7 @@ body .ml-mdc-feedback:is(.cbi-button-negative,.cbi-button-remove,.cbi-input-remo
 
 body .ml-native-button.mdc-button:not(:disabled){display:inline-flex;align-items:center;justify-content:center;font:inherit;color:inherit;border-radius:2px}
 
-body .ml-mdc-select.mdc-selection.mdc-form-field>label{margin:0;padding:0}
+body .ml-mdc-selection.mdc-form-field>label{margin:0;padding:0}
 
 /* LuCI owns one modal node, reused as MDC container/surface/content.
    Undo the wrapper's full-height and content flex sizing on that node. */
@@ -608,4 +608,10 @@ body select:not(.ml-mdc-native-select){background-color:transparent;color:var(--
 body .ml-mdc-selection>input:is(.mdc-checkbox__native-control,.mdc-radio__native-control){appearance:none;-webkit-appearance:none}
 body .ml-mdc-select.mdc-select .mdc-select__ripple::before,body .ml-mdc-select.mdc-select .mdc-select__ripple::after{background-color:var(--control-accent)}
 
-body .ml-mdc-selection>input:is(.mdc-checkbox__native-control,.mdc-radio__native-control){position:static!important;display:inline-block;width:18px!important;height:18px!important;min-width:18px;max-width:18px;min-height:18px;max-height:18px;padding:0!important;margin:0!important;transform:none}
+
+/* Keep native LuCI input/label/description siblings while mirroring radio state. */
+body .ml-mdc-selection>.mdc-radio__background .mdc-radio__outer-circle{border-color:var(--muted)}
+body .ml-mdc-selection:has(>input[type=radio]:checked)>.mdc-radio__background .mdc-radio__outer-circle,
+body .ml-mdc-selection:has(>input[type=radio]:checked)>.mdc-radio__background .mdc-radio__inner-circle{border-color:var(--control-accent)}
+body .ml-mdc-selection:has(>input[type=radio]:checked)>.mdc-radio__background .mdc-radio__inner-circle{transform:scale(.5)}
+body .ml-mdc-selection:has(>input[type=radio]:disabled)>.mdc-radio__background :is(.mdc-radio__outer-circle,.mdc-radio__inner-circle){border-color:var(--disabled)}
