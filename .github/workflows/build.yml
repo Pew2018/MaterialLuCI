@@ -56,7 +56,11 @@ jobs:
       - name: Compile Lua templates and prepare compatibility preview
         run: python3 ci/prepare.py
       - name: Test desktop and mobile layouts in Chromium and WebKit
-        run: node ci/browser.mjs
+        run: |
+          mkdir -p dist/previews
+          git rev-parse HEAD > dist/previews/commit.txt
+          sha256sum build/stage/www/luci-static/materialluci/* > dist/previews/assets.sha256
+          node ci/browser.mjs
       - name: Upload the single IPK (GitHub downloads artifacts as ZIP)
         if: success()
         uses: actions/upload-artifact@v4
@@ -64,4 +68,13 @@ jobs:
           name: MaterialLuCI-0.3.0-IPK-in-ZIP-AX3000T-aarch64_cortex-a53
           path: dist/luci-theme-materialluci_0.3.0-1_aarch64_cortex-a53.ipk
           if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload browser previews and source identity
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MaterialLuCI-UI-previews-${{ github.sha }}
+          path: dist/previews/
+          if-no-files-found: warn
           retention-days: 30

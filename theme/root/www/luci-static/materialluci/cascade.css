@@ -337,3 +337,5 @@ body .mdc-switch>span{z-index:auto}
 .cbi-checkbox:has(.ml-switch-source)>label:empty{display:none}
 :root{--switch-off-thumb:#fafafa;--switch-off-track:rgba(0,0,0,.38);--switch-disabled-thumb:#bdbdbd}
 :root[data-theme=dark]{--switch-off-thumb:#bdbdbd;--switch-off-track:rgba(255,255,255,.30);--switch-disabled-thumb:#757575}
+
+body .mdc-switch>.mdc-switch__handle-track{position:absolute}

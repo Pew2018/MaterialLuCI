@@ -1,0 +1,110 @@
+import assert from "node:assert/strict";
+export async function verifySixUI(browser,name,base){
+ const page=await browser.newPage({viewport:{width:390,height:844}});
+ const errors=[];page.on("pageerror",e=>errors.push(e.message));
+ await page.goto(base);await page.waitForFunction(()=>window.fixtureCheckbox&&document.body.dataset.mlMenus==="ready");
+ // Real LuCI polling and real indicator span, never a replacement handler.
+ await page.evaluate(async()=>{const poll=await L.require("poll");window.testPoll=poll;window.testPollFn=()=>Promise.resolve();poll.add(testPollFn,30);poll.start();});
+ const poll=page.locator('#indicators [data-indicator="poll-status"]');
+ await page.waitForFunction(()=>document.querySelector(".ml-poll-action")?.getAttribute("role")==="button");
+ assert.equal(await poll.getAttribute("aria-label"),"暂停自动刷新");
+ assert((await poll.boundingBox()).height>=48);
+ await page.evaluate(async()=>{const ui=await L.require("ui");ui.showIndicator("uci-changes","未保存更改",()=>{});});
+ assert.equal(await page.locator('[data-indicator="uci-changes"]').getAttribute("role"),null);
+ if(name==="chromium")await page.screenshot({path:"dist/previews/refresh-running.png"});
+ await poll.click();assert.equal(await page.evaluate(()=>testPoll.active()),false);
+ await page.waitForFunction(()=>document.querySelector(".ml-poll-action").getAttribute("aria-label")==="恢复自动刷新");
+ if(name==="chromium")await page.screenshot({path:"dist/previews/refresh-paused.png"});
+ await poll.focus();await page.keyboard.press(" ");assert.equal(await page.evaluate(()=>testPoll.active()),true);
+ await page.keyboard.press("Enter");assert.equal(await page.evaluate(()=>testPoll.active()),false);
+ await poll.click();assert.equal(await page.evaluate(()=>testPoll.active()),true);
+ // Same hit area and exactly one ripple, on text and chevron.
+ await page.locator("#ml-menu-button").click();
+ const parent=page.locator(".ml-nav-parent[aria-controls]").filter({hasText:"网络"});
+ for(const child of [".ml-nav-parent-label",".ml-nav-chevron"]){
+  await page.waitForTimeout(550);const before=await parent.getAttribute("aria-expanded");
+  await parent.locator(child).click();
+  assert.notEqual(await parent.getAttribute("aria-expanded"),before);
+  assert.equal(await parent.locator(".tap-ripple").count(),1);
+  assert.equal(await parent.locator("..").locator(":scope > .tap-ripple").count(),0);
+ }
+ assert.equal(await parent.getAttribute("data-ripple"),"control");
+ assert.equal(await parent.locator(".ml-nav-chevron").evaluate(el=>getComputedStyle(el).backgroundColor),"rgba(0, 0, 0, 0)");
+ await page.waitForTimeout(550);
+ // A moved/cancelled pointer must leave no wave.
+ await parent.dispatchEvent("pointerdown",{pointerId:8,isPrimary:true,button:0,clientX:40,clientY:200,pointerType:"touch"});
+ await parent.dispatchEvent("pointercancel",{pointerId:8,isPrimary:true});
+ await parent.dispatchEvent("pointerup",{pointerId:8,isPrimary:true,button:0,clientX:40,clientY:250,pointerType:"touch"});
+ assert.equal(await parent.locator(".tap-ripple").count(),0);
+ await page.keyboard.press("Escape");
+ // Assert official instance state, native events, external setters, reset and disposal.
+ const flag=page.locator("#legacy-switch + .mdc-switch");
+ await page.evaluate(()=>{window.fieldEvents={click:0,change:0};const input=document.getElementById("legacy-switch");for(const key of ["click","change"])input.addEventListener(key,()=>fieldEvents[key]++);});
+ await flag.click();
+ assert.deepEqual(await page.evaluate(()=>fieldEvents),{click:1,change:1});
+ assert(await flag.evaluate(el=>!!el._mlMdcSwitch&&el._mlMdcSwitch.selected===document.getElementById("legacy-switch").checked));
+ await page.evaluate(()=>{const el=document.getElementById("legacy-switch");el.checked=true;el.disabled=true;});
+ assert.equal(await flag.getAttribute("aria-checked"),"true");assert(await flag.isDisabled());
+ await page.evaluate(()=>{document.getElementById("legacy-switch").disabled=false;document.getElementById("fixture-form").reset();});
+ await page.waitForTimeout(30);assert.equal(await flag.getAttribute("aria-checked"),"true");
+ await page.evaluate(()=>{document.getElementById("legacy-switch").setAttribute("disabled","");});
+ await page.waitForFunction(()=>document.querySelector("#legacy-switch + .mdc-switch").disabled);
+ await page.evaluate(()=>document.getElementById("legacy-switch").removeAttribute("disabled"));
+ await page.waitForFunction(()=>!document.querySelector("#legacy-switch + .mdc-switch").disabled);
+ // Representative plugin DOM, explicitly simulated (not a claim of router coverage).
+ await page.evaluate(()=>{
+  const view=document.createElement("div");view.id="view";document.getElementById("maincontent").append(view);
+  const section=document.createElement("section");section.className="cbi-section";section.id="rate-fixture";
+  section.innerHTML='<h3>网速控制 · 模拟配置</h3><div class="cbi-value"><label class="cbi-value-title">启用网速控制</label><div class="cbi-value-field"><label><input class="cbi-input-checkbox" type="checkbox" name="rate_enabled"></label></div></div><div class="network-status-table"><div class="ifacebox"><div class="ifacebox-head">IPv4 上游</div><div class="ifacebox-body">WAN 已连接 <span class="ifacebadge">eth0</span></div></div></div>';
+  view.append(section);
+ });
+ await page.waitForSelector("#rate-fixture .mdc-switch");
+ const rate=page.locator("#rate-fixture .mdc-switch");await rate.click();
+ assert.equal(await page.locator('#rate-fixture input').isChecked(),true,"label default double-toggled field");
+ assert.equal(await rate.getAttribute("aria-checked"),"true");
+ for(const theme of ["light","dark"])for(const cards of [true,false]){
+  await page.evaluate(({theme,cards})=>{MaterialAppearance.set("mode",theme);MaterialAppearance.set("cards",cards);}, {theme,cards});
+  assert.equal(await page.locator("#maincontent").evaluate(el=>el.classList.contains("ml-card-surface")),false);
+  assert.equal(await page.locator(".ml-card-surface .ml-card-surface").count(),0);
+  assert.equal(await page.locator("#rate-fixture .ifacebadge").evaluate(el=>getComputedStyle(el).backgroundColor),"rgba(0, 0, 0, 0)");
+  if(name==="chromium"&&cards){await page.locator("#rate-fixture").scrollIntoViewIfNeeded();await page.screenshot({path:"dist/previews/rate-"+theme+".png"});}
+ }
+ await page.evaluate(()=>{MaterialAppearance.set("toolbar",true);MaterialAppearance.set("cards",true);});
+ assert.equal(await page.locator('meta[name="theme-color"],meta[name="apple-mobile-web-app-status-bar-style"]').count(),0);
+ assert(!await page.locator('meta[name="viewport"]').getAttribute("content").then(v=>v.includes("viewport-fit=cover")));
+ assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),56);
+ // Use the actual pinned LuCI View.__init__ lifecycle with controlled data.
+ await page.evaluate(async()=>{
+  window.fixtureViewClass=await L.require("view");
+  window.fixtureReady=new Promise(resolve=>window.resolveView=resolve);
+  window.fixtureViewPromise=fixtureViewClass.prototype.__init__.call({
+   load:()=>fixtureReady,render:()=>E("section",{class:"cbi-section"},[E("h3","状态视图已载入"),E("p","模拟网络数据")]),addFooter:()=>null
+  });
+ });
+ await page.waitForSelector("#view > .ml-progress-host .ml-task-progress");
+ assert.equal(await page.locator("#view > .spinning").count(),1);
+ const progress=page.locator("#view .mdc-linear-progress__primary-bar");
+ const start=await progress.evaluate(el=>el.getAnimations()[0]?.currentTime);
+ await page.waitForTimeout(160);assert(await progress.evaluate((el,t)=>el.getAnimations()[0]?.currentTime>t,start),"body progress animation frozen");
+ if(name==="chromium")await page.screenshot({path:"dist/previews/status-loading.png"});
+ await page.evaluate(()=>resolveView());await page.waitForSelector("#view > .spinning",{state:"detached"});
+ assert.equal(await page.locator("#view .ml-task-progress").count(),0);
+ if(name==="chromium")await page.screenshot({path:"dist/previews/status-loaded.png"});
+ await page.evaluate(()=>{
+  window.fixtureFail=new Promise((resolve,reject)=>window.rejectView=reject);
+  window.fixtureFailedPromise=fixtureViewClass.prototype.__init__.call({
+   load:()=>fixtureFail,render:()=>E("p","unexpected"),addFooter:()=>null
+  }).catch(e=>{window.expectedViewError=e.message;});
+ });
+ await page.waitForSelector("#view .ml-task-progress");
+ await page.evaluate(()=>rejectView(new Error("模拟载入失败")));
+ await page.waitForSelector("#view .ml-task-progress",{state:"detached"});
+ assert(await page.locator("#view [role=alert]").textContent().then(v=>v.includes("失败")));
+ await page.evaluate(async()=>{await fixtureFailedPromise;document.getElementById("view").replaceChildren();});
+ assert.equal(await page.locator(".ml-task-progress").count(),0);
+ // Resource URLs come from the freshly built package, with a cache suffix.
+ const urls=await page.locator('script[src*="/materialluci/"],link[href*="/materialluci/"]').evaluateAll(nodes=>nodes.map(el=>el.src||el.href));
+ assert(urls.every(url=>new URL(url).searchParams.has("v")));
+ assert.equal(errors.length,0,errors.join("\n"));
+ await page.close();
+}

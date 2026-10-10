@@ -205,7 +205,7 @@
   }
   // Only explicit boolean LuCI fields get switches; list/group checkboxes remain checkboxes.
   for(const input of all('.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox')){
-   if(input.classList.contains("ml-switch")||input.closest(".cbi-dropdown,[role=group],.cbi-section-table,.ml-table-scroll"))continue;
+   if(input.classList.contains("ml-switch")||input.closest(".cbi-dropdown,[role=group]"))continue;
    const field=input.closest(".cbi-value-field");
    if(!field||field.querySelectorAll("input[type=checkbox]").length!==1)continue;
    input.classList.add("ml-switch");
