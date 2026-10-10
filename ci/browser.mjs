@@ -15,7 +15,7 @@ try{
   await page.goto(base);await page.waitForFunction(()=>window.fixtureCheckbox&&window.fixtureSelect&&document.body.dataset.mlMenus==="ready");
   await page.waitForSelector("#real-widget .ml-switch-hit .mdc-switch");
   assert.equal(await page.locator(".ml-bottom-nav").count(),0);
-  assert.equal(await page.locator('meta[name="theme-color"]').count(),0);
+  assert.deepEqual(await page.locator('meta[name="theme-color"]').evaluateAll(nodes=>nodes.map(n=>n.content)),["#FAFAFA","#121212"]);
   assert(requests.some(url=>/materialluci-menu-v0_3_0-[0-9]+/.test(url)),"versioned menu module not requested");
   assert(!requests.some(url=>new URL(url).pathname.endsWith("/materialluci-menu.js")),"stale menu adapter path used");
 
