@@ -37,3 +37,5 @@ LuCI 直接使用 modal_overlay.firstElementChild、modal.lastChild 和调用返
 ci/mdc-controls.mjs 使用解包 IPK，检查真实控件的迁移前后尺寸、字体、颜色、圆角与首节点，官方实例、原生字段变更次数、上游 ui.Select sibling 链、ui.Checkbox 隐藏字段、MDCDialog 生命周期、焦点、history 及卸载清理。CI 专用 init flag 才采集 before 样式，运行时不保存整套 computed styles。
 
 延续所有手机/桌面 Chromium/WebKit 测试、状态页、键盘视口与顶栏对比度检查；输出两引擎 dialog/choice/control 截图。真实路由器与 iPhone Safari：待验证。以 Actions 包标识及页面实际资源 cache/SHA 为部署核对依据。
+
+包修订号提升为 0.3.0-4，以便正常升级；每次 Actions 仍按提交生成独立缓存版本。观察器忽略新增 MDC 装饰节点，避免由组件内部标记引发反复页面增强。测试另外断言真实 ripple 伪元素使用官方动画，而非只存在实例或类名。

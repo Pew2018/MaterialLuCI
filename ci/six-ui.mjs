@@ -35,6 +35,7 @@ export async function verifySixUI(browser,name,base){
   assert.notEqual(await parent.getAttribute("aria-expanded"),before);
   assert.equal(await parent.locator(":scope > .mdc-button__ripple").count(),1);
   assert(await parent.evaluate(el=>!!el._mlMdcRipple&&el.classList.contains("mdc-ripple-upgraded--foreground-activation")));
+  assert(await parent.locator(":scope > .mdc-button__ripple").evaluate(el=>getComputedStyle(el,"::after").animationName.includes("mdc-ripple-fg-radius-in")),"official ripple CSS is not animating");
   assert.equal(await parent.locator("..").evaluate(el=>!!el._mlMdcRipple),false);
  }
  assert.equal(await parent.getAttribute("data-ripple"),"control");

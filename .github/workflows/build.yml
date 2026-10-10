@@ -99,7 +99,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: MaterialLuCI-0.3.0-3-IPK-${{ github.sha }}-AX3000T
+          name: MaterialLuCI-0.3.0-4-IPK-${{ github.sha }}-AX3000T
           path: dist/*.ipk
           if-no-files-found: error
           retention-days: 30

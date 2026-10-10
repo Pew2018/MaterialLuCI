@@ -287,12 +287,13 @@
  window.addEventListener("popstate",()=>{if(dialog&&(!history.state||history.state.materialluci!=="dialog"||history.state.id!==dialog.id))finishDialog();setDrawer(false);});
  if(document.querySelector('input[name="luci_password"]'))document.body.classList.add("ml-login");
  enhance(main);
+ const decoration=n=>n.matches(".mdc-button__ripple,.mdc-icon-button__ripple,.mdc-checkbox__background,.mdc-checkbox__ripple,.mdc-checkbox__focus-ring,.mdc-radio__background,.mdc-radio__ripple,.mdc-radio__focus-ring");
  let scheduled=false;const pending=new Set();
  function flush(){scheduled=false;for(const n of pending)if(n.isConnected)enhance(n);pending.clear();}
- const observer=new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&!n.classList.contains("tap-ripple"))pending.add(n);if(pending.size&&!scheduled){scheduled=true;requestAnimationFrame(flush);}});
+ const observer=new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&!decoration(n))pending.add(n);if(pending.size&&!scheduled){scheduled=true;requestAnimationFrame(flush);}});
  observer.observe(main,{childList:true,subtree:true});
  const watched=new WeakSet();
- function watchModal(modal){if(!modal||watched.has(modal))return;watched.add(modal);enhance(modal);new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&!n.classList.contains("tap-ripple"))enhance(n);}).observe(modal,{childList:true,subtree:true});}
+ function watchModal(modal){if(!modal||watched.has(modal))return;watched.add(modal);enhance(modal);new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&!decoration(n))enhance(n);}).observe(modal,{childList:true,subtree:true});}
  watchModal(document.getElementById("modal_overlay"));
  new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&n.id==="modal_overlay")watchModal(n);}).observe(document.body,{childList:true});
  const vv=window.visualViewport,root=document.documentElement;let viewportFrame=0;
