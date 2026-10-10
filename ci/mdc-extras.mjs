@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 export async function verifyMDCExtras(browser,name,base){
  const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
  page.on("pageerror",e=>{errors.push(e.message);console.error("extras browser error",e.message);});
+ await page.addInitScript(()=>{window.extraTrace=[];for(const type of ["MDCMenuSurface:opening","MDCMenuSurface:opened","MDCMenuSurface:closing","MDCMenuSurface:closed","scroll"]){document.addEventListener(type,event=>{if(type==="scroll"&&event.target!==document)return;const el=event.target,a=document.activeElement;extraTrace.push({type,time:performance.now(),menu:el.className,open:el._mlMdcMenu?.open,scrollY,active:{tag:a?.tagName,id:a?.id,cls:a?.className,value:a?.dataset?.value}});if(extraTrace.length>60)extraTrace.shift();},true);}});
+ try{
  await page.goto(base);await page.waitForFunction(()=>window.MaterialExtras&&window.fixtureSelect);
  await page.waitForFunction(()=>document.querySelector("#real-select select")?._mlMdcSelect);
  assert(await page.evaluate(()=>fixtureSelect.node.firstChild.tagName==="SELECT"),"LuCI Select firstChild contract changed");
@@ -129,4 +131,6 @@ export async function verifyMDCExtras(browser,name,base){
  await page.waitForFunction(()=>extraSelect._mlMdcSelect===null);
  assert.deepEqual(errors,[]);
  await page.close();console.log(name+": packaged MDC menus/selects/snackbar/tooltips, native values/events, contracts, disabled choices, focus, dynamic options and card coverage passed");
+ }catch(error){console.error(name+": extras trace",JSON.stringify(await page.evaluate(()=>({trace:extraTrace,active:{tag:document.activeElement?.tagName,id:document.activeElement?.id,cls:document.activeElement?.className},menus:[...document.querySelectorAll(".ml-mdc-menu")].map(el=>({cls:el.className,open:el._mlMdcMenu?.open,rect:el.getBoundingClientRect().toJSON()}))}))));await page.screenshot({path:"dist/previews/extras-"+name+"-failure.png"});throw error;}
+
 }

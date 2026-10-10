@@ -14,7 +14,7 @@
  function replaceItems(list,items){clearItems(list);list.replaceChildren(...items);for(const li of items){li._mlMdcRipple=new MDCRipple(li);li._mlMdcRipple.disabled=li.getAttribute("aria-disabled")==="true";}}
  function portalMenu(root){
   root.classList.add("ml-mdc-menu");document.body.append(root);
-  const menu=new MDCMenu(root,undefined,undefined,el=>{const list=new MDCList(el);list.disabledItemsFocusable=false;return list;});menu.setIsHoisted(true);menu.setFixedPosition(true);
+  const menu=new MDCMenu(root,undefined,undefined,el=>{const list=new MDCList(el);list.disabledItemsFocusable=false;return list;});menu.setIsHoisted(true);menu.setFixedPosition(false);
   menu.wrapFocus=true;menu.hasTypeahead=true;root._mlMdcMenu=menu;
   // v14 transition callbacks may arrive after an opposite user action.
   // Do not let a superseded opened/closed event steal focus or select state.
@@ -124,7 +124,7 @@
    const rows=[...ul.children].filter(li=>li.tagName==="LI");
    replaceItems(list,rows.map(li=>{const el=item(li.textContent,li.getAttribute("data-value")||"",li.hasAttribute("unselectable")||li.getAttribute("aria-disabled")==="true",li.hasAttribute("selected"));el.setAttribute("role","menuitem");el._nativeChoice=li;return el;}));
    menu.layout();menu.items.forEach((li,i)=>menu.setEnabled(i,li.getAttribute("aria-disabled")!=="true"));
-   menu.setAnchorElement(owner);menu.setIsHoisted(true);menu.setFixedPosition(true);menu.open=true;arrow.setAttribute("aria-expanded","true");
+   menu.setAnchorElement(owner);menu.setIsHoisted(true);menu.setFixedPosition(false);menu.open=true;arrow.setAttribute("aria-expanded","true");
   }
   function key(event){if(["Enter"," ","ArrowDown","ArrowUp"].includes(event.key))open(event);}
   function click(event){if(event.target===arrow||arrow.contains(event.target))open(event);}
