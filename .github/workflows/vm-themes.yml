@@ -1,0 +1,125 @@
+name: Build x86_64 VM themes (feature and frozen backup)
+on:
+  push:
+    branches: ["feature/classic-native-v1"]
+    paths: [".github/workflows/vm-themes.yml", "ci/vm-target-build.py"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: materialluci-vm-themes
+  cancel-in-progress: false
+jobs:
+  vm-theme:
+    name: x86_64 - ${{ matrix.label }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: feature
+            branch: feature/classic-native-v1
+            source: 0e88eeec549e363462d32f814671a3ee2ed3671c
+          - label: backup
+            branch: archive/classic-native-v1-20261010-mdc-baseline
+            source: 6fcd2782065055b7cafeb2da072affd2e35d88cf
+    steps:
+      - name: Checkout selected UI source at an immutable commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.source }}
+          path: source
+      - name: Checkout CI adapter from this workflow commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: ci-runner
+          sparse-checkout: ci/vm-target-build.py
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Lua template tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y lua5.1
+      - name: Install selected branch dependencies and browser engines
+        working-directory: source
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium webkit
+      - name: Validate syntax and semantic colors
+        working-directory: source
+        run: |
+          for file in theme/root/www/luci-static/materialluci/*.js; do node --check "$file"; done
+          sh -n theme/control/postinst
+          sh -n theme/control/prerm
+          sh -n theme/root/etc/uci-defaults/95-materialluci
+          node ci/colors.cjs
+      - name: Build x86_64 package and prove UI payload matches native branch build
+        env:
+          SOURCE_BRANCH: ${{ matrix.branch }}
+        run: python3 ci-runner/ci/vm-target-build.py --source source --branch "$SOURCE_BRANCH"
+      - name: Audit the actual x86_64 IPK and extract test resources
+        working-directory: source
+        run: |
+          python3 ci/ipk-audit.py dist/*.ipk --sha "$(git rev-parse HEAD)" --run "$GITHUB_RUN_ID" --out build/package-audit.json --extract build/unpacked --candidate
+      - name: Obtain pinned upstream LuCI
+        uses: actions/checkout@v4
+        with:
+          repository: openwrt/luci
+          ref: e4c46338b196e486a88b1a75b78e283708c82bc4
+          path: source/luci-fixture
+          sparse-checkout: |
+            modules/luci-base/htdocs/luci-static/resources
+            applications/luci-app-opkg/htdocs/luci-static/resources
+            modules/luci-mod-status/htdocs/luci-static/resources
+      - name: Compile actual packaged templates
+        working-directory: source
+        run: python3 ci/prepare.py
+      - name: Test packaged resources on desktop and mobile Chromium and WebKit
+        working-directory: source
+        run: |
+          mkdir -p dist/previews
+          cp build/package-audit.json build/vm-target-audit.json dist/previews/
+          git rev-parse HEAD > dist/previews/commit.txt
+          sha256sum build/unpacked/www/luci-static/materialluci/*.js build/unpacked/www/luci-static/materialluci/*.css build/unpacked/www/luci-static/materialluci/icons/*.svg > dist/previews/assets.sha256
+          node ci/browser.mjs
+      - name: Screenshot contact sheets
+        if: always()
+        working-directory: source
+        run: node ci/contact-sheet.mjs
+      - name: Package identity summary
+        if: always()
+        working-directory: source
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, os
+          p=pathlib.Path("build/vm-target-audit.json")
+          if p.exists():
+              d=json.loads(p.read_text())
+              with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as out:
+                  out.write("## x86_64 VM package\n\n")
+                  for key,value in d.items():out.write("- "+key+": `"+str(value)+"`\n")
+                  out.write("\nPackaged resources tested with pinned LuCI and mocked read-only data. Installation in Patrick's VM and iPhone Safari: **待验证**.\n")
+          PY
+      - name: Upload verified VM IPK and identity
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MaterialLuCI-VM-x86_64-${{ matrix.label }}-${{ matrix.source }}
+          path: |
+            source/dist/*.ipk
+            source/build/vm-target-audit.json
+            source/build/package-audit.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MaterialLuCI-VM-previews-${{ matrix.label }}-${{ matrix.source }}
+          path: source/dist/previews/
+          if-no-files-found: warn
+          retention-days: 30
