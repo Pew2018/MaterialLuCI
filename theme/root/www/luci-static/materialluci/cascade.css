@@ -562,3 +562,40 @@ body #modal_overlay>.modal:has(.cbi-map,.cbi-section,.cbi-tblsection,pre):not(.a
 }
 /* Keep LuCI's separate apply/menu targets without its legacy white seam. */
 body .cbi-dropdown:is(.btn,.cbi-button)>.open{border-left-color:transparent;background:transparent;color:inherit}
+
+/* Neutral surfaces communicate elevation; classic geometry stays 2px. */
+:root{--raised-surface:#fff;--inset-surface:#f5f5f5;--sidebar-surface:#fafafa;--card:#fff;--mdc-theme-primary:var(--control-accent);--mdc-theme-surface:var(--raised-surface);--mdc-theme-on-surface:var(--ink)}
+:root[data-theme=dark]{--surface:#1e1e1e;--card:#1e1e1e;--raised-surface:#2d2d2d;--inset-surface:#181818;--sidebar-surface:#181818;--log:#181818;--status-surface:#262626}
+body .ml-sidebar{background:var(--sidebar-surface)}
+:root[data-cards=true] .ml-card-surface{padding-top:16px;border:0;box-shadow:0 1px 3px rgba(0,0,0,.16)}
+:root[data-cards=true] .ml-card-surface>:is(h3,h4,legend){padding-top:0}
+:root[data-theme=dark][data-cards=true] .ml-card-surface{box-shadow:0 1px 3px rgba(0,0,0,.3)}
+:root[data-cards=false] .ml-card-surface{padding:0;margin-bottom:16px;border:0;background:transparent;box-shadow:none}
+:root[data-cards=true] #maincontent .ml-chart-surface.ml-card-surface{background:var(--card)!important;border:0!important}
+body #modal_overlay>.modal.mdc-dialog__surface,body #modal_overlay>.modal.alert-message,
+body .ml-dialog.mdc-dialog__surface{background:var(--raised-surface)}
+body #modal_overlay .modal>:is(h3,h4,.right){background:var(--raised-surface)}
+body .ml-mdc-menu.mdc-menu-surface{background:var(--raised-surface);color:var(--ink);font:inherit;border-radius:2px;max-width:calc(100vw - 24px);z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.28)}
+body .ml-mdc-menu .mdc-deprecated-list{padding:8px 0;color:var(--ink);font:inherit}
+body .ml-mdc-menu .mdc-deprecated-list-item{height:auto;min-height:48px;padding:10px 16px;font:inherit;letter-spacing:normal;color:var(--ink);white-space:normal}
+body .ml-mdc-menu .mdc-deprecated-list-item__text{overflow-wrap:anywhere;line-height:1.45}
+body .ml-mdc-menu .mdc-deprecated-list-item--disabled{color:var(--disabled)}
+body .ml-mdc-menu .mdc-deprecated-list-item--selected{background:var(--action-tonal);color:var(--on-action-tonal)}
+body .ml-mdc-menu .mdc-deprecated-list-item__ripple::before,body .ml-mdc-menu .mdc-deprecated-list-item__ripple::after{background:var(--control-accent)}
+body .ml-mdc-select{display:inline-flex;min-width:160px;max-width:100%;width:100%;vertical-align:middle;font:inherit;--mdc-select-disabled-dropdown-icon-color:var(--disabled)}
+body .ml-mdc-select .mdc-select__anchor{height:48px;width:100%;padding:8px 0;background:transparent;border-radius:0;font:inherit;color:var(--ink)}
+body .ml-mdc-select .mdc-select__selected-text{color:var(--ink);font:inherit;letter-spacing:normal;padding:0;overflow:hidden;text-overflow:ellipsis}
+body .ml-mdc-select .mdc-select__selected-text-container{padding:0;min-width:0}
+body .ml-mdc-select .mdc-select__dropdown-icon{margin:0 8px 0 12px}
+body .ml-mdc-select .mdc-select__dropdown-icon-graphic{fill:var(--muted)}
+body .ml-mdc-select .mdc-line-ripple::before{border-bottom-color:var(--muted)}
+body .ml-mdc-select .mdc-line-ripple::after{border-bottom-color:var(--control-accent)}
+body .ml-mdc-select.mdc-select--disabled .mdc-select__selected-text{color:var(--disabled)}
+body .ml-mdc-select.mdc-select--invalid .mdc-line-ripple::before{border-bottom-color:var(--danger)}
+body select.ml-mdc-native-select{position:absolute!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;max-width:1px!important;opacity:0;clip-path:inset(50%);padding:0!important;margin:0!important;pointer-events:none}
+body .ml-preference-snackbar{z-index:60;pointer-events:none;padding-bottom:max(8px,env(safe-area-inset-bottom))}
+body .ml-preference-snackbar .mdc-snackbar__surface{background:#323232;color:#fff;border-radius:2px;min-width:288px;max-width:min(568px,calc(100vw - 24px));pointer-events:auto}
+body .ml-preference-snackbar .mdc-snackbar__label{font:inherit;color:#fff}
+body .mdc-tooltip{z-index:70;pointer-events:none}
+body .mdc-tooltip__surface{background:#616161;color:#fff;border-radius:2px;font:400 12px/1.4 Roboto,"Noto Sans",system-ui,sans-serif;padding:6px 8px}
+@media(prefers-reduced-motion:reduce){.ml-mdc-menu,.ml-preference-snackbar,.mdc-tooltip__surface-animation{animation:none!important;transition:none!important}}

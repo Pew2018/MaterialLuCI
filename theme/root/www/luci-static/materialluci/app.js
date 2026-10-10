@@ -257,10 +257,12 @@
   // Re-evaluate semantic sections after dynamic rendering. A map and #view
   // are layout containers; only their leaf content groups own surfaces.
   main.classList.remove("ml-card-surface");
+  // Plots are groups even when upstream wraps them in unnamed divs.
+  for(const svg of main.querySelectorAll("#view svg"))if(svg.querySelector("polyline,polygon"))svg.parentElement?.classList.add("ml-chart-surface");
   // Select a complete semantic group, rather than only its deepest child.
   // Status sections contain a title, device boxes AND associated tables.
-  const candidates=[...main.querySelectorAll(".cbi-section,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table")]
-   .filter(section=>!section.closest("#ml-appearance,.modal,.cbi-value,table,.table")&&section.id!=="view");
+  const candidates=[...main.querySelectorAll(".cbi-section,.cbi-section-node,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table,.ml-chart-surface,#view > .ml-table-scroll,.cbi-map > .ml-table-scroll")]
+   .filter(section=>!section.closest("#ml-appearance,.modal,.cbi-value,table,.table")&&!section.matches(".cbi-section-node:empty")&&section.id!=="view");
   const surfaces=new Set(candidates.filter(section=>!candidates.some(parent=>parent!==section&&parent.contains(section))));
   main.querySelectorAll(".ml-card-surface").forEach(el=>{if(!surfaces.has(el))el.classList.remove("ml-card-surface");});
   for(const section of surfaces)if(!section.classList.contains("ml-card-surface"))section.classList.add("ml-card-surface");
@@ -282,7 +284,7 @@
    }
   }
   // Keep original selects and LuCI dropdowns authoritative, including keyboard behavior.
-  appearanceEntry(root);window.MaterialTextFields?.enhance(root);MaterialControls.enhance(root);MaterialFeedback.bind(root);
+  appearanceEntry(root);window.MaterialTextFields?.enhance(root);MaterialControls.enhance(root);MaterialFeedback.bind(root);window.MaterialExtras?.enhance(root);
  }
  window.addEventListener("popstate",()=>{if(dialog&&(!history.state||history.state.materialluci!=="dialog"||history.state.id!==dialog.id))finishDialog();setDrawer(false);});
  if(document.querySelector('input[name="luci_password"]'))document.body.classList.add("ml-login");

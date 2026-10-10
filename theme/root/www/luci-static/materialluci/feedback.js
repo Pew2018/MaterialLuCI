@@ -28,7 +28,7 @@
   else el.classList.add("mdc-ripple-surface");
   // Append after business children: LuCI owns firstChild and sibling contracts.
   const cls=icon?"mdc-icon-button__ripple":el.classList.contains("mdc-button")?"mdc-button__ripple":null;
-  if(cls&&!el.querySelector(":scope > ."+cls)){const layer=document.createElement("span");layer.className=cls;layer.setAttribute("aria-hidden","true");el.append(layer);}
+  if(cls&&!el.querySelector(":scope > ."+cls)){const layer=document.createElement("span");layer.className=cls;layer.setAttribute("aria-hidden","true");if(el.matches(".cbi-dropdown"))el.insertBefore(layer,el.lastElementChild);else el.append(layer);}
   if(el.matches("button")&&el.firstElementChild?.tagName==="SPAN"&&!el.firstElementChild.matches(".mdc-button__ripple,.mdc-icon-button__ripple,.ml-radio"))el.firstElementChild.classList.add("mdc-button__label");
  }
  function bind(el){

@@ -69,8 +69,8 @@ export async function verifyMDCControls(browser,name,base){
  const actionArrow=page.locator("#mdc-action-menu>.open");
  assert.equal(await actionArrow.evaluate(el=>getComputedStyle(el).borderLeftColor),"rgba(0, 0, 0, 0)","legacy split button seam");
  await actionArrow.click();
- await page.waitForFunction(()=>document.getElementById("mdc-action-menu").hasAttribute("open"));
- await page.locator('#mdc-action-menu>ul.dropdown>li[data-value="unchecked"]').click();
+ await page.waitForFunction(()=>document.getElementById("mdc-action-menu")._mlMdcMenu?.open);
+ await page.locator('.ml-action-menu.mdc-menu-surface--open [data-value="unchecked"]').click();
  assert.equal(await page.evaluate(()=>realActionMenu.getValue()),"unchecked","native dropdown selection changed");
  await page.screenshot({path:"dist/previews/mdc-action-menu-"+name+".png"});
  // Actual upstream apply status API: short notices must not inherit MDC's

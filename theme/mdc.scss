@@ -5,6 +5,12 @@
 @use "@material/radio/styles" as radio-styles;
 @use "@material/form-field";
 @use "@material/dialog";
+@use "@material/list/mdc-list";
+@use "@material/menu-surface/mdc-menu-surface";
+@use "@material/menu/mdc-menu";
+@use "@material/select/styles" as select-styles;
+@use "@material/snackbar";
+@use "@material/tooltip/styles" as tooltip-styles;
 @use "@material/line-ripple/mdc-line-ripple";
 @use "@material/textfield";
 @use "@material/button/styles" as button-styles;
@@ -15,6 +21,7 @@
 @include checkbox.core-styles;
 @include form-field.core-styles;
 @include dialog.core-styles;
+@include snackbar.core-styles;
 
 /* v14 defaults use icons and dark OFF thumbs. MD1 adaptation uses the
    official 36x14 track / 20px thumb with neutral OFF and accent ON. */

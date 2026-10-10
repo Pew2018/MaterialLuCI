@@ -39,10 +39,12 @@ if a.candidate:
  assert all(assets+n in files for n in ["mdc-controls.js","controls.js"])
  assert "mdc-controls.js?v=" in header and "controls.js?v=" in header
  controls=files[assets+"mdc-controls.js"].decode()
- for component in ["MDCRipple","MDCDialog","MDCCheckbox","MDCRadio","MDCFormField"]:assert component in controls,component
+ for component in ["MDCRipple","MDCDialog","MDCCheckbox","MDCRadio","MDCFormField","MDCMenu","MDCMenuSurface","MDCSelect","MDCSnackbar","MDCTooltip"]:assert component in controls,component
  shared_css=files[assets+"mdc-linear-progress.css"].decode()
- for cls in ["mdc-button","mdc-icon-button","mdc-dialog","mdc-checkbox","mdc-radio"]:assert cls in shared_css,cls
+ for cls in ["mdc-button","mdc-icon-button","mdc-dialog","mdc-checkbox","mdc-radio","mdc-menu","mdc-menu-surface","mdc-select","mdc-snackbar","mdc-tooltip"]:assert cls in shared_css,cls
  assert "tap-ripple" not in files[assets+"feedback.js"].decode()
+ assert assets+"extras.js" in files and "extras.js?v=" in header
+ checks["official_extra_controls_bundled"]=True
  checks["official_controls_bundled"]=True
  assert "mdc-text-field" in files[assets+"mdc-linear-progress.css"].decode()
  assert " · " not in files[assets+"app.js"].decode()
