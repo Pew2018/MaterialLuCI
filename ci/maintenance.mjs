@@ -14,6 +14,40 @@ export async function verifyMaintenance(browser,name,base){
    assert.equal(await page.locator("#view>.alert-message.warning").count(),1,"reboot warning preserved");
    await page.locator("#view>button").click();
    assert.deepEqual(await page.evaluate(()=>maintenanceCalls),["Perform reboot"]);
+   // Compatibility fixture matching the documented legacy Lua shape:
+   // h2/p/hr and an input button directly under maincontent, with no #view.
+   const legacy=await browser.newPage({viewport:{width:390,height:844}}),legacyErrors=[];
+   legacy.on("pageerror",e=>legacyErrors.push(e.message));
+   await legacy.goto(base+"/reboot.html");
+   await legacy.waitForFunction(()=>!!window.MaterialLuCI);
+   await legacy.evaluate(()=>{
+    const main=document.getElementById("maincontent");
+    window.L.env.dispatchpath=[];window.L.env.requestpath=[];
+    main.dataset.mlPage="";
+    const title=document.createElement("h2");title.textContent="Reboot";
+    const description=document.createElement("p");description.textContent="Restart the device and reconnect after it becomes available.";
+    const rule=document.createElement("hr"),form=document.createElement("form"),action=document.createElement("input");
+    action.type="button";action.id="legacy-reboot-action";action.name="reboot";action.value="Perform reboot";action.className="cbi-button cbi-button-action important";
+    action.addEventListener("click",()=>window.legacyCalls=(window.legacyCalls||0)+1);
+    form.append(action);main.replaceChildren(title,description,rule,form);
+    MaterialLuCI.enhance(main);
+   });
+   await legacy.waitForFunction(()=>document.getElementById("maincontent").classList.contains("ml-card-surface"));
+   assert.equal(await legacy.locator("#maincontent").getAttribute("data-ml-page"),"reboot","legacy data-page route fallback");
+   assert.equal(await legacy.locator("#maincontent hr").evaluate(el=>getComputedStyle(el).display),"none");
+   assert.equal(await legacy.locator("#legacy-reboot-action").getAttribute("name"),"reboot");
+   assert.equal(await legacy.locator("#legacy-reboot-action").evaluate(el=>getComputedStyle(el).textAlign),"center");
+   assert.equal(await legacy.locator("#legacy-reboot-action").evaluate(el=>getComputedStyle(el).borderTopColor),"rgba(0, 0, 0, 0)");
+   await legacy.locator("#legacy-reboot-action").click();
+   assert.equal(await legacy.evaluate(()=>legacyCalls),1,"legacy reboot click callback preserved");
+   for(const width of [390,1280])for(const mode of ["light","dark"]){
+    await legacy.setViewportSize({width,height:844});
+    await legacy.evaluate(mode=>MaterialAppearance.set("mode",mode),mode);
+    assert(await legacy.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"legacy reboot overflow");
+    await legacy.screenshot({path:"dist/previews/"+name+"-reboot-legacy-"+width+"-"+mode+".png",fullPage:true});
+   }
+   assert.deepEqual(legacyErrors,[]);
+   await legacy.close();
   }else if(kind==="firewall"){
    const contracts=await page.evaluate(()=>{
     const first=firewallPreview.createChainSection(false,'Filter','INPUT','ACCEPT',10,128);
@@ -31,6 +65,13 @@ export async function verifyMaintenance(browser,name,base){
    assert(boxes.length>=5);
    assert(boxes.every(x=>x.h===48&&x.r==="2px"),"backup/reset/upload/download button geometry");
    assert(boxes.every(x=>Math.abs(x.x-boxes[0].x)<1),"backup action column alignment");
+   const picker=page.locator('input[type="file"]');
+   if(await picker.count()){
+    const rect=await picker.first().boundingBox(),style=await picker.first().evaluate(el=>({color:getComputedStyle(el).color,border:getComputedStyle(el).borderBottomWidth}));
+    assert(rect.width>0&&rect.height>0&&rect.x+rect.width<=innerWidth,"native restore file picker remains in bounds");
+    assert.equal(style.color,await page.locator("#maincontent").evaluate(el=>getComputedStyle(el).color));
+    assert.equal(style.border,"0px","file picker is not styled as a text field");
+   }
   }
   for(const width of [390,1280])for(const mode of ["light","dark"]){
    await page.setViewportSize({width,height:900});
