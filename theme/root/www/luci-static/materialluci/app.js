@@ -75,7 +75,8 @@
   // operation only when the native clickable attribute is absent.
   if(!el.hasAttribute("data-clickable")&&!pollFallback.has(el)){
    pollFallback.add(el);el.setAttribute("data-clickable","true");
-   el.addEventListener("click",()=>{try{Promise.resolve(L.require("poll")).then(poll=>poll.active()?poll.stop():poll.start()).catch(error=>console.error("Unable to toggle LuCI polling",error));}catch(error){console.error("Unable to toggle LuCI polling",error);}});
+   let running=!paused;
+   el.addEventListener("click",()=>{try{Promise.resolve(L.require("poll")).then(poll=>{if(running){poll.stop();running=false;}else{poll.start();running=true;}el.setAttribute("data-style",running?"active":"inactive");}).catch(error=>console.error("Unable to toggle LuCI polling",error));}catch(error){console.error("Unable to toggle LuCI polling",error);}});
   }
  }
  if(indicators)new MutationObserver(syncPollIndicator).observe(indicators,{childList:true,subtree:true,attributes:true,attributeFilter:["data-style","data-clickable"]});
