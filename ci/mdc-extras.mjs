@@ -77,6 +77,7 @@ export async function verifyMDCExtras(browser,name,base){
  for(const width of [1440,390]){
   await page.setViewportSize({width,height:844});await arrow.scrollIntoViewIfNeeded();await arrow.click();
   await page.waitForSelector(".ml-action-menu.mdc-menu-surface--open");
+  await page.waitForSelector(".ml-action-menu.mdc-menu-surface--animating-open",{state:"detached"});
   const box=await page.locator(".ml-action-menu.mdc-menu-surface--open").boundingBox();
   assert(box.x>=0&&box.x+box.width<=width+1,"action menu horizontal overflow");
   assert(box.y>=0&&box.y+box.height<=845,"action menu vertical overflow");

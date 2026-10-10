@@ -58,7 +58,7 @@
   // Sibling decoration preserves ui.Select.node.firstChild and original label.
   select.after(root);
   const oldTab=select.getAttribute("tabindex"),oldHidden=select.getAttribute("aria-hidden"),restore=[],optionHooks=new WeakSet();
-  let instance,menu,syncing=false,queued=false,signature="",anchorRect=null;
+  let instance,menu,syncing=false,queued=false,signature="";
   function queue(){if(!queued){queued=true;queueMicrotask(()=>{queued=false;if(select.isConnected)sync();});}}
   function sync(){
    if(!simple(select)){entry.destroy();return;}
@@ -81,7 +81,7 @@
     }
    }finally{syncing=false;}
   }
-  const entry={root,anchor,get menu(){return menu;},get rect(){return anchorRect;},destroy(){
+  const entry={root,anchor,get menu(){return menu;},destroy(){
    observer.disconnect();popup._mlEscapeCleanup?.();clearItems(list);instance?.destroy();popup.remove();root.remove();select.classList.remove("ml-mdc-native-select");select._mlMdcSelect=null;
    select.removeEventListener("input",queue);select.removeEventListener("change",queue);select.removeEventListener("focus",focus);select.removeEventListener("invalid",invalid);
    select.form?.removeEventListener("reset",reset);restore.forEach(fn=>fn());
@@ -90,7 +90,7 @@
   }};
   sync();
   instance=new MDCSelect(root,undefined,undefined,undefined,undefined,el=>{menu=portalMenu(el);return menu;});
-  popup.addEventListener("MDCMenuSurface:opening",()=>{anchorRect=null;});popup.addEventListener("MDCMenuSurface:opened",()=>{anchorRect=anchor.getBoundingClientRect();});escapeFocus(popup,anchor);
+  escapeFocus(popup,anchor);
   instance.useDefaultValidation=false;root._mlMdcSelect=instance;select._mlMdcSelect=instance;selects.set(select,entry);
   root.addEventListener("MDCSelect:change",()=>{
    if(syncing||select.disabled)return;
@@ -113,7 +113,7 @@
   const arrow=owner.querySelector(":scope > .open"),ul=owner.querySelector(":scope > ul:not(.preview)");
   if(!arrow||!ul)return;
   const popup=make("div","mdc-menu mdc-menu-surface ml-action-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","menu");list.tabIndex=-1;popup.append(list);
-  const menu=portalMenu(popup);let ownerRect=null;popup.addEventListener("MDCMenuSurface:opening",()=>{ownerRect=null;});popup.addEventListener("MDCMenuSurface:opened",()=>{ownerRect=owner.getBoundingClientRect();});popup.id="ml-menu-"+(++sequence);owner._mlMdcMenu=menu;
+  const menu=portalMenu(popup);popup.id="ml-menu-"+(++sequence);owner._mlMdcMenu=menu;
   const oldRole=arrow.getAttribute("role"),oldTab=arrow.getAttribute("tabindex");arrow.setAttribute("role","button");arrow.tabIndex=0;
   escapeFocus(popup,arrow);
   arrow.setAttribute("aria-label",document.documentElement.lang.startsWith("zh")?"更多应用选项":"More apply options");arrow.setAttribute("aria-haspopup","menu");arrow.setAttribute("aria-controls",popup.id);arrow.setAttribute("aria-expanded","false");
@@ -124,7 +124,7 @@
    const rows=[...ul.children].filter(li=>li.tagName==="LI");
    replaceItems(list,rows.map(li=>{const el=item(li.textContent,li.getAttribute("data-value")||"",li.hasAttribute("unselectable")||li.getAttribute("aria-disabled")==="true",li.hasAttribute("selected"));el.setAttribute("role","menuitem");el._nativeChoice=li;return el;}));
    menu.layout();menu.items.forEach((li,i)=>menu.setEnabled(i,li.getAttribute("aria-disabled")!=="true"));
-   menu.setAnchorElement(owner);menu.setIsHoisted(true);menu.setFixedPosition(true);menu.open=true;arrow.setAttribute("aria-expanded","true");
+   menu.setAnchorElement(arrow);menu.setIsHoisted(true);menu.setFixedPosition(true);menu.open=true;arrow.setAttribute("aria-expanded","true");
   }
   function key(event){if(["Enter"," ","ArrowDown","ArrowUp"].includes(event.key))open(event);}
   function click(event){if(event.target===arrow||arrow.contains(event.target))open(event);}
@@ -136,7 +136,7 @@
    li.dispatchEvent(new CustomEvent("cbi-dropdown-select",{bubbles:true}));arrow.focus({preventScroll:true});
   });
   popup.addEventListener("MDCMenuSurface:closed",()=>{arrow.setAttribute("aria-expanded",String(menu.open));});
-  actions.set(owner,{open,get rect(){return ownerRect;},destroy(){popup._mlEscapeCleanup?.();clearItems(list);menu.destroy();popup.remove();owner.removeEventListener("click",click,true);arrow.removeEventListener("keydown",key);owner._mlMdcMenu=null;for(const a of ["aria-label","aria-haspopup","aria-controls","aria-expanded"])arrow.removeAttribute(a);for(const [a,v] of [["role",oldRole],["tabindex",oldTab]])if(v===null)arrow.removeAttribute(a);else arrow.setAttribute(a,v);actions.delete(owner);}});
+  actions.set(owner,{open,destroy(){popup._mlEscapeCleanup?.();clearItems(list);menu.destroy();popup.remove();owner.removeEventListener("click",click,true);arrow.removeEventListener("keydown",key);owner._mlMdcMenu=null;for(const a of ["aria-label","aria-haspopup","aria-controls","aria-expanded"])arrow.removeAttribute(a);for(const [a,v] of [["role",oldRole],["tabindex",oldTab]])if(v===null)arrow.removeAttribute(a);else arrow.setAttribute(a,v);actions.delete(owner);}});
  }
  function tooltip(anchor){
   const label=anchor.getAttribute("aria-label")||anchor.title;if(!label)return;
