@@ -146,7 +146,10 @@
   const description=anchor.getAttribute("aria-describedby"),title=anchor.getAttribute("title"),data=anchor.getAttribute("data-tooltip-id");
   anchor.setAttribute("aria-describedby",[description,id].filter(Boolean).join(" "));anchor.setAttribute("data-tooltip-id",id);anchor.removeAttribute("title");
   const instance=new MDCTooltip(root);instance.setShowDelay(500);anchor._mlMdcTooltip=instance;
-  tips.set(anchor,{surface,destroy(){instance.destroy();root.remove();anchor._mlMdcTooltip=null;for(const [a,v] of [["aria-describedby",description],["title",title],["data-tooltip-id",data]])if(v===null)anchor.removeAttribute(a);else anchor.setAttribute(a,v);tips.delete(anchor);}});
+  const guard=event=>{if(anchor.closest('[inert],[aria-hidden="true"]')||!anchor.getClientRects().length){instance.hide();event.stopImmediatePropagation();}};
+  for(const event of ["focus","mouseenter","touchstart"])anchor.addEventListener(event,guard,true);
+  const visibility=new MutationObserver(()=>root.setAttribute("aria-hidden",String(!instance.isShown())));visibility.observe(root,{attributes:true,attributeFilter:["class"]});
+  tips.set(anchor,{surface,destroy(){visibility.disconnect();for(const event of ["focus","mouseenter","touchstart"])anchor.removeEventListener(event,guard,true);instance.destroy();root.remove();anchor._mlMdcTooltip=null;for(const [a,v] of [["aria-describedby",description],["title",title],["data-tooltip-id",data]])if(v===null)anchor.removeAttribute(a);else anchor.setAttribute(a,v);tips.delete(anchor);}});
  }
  // Run before the surface's later body capture listener so clicking the
  // native arrow toggles once instead of closing and immediately reopening.
@@ -171,13 +174,14 @@
  }
  let pending=false;
  const observer=new MutationObserver(records=>{
+  if(records.some(r=>r.type==="attributes"&&(r.attributeName==="inert"||r.attributeName==="aria-hidden"||r.target===document.body)))for(const el of tips.keys())if(el.closest('[inert],[aria-hidden="true"]'))el._mlMdcTooltip.hide();
   for(const [el,entry] of selects)if(!el.isConnected||!entry.root.isConnected)entry.destroy();
   for(const [el,entry] of actions)if(!el.isConnected)entry.destroy();
   for(const [el,entry] of tips)if(!el.isConnected)entry.destroy();
   const relevant=records.some(r=>r.type==="childList"&&[...r.addedNodes].some(n=>n.nodeType===1&&!n.matches(".mdc-tooltip,.ml-mdc-menu,.mdc-snackbar"))||r.type==="attributes"&&r.target.matches(".ml-icon-button,.ml-poll-action,#ml-drawer-close"));
   if(relevant&&!pending){pending=true;queueMicrotask(()=>{pending=false;enhance(document);});}
  });
- observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["aria-label","title"]});
+ observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["aria-label","title","inert","aria-hidden","class"]});
  function closeMenus(){for(const e of selects.values())e.menu.open=false;for(const el of actions.keys())el._mlMdcMenu.open=false;for(const el of tips.keys())el._mlMdcTooltip.hide();}
  // User scrolling closes popups. Browser focus/scroll anchoring and LuCI's
  // programmatic scrolls must not turn a single toggle into close + reopen.
@@ -187,7 +191,6 @@
  document.addEventListener("touchmove",userScroll,{capture:true,passive:true});
  document.addEventListener("keydown",event=>{if(["PageDown","PageUp","Home","End"].includes(event.key)&&!event.target.closest?.(".ml-mdc-menu"))closeMenus();},true);
  document.addEventListener("pointerdown",event=>{if(event.clientX>=document.documentElement.clientWidth)closeMenus();},true);
- document.addEventListener("scroll",()=>{for(const el of tips.keys())el._mlMdcTooltip.hide();},{capture:true,passive:true});
  document.addEventListener("change",event=>{if(event.target.closest("#ml-appearance"))feedback(document.documentElement.lang.startsWith("zh")?"已保存此浏览器的主题设置":"Theme preferences saved in this browser");});
  document.addEventListener("click",event=>{if(event.target.closest("#ml-appearance .ml-swatch-item,#ml-appearance .ml-mode-option"))feedback(document.documentElement.lang.startsWith("zh")?"已保存此浏览器的主题设置":"Theme preferences saved in this browser");});
  window.addEventListener("pagehide",event=>{if(!event.persisted){stopped=true;observer.disconnect();for(const e of [...selects.values()])e.destroy();for(const e of [...actions.values()])e.destroy();for(const e of [...tips.values()])e.destroy();if(notice){clearTimeout(notice.timer);notice.instance.destroy();notice.root.remove();notice=null;}}});

@@ -95,11 +95,13 @@ export async function verifyMDCExtras(browser,name,base){
  await arrow.click({force:true});assert.equal(await page.locator(".ml-action-menu.mdc-menu-surface--open").count(),0);
  // Tooltip leaves the accessible action name and click handler intact.
  const toggle=page.locator("#ml-menu-button");
- await toggle.focus();await page.waitForTimeout(650);
+ await toggle.focus();await toggle.hover();const tipId=await toggle.getAttribute("data-tooltip-id");await page.waitForSelector("#"+tipId+".mdc-tooltip--shown");
+ assert.equal(await page.locator("#"+tipId).getAttribute("aria-hidden"),"false","visible tooltip remained inaccessible");
  assert(["菜单","Menu"].includes(await toggle.getAttribute("aria-label")),"localized accessible menu name was lost");
  assert(await toggle.evaluate(el=>!!el._mlMdcTooltip));
  await page.screenshot({path:"dist/previews/extras-"+name+"-tooltip.png"});
  await toggle.click();await page.waitForFunction(()=>document.body.classList.contains("ml-drawer-open"));await page.locator("#ml-drawer-close").click();
+ await page.waitForFunction(()=>!document.querySelector("#ml-drawer-close")._mlMdcTooltip.isShown());
  await page.locator(".ml-mode-option").filter({hasText:"深色"}).click();
  await page.waitForSelector(".ml-preference-snackbar.mdc-snackbar--open");
  assert.equal(await page.locator(".ml-preference-snackbar .mdc-snackbar__label").textContent(),"已保存此浏览器的主题设置");
@@ -107,7 +109,7 @@ export async function verifyMDCExtras(browser,name,base){
  await page.locator("#real-select").scrollIntoViewIfNeeded();
  assert.equal(await anchor.evaluate(el=>getComputedStyle(el).backgroundColor),"rgba(0, 0, 0, 0)","MDC default fill overrode dark select");
  assert.equal(await root.locator(".mdc-select__selected-text").evaluate(el=>getComputedStyle(el).color),"rgba(255, 255, 255, 0.87)","MDC default text overrode dark select");
- await anchor.click();
+ await anchor.click();await page.waitForSelector(".ml-select-menu.mdc-menu-surface--open");await page.waitForSelector(".ml-select-menu.mdc-menu-surface--animating-open",{state:"detached"});
  await page.screenshot({path:"dist/previews/extras-"+name+"-select-dark.png"});await page.keyboard.press("Escape");
  // Accent text must remain readable on raised menus/dialogs, including
  // their white pressed overlay. Saved seeds are never modified.
