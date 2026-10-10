@@ -314,3 +314,11 @@ body.modal-overlay-active #modal_overlay>.modal.ml-has-progress{padding-bottom:3
 #indicators .ml-poll-action:focus-visible{outline:2px solid currentColor!important;outline-offset:-4px}
 @media(hover:hover){#indicators .ml-poll-action:hover{background:var(--hover)}}
 :root[data-toolbar=true] #indicators .ml-poll-action:hover,:root[data-toolbar=true] #indicators .ml-poll-action:active{background:rgba(255,255,255,.16)}
+
+/* The whole parent button owns hit testing, focus and the single clipped ripple. */
+body .ml-sidebar button.ml-nav-parent{margin:0;min-height:48px;padding:10px 20px;border:0;border-radius:0;background:transparent;box-shadow:none;--button-ink:var(--ink);--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed)}
+body .ml-sidebar button.ml-nav-parent[aria-expanded=true]{--button-ink:var(--accent-ink);color:var(--accent-ink)}
+body .ml-sidebar button.ml-nav-parent:active{background:var(--pressed)}
+body .ml-sidebar button.ml-nav-parent:hover{background:var(--hover)}
+.ml-nav-parent-label,.ml-nav-chevron{pointer-events:none;background:transparent;border:0;box-shadow:none}
+.ml-nav-row-action{cursor:default}
