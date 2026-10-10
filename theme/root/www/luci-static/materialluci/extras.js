@@ -105,7 +105,7 @@
   const arrow=owner.querySelector(":scope > .open"),ul=owner.querySelector(":scope > ul:not(.preview)");
   if(!arrow||!ul)return;
   const popup=make("div","mdc-menu mdc-menu-surface ml-action-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","menu");popup.append(list);
-  const menu=portalMenu(popup);popup.id="ml-menu-"+(++sequence);owner._mlMdcMenu=menu;
+  const menu=portalMenu(popup);let ownerRect=null;popup.addEventListener("MDCMenuSurface:opening",()=>{ownerRect=owner.getBoundingClientRect();});popup.id="ml-menu-"+(++sequence);owner._mlMdcMenu=menu;
   const oldRole=arrow.getAttribute("role"),oldTab=arrow.getAttribute("tabindex");arrow.setAttribute("role","button");arrow.tabIndex=0;
   escapeFocus(popup,arrow);
   arrow.setAttribute("aria-label",document.documentElement.lang.startsWith("zh")?"更多应用选项":"More apply options");arrow.setAttribute("aria-haspopup","menu");arrow.setAttribute("aria-controls",popup.id);arrow.setAttribute("aria-expanded","false");
@@ -127,8 +127,8 @@
    // Native event invokes LuCI's toggleItem / saveValues and original callbacks.
    li.dispatchEvent(new CustomEvent("cbi-dropdown-select",{bubbles:true}));arrow.focus({preventScroll:true});
   });
-  popup.addEventListener("MDCMenuSurface:closed",()=>{arrow.setAttribute("aria-expanded","false");});
-  actions.set(owner,{open,destroy(){popup._mlEscapeCleanup?.();menu.destroy();popup.remove();owner.removeEventListener("click",click,true);arrow.removeEventListener("keydown",key);owner._mlMdcMenu=null;for(const a of ["aria-label","aria-haspopup","aria-controls","aria-expanded"])arrow.removeAttribute(a);for(const [a,v] of [["role",oldRole],["tabindex",oldTab]])if(v===null)arrow.removeAttribute(a);else arrow.setAttribute(a,v);actions.delete(owner);}});
+  popup.addEventListener("MDCMenuSurface:closed",()=>{arrow.setAttribute("aria-expanded",String(menu.open));});
+  actions.set(owner,{open,get rect(){return ownerRect;},destroy(){popup._mlEscapeCleanup?.();menu.destroy();popup.remove();owner.removeEventListener("click",click,true);arrow.removeEventListener("keydown",key);owner._mlMdcMenu=null;for(const a of ["aria-label","aria-haspopup","aria-controls","aria-expanded"])arrow.removeAttribute(a);for(const [a,v] of [["role",oldRole],["tabindex",oldTab]])if(v===null)arrow.removeAttribute(a);else arrow.setAttribute(a,v);actions.delete(owner);}});
  }
  function tooltip(anchor){
   const label=anchor.getAttribute("aria-label")||anchor.title;if(!label)return;
@@ -170,7 +170,7 @@
   if(relevant&&!pending){pending=true;queueMicrotask(()=>{pending=false;enhance(document);});}
  });
  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["aria-label","title"]});
- function closeMenus(event){for(const e of selects.values()){const r=e.anchor.getBoundingClientRect();if(event?.type!=="scroll"||!e.rect||Math.abs(r.top-e.rect.top)>1||Math.abs(r.left-e.rect.left)>1)e.menu.open=false;}for(const el of actions.keys())el._mlMdcMenu.open=false;for(const el of tips.keys())el._mlMdcTooltip.hide();}
+ function closeMenus(event){for(const e of selects.values()){const r=e.anchor.getBoundingClientRect();if(event?.type!=="scroll"||!e.rect||Math.abs(r.top-e.rect.top)>1||Math.abs(r.left-e.rect.left)>1)e.menu.open=false;}for(const [el,e] of actions){const r=el.getBoundingClientRect();if(event?.type!=="scroll"||!e.rect||Math.abs(r.top-e.rect.top)>1||Math.abs(r.left-e.rect.left)>1)el._mlMdcMenu.open=false;}for(const el of tips.keys())el._mlMdcTooltip.hide();}
  // Menus close during viewport movement instead of remaining detached from anchors.
  window.addEventListener("resize",closeMenus);document.addEventListener("scroll",event=>{if(!event.target.closest?.(".ml-mdc-menu"))closeMenus(event);},{capture:true,passive:true});
  document.addEventListener("change",event=>{if(event.target.closest("#ml-appearance"))feedback(document.documentElement.lang.startsWith("zh")?"已保存此浏览器的主题设置":"Theme preferences saved in this browser");});
