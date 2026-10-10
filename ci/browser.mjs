@@ -124,6 +124,7 @@ try{
   // A modal checkbox outside a CBI boolean field remains a checkbox.
   assert.equal(await page.locator('#modal_overlay input[type=checkbox]').getAttribute("role"),null);
   await page.setViewportSize({width:390,height:360});await page.locator("#modal-input").fill("keyboard draft");
+  await page.waitForFunction(()=>Math.abs(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ml-vv-height"))-(visualViewport?.height||innerHeight))<1);
   const modal=await page.locator("#modal_overlay>.modal").boundingBox();assert(modal.y>=0&&modal.y+modal.height<=361);
   await page.getByRole("button",{name:"关闭",exact:true}).click();
   await page.waitForFunction(()=>!document.body.classList.contains("modal-overlay-active"));
