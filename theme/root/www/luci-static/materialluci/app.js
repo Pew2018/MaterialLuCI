@@ -5,8 +5,13 @@
  sidebar=document.getElementById("ml-sidebar"),toolbar=document.querySelector(".ml-toolbar"),
  menuButton=document.getElementById("ml-menu-button"),scrim=document.getElementById("ml-drawer-scrim");
  if(!main||!appearance)return;
- const route=window.L?.env?.dispatchpath||window.L?.env?.requestpath||[];
- main.dataset.mlPage=route[route.length-1]||"";
+ function identifyPage(){
+  const envRoute=window.L?.env?.dispatchpath||window.L?.env?.requestpath||[];
+  const segments=Array.isArray(envRoute)?envRoute.filter(Boolean):typeof envRoute==="string"?envRoute.split(/[\\/]+/).filter(Boolean):[];
+  const fallback=(document.body.dataset.page||"").split(/[\\/-]+/).filter(Boolean);
+  main.dataset.mlPage=segments.at(-1)||fallback.at(-1)||"";
+ }
+ identifyPage();
  const zh=document.documentElement.lang.startsWith("zh"),t=(cn,en)=>zh?cn:en;
  const node=(tag,attrs={},children=[])=>{const el=document.createElement(tag);for(const [key,val] of Object.entries(attrs)){if(key==="text")el.textContent=val;else if(key==="class")el.className=val;else el.setAttribute(key,String(val));}for(const child of children)el.append(child);return el;};
  const textButton=(text,fn,cls="text-action")=>{const b=node("button",{type:"button",class:cls},[node("span",{text})]);b.addEventListener("click",fn);return b;};
@@ -222,6 +227,7 @@
   syncDisclosure();if(details.open)openAppearance(details);
  }
  function enhance(root){
+  identifyPage();
   const all=selector=>[...(root.matches&&root.matches(selector)?[root]:[]),...root.querySelectorAll(selector)];
   // Older opkg views use div.btn. Preserve their click handlers and make
   // keyboard behavior and disabled semantics match real buttons.
@@ -280,6 +286,9 @@
   // section. Their existing content host owns the surface; never wrap children.
   const view=main.querySelector("#view");
   if(view&&view.children.length&&!view.querySelector(":scope > .spinning,.cbi-map,.cbi-section,fieldset,.ml-card-surface")&&!candidates.some(section=>view.contains(section)))surfaces.add(view);
+  // Legacy Lua reboot templates render h2/p/hr/input directly without #view.
+  // Keep their nodes and handlers in place; style the existing main surface.
+  if(!view&&main.dataset.mlPage==="reboot"&&main.children.length&&[...main.children].some(el=>el.matches("h2,p,hr,form,input,button")))surfaces.add(main);
   for(const map of main.querySelectorAll(".cbi-map"))if(map.querySelector(".cbi-value")&&!map.querySelector(".ml-section-container")&&!candidates.some(section=>map.contains(section)))surfaces.add(map);
   main.querySelectorAll(".ml-card-surface").forEach(el=>{if(!surfaces.has(el))el.classList.remove("ml-card-surface");});
   for(const section of surfaces)section.classList.add("ml-card-surface");
