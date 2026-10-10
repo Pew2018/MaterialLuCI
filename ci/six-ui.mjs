@@ -8,7 +8,7 @@ export async function verifySixUI(browser,name,base){
  // make that same indicator resume polling without reloading the page.
  await page.evaluate(async()=>{
   const poll=await L.require("poll"),ui=await L.require("ui");window.testPoll=poll;poll.stop();
-  document.querySelector('#indicators [data-indicator="poll-status"]').remove();
+  document.querySelector('#indicators [data-indicator="poll-status"]')?.remove();
   ui.showIndicator("poll-status","Paused",null,"inactive");
  });
  const poll=page.locator('#indicators [data-indicator="poll-status"]');
