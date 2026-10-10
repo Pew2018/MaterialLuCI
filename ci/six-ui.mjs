@@ -51,7 +51,7 @@ export async function verifySixUI(browser,name,base){
  const appearance=page.locator("#ml-appearance-entry");
  assert(await appearance.evaluate(el=>el.open),"appearance settings should start expanded");
  assert.equal(await page.locator("#ml-appearance h2").allTextContents().then(xs=>xs.some(x=>x==="关于"||x==="About")),false);
- if(name==="chromium")await page.screenshot({path:"dist/previews/appearance-mobile.png"});
+ await appearance.scrollIntoViewIfNeeded();\n if(name==="chromium")await page.screenshot({path:"dist/previews/appearance-mobile.png"});
  await page.setViewportSize({width:1280,height:900});
  await page.waitForFunction(()=>document.querySelector("#ml-appearance-entry")?.open);
  assert.equal(await page.locator("#ml-appearance> .ml-group").evaluate(el=>getComputedStyle(el.parentElement).display),"grid");
@@ -60,7 +60,7 @@ export async function verifySixUI(browser,name,base){
  const desktopBg=await page.locator(".ml-sidebar").evaluate(el=>getComputedStyle(el).backgroundColor);
  const canvasBg=await page.locator("body").evaluate(el=>getComputedStyle(el).backgroundColor);
  assert.equal(desktopBg,canvasBg,"desktop sidebar and content canvas should share one background");
- if(name==="chromium")await page.screenshot({path:"dist/previews/appearance-desktop.png"});
+ await appearance.scrollIntoViewIfNeeded();\n if(name==="chromium")await page.screenshot({path:"dist/previews/appearance-desktop.png"});
  await page.setViewportSize({width:390,height:844});
  // Assert official instance state, native events, external setters, reset and disposal.
  const flag=page.locator("#legacy-switch + .mdc-switch");

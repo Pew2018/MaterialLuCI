@@ -207,7 +207,7 @@
   const details=node("details",{id:"ml-appearance-entry",class:"ml-appearance-entry",open:"true"},[node("summary",{text:t("主题外观（此浏览器）","Theme appearance (this browser)")})]);
   const desktop=matchMedia("(min-width:1024px)");
   const syncDisclosure=()=>{if(desktop.matches)details.open=true;};
-  field.after(details);details.addEventListener("toggle",()=>{if(details.open)openAppearance(details);});
+  field.after(details);details.addEventListener("toggle",()=>{if(desktop.matches&&!details.open)details.open=true;if(details.open)openAppearance(details);});
   if(desktop.addEventListener)desktop.addEventListener("change",syncDisclosure);else desktop.addListener(syncDisclosure);
   syncDisclosure();if(details.open)openAppearance(details);
  }
