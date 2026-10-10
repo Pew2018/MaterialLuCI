@@ -4,9 +4,14 @@ export async function verifySixUI(browser,name,base){
  const page=await browser.newPage({viewport:{width:390,height:844}});
  const errors=[];page.on("pageerror",e=>errors.push(e.message));
  await page.goto(base);await page.waitForFunction(()=>window.fixtureCheckbox&&document.body.dataset.mlMenus==="ready");
- // Real LuCI polling and real indicator span, never a replacement handler.
- await page.evaluate(async()=>{const poll=await L.require("poll");window.testPoll=poll;window.testPollFn=()=>Promise.resolve();poll.add(testPollFn,30);poll.start();});
+ // An initially paused LuCI indicator has no native handler; the theme must
+ // make that same indicator resume polling without reloading the page.
+ await page.evaluate(async()=>{const poll=await L.require("poll");window.testPoll=poll;poll.stop();});
  const poll=page.locator('#indicators [data-indicator="poll-status"]');
+ await page.waitForFunction(()=>document.querySelector(".ml-poll-action")?.getAttribute("aria-label")==="恢复自动刷新");
+ await poll.click();assert.equal(await page.evaluate(()=>testPoll.active()),true);
+ // Real LuCI polling and real indicator span, never a replacement handler.
+ await page.evaluate(async()=>{window.testPollFn=()=>Promise.resolve();testPoll.add(testPollFn,30);testPoll.start();});
  await page.waitForFunction(()=>document.querySelector(".ml-poll-action")?.getAttribute("role")==="button");
  assert.equal(await poll.getAttribute("aria-label"),"暂停自动刷新");
  assert((await poll.boundingBox()).height>=48);
