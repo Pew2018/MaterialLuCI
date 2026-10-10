@@ -13,11 +13,16 @@
  function portalMenu(root){
   root.classList.add("ml-mdc-menu");document.body.append(root);
   const menu=new MDCMenu(root);menu.setIsHoisted(true);menu.setFixedPosition(true);
-  menu.wrapFocus=true;menu.hasTypeahead=true;return menu;
+  menu.wrapFocus=true;menu.hasTypeahead=true;root._mlMdcMenu=menu;return menu;
  }
  function escapeFocus(popup,anchor){
   let restore=false;
-  popup.addEventListener("keydown",event=>{if(event.key==="Escape")restore=true;},true);
+  const key=event=>{
+   if(event.key==="Escape"&&popup._mlMdcMenu?.open){restore=true;event.preventDefault();event.stopPropagation();popup._mlMdcMenu.open=false;}
+  };
+  // Escape is valid during opening, before MDC moves focus into the list.
+  popup.addEventListener("keydown",key,true);anchor.addEventListener("keydown",key);
+  popup._mlEscapeCleanup=()=>anchor.removeEventListener("keydown",key);
   popup.addEventListener("MDCMenuSurface:closed",()=>{
    if(restore&&anchor.isConnected&&!anchor.closest('[disabled],[aria-disabled="true"]')&&!document.body.classList.contains("modal-overlay-active"))anchor.focus({preventScroll:true});
    restore=false;
@@ -69,7 +74,7 @@
    }finally{syncing=false;}
   }
   const entry={root,anchor,get menu(){return menu;},get rect(){return anchorRect;},destroy(){
-   observer.disconnect();instance?.destroy();popup.remove();root.remove();select.classList.remove("ml-mdc-native-select");select._mlMdcSelect=null;
+   observer.disconnect();popup._mlEscapeCleanup?.();instance?.destroy();popup.remove();root.remove();select.classList.remove("ml-mdc-native-select");select._mlMdcSelect=null;
    select.removeEventListener("input",queue);select.removeEventListener("change",queue);select.removeEventListener("focus",focus);select.removeEventListener("invalid",invalid);
    select.form?.removeEventListener("reset",reset);restore.forEach(fn=>fn());
    for(const [attr,old] of [["tabindex",oldTab],["aria-hidden",oldHidden]])if(old===null)select.removeAttribute(attr);else select.setAttribute(attr,old);
@@ -123,7 +128,7 @@
    li.dispatchEvent(new CustomEvent("cbi-dropdown-select",{bubbles:true}));arrow.focus({preventScroll:true});
   });
   popup.addEventListener("MDCMenuSurface:closed",()=>{arrow.setAttribute("aria-expanded","false");});
-  actions.set(owner,{open,destroy(){menu.destroy();popup.remove();owner.removeEventListener("click",click,true);arrow.removeEventListener("keydown",key);owner._mlMdcMenu=null;for(const a of ["aria-label","aria-haspopup","aria-controls","aria-expanded"])arrow.removeAttribute(a);for(const [a,v] of [["role",oldRole],["tabindex",oldTab]])if(v===null)arrow.removeAttribute(a);else arrow.setAttribute(a,v);actions.delete(owner);}});
+  actions.set(owner,{open,destroy(){popup._mlEscapeCleanup?.();menu.destroy();popup.remove();owner.removeEventListener("click",click,true);arrow.removeEventListener("keydown",key);owner._mlMdcMenu=null;for(const a of ["aria-label","aria-haspopup","aria-controls","aria-expanded"])arrow.removeAttribute(a);for(const [a,v] of [["role",oldRole],["tabindex",oldTab]])if(v===null)arrow.removeAttribute(a);else arrow.setAttribute(a,v);actions.delete(owner);}});
  }
  function tooltip(anchor){
   const label=anchor.getAttribute("aria-label")||anchor.title;if(!label)return;
@@ -175,7 +180,7 @@
   const popup=make("div","mdc-menu mdc-menu-surface ml-action-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","menu");list.append(...options.map(([key,label,disabled])=>{const li=item(label,key,disabled,key===value);li.setAttribute("role","menuitem");return li;}));popup.append(list);const menu=portalMenu(popup);escapeFocus(popup,anchor);menu.setAnchorElement(anchor);
   menu.items.forEach((li,i)=>menu.setEnabled(i,li.getAttribute("aria-disabled")!=="true"));
   popup.addEventListener("MDCMenu:selected",event=>onChange(event.detail.item.dataset.value),{once:true});
-  popup.addEventListener("MDCMenuSurface:closed",()=>{menu.destroy();popup.remove();},{once:true});menu.open=true;return menu;
+  popup.addEventListener("MDCMenuSurface:closed",()=>{popup._mlEscapeCleanup?.();menu.destroy();popup.remove();},{once:true});menu.open=true;return menu;
  },counts(){return {selects:selects.size,menus:actions.size,tooltips:tips.size};}};
  enhance();
 })();
