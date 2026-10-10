@@ -70,7 +70,7 @@ export async function verifyMDCExtras(browser,name,base){
  await page.keyboard.press("ArrowDown");assert.equal(await page.evaluate(()=>document.activeElement.dataset.value),"apply");
  await page.keyboard.press("ArrowDown");assert.equal(await page.evaluate(()=>document.activeElement.dataset.value),"unchecked");
  await page.keyboard.press("ArrowDown");assert.equal(await page.evaluate(()=>document.activeElement.dataset.value),"apply","keyboard did not skip disabled menu item");
- await page.keyboard.press("Escape");await page.waitForTimeout(160);assert(await arrow.evaluate(el=>el===document.activeElement));
+ await page.keyboard.press("Escape");await page.waitForFunction(()=>document.querySelector("#extras-action>.open")===document.activeElement,null,{timeout:5000});assert(await arrow.evaluate(el=>el===document.activeElement));
  for(const width of [1440,390]){
   await page.setViewportSize({width,height:844});await arrow.scrollIntoViewIfNeeded();await arrow.click();
   await page.waitForSelector(".ml-action-menu.mdc-menu-surface--open");
