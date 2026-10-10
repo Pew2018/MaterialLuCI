@@ -2,7 +2,7 @@ name: Build x86_64 VM themes (feature and frozen backup)
 on:
   push:
     branches: ["feature/classic-native-v1"]
-    paths: [".github/workflows/vm-themes.yml", "ci/**", "theme/**", "scripts/**", "package.json", "package-lock.json"]
+    paths: [".github/workflows/**", "ci/**", "theme/**", "scripts/**", "package.json", "package-lock.json"]
   workflow_dispatch:
 permissions:
   contents: read
