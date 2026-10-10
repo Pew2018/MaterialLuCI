@@ -808,8 +808,8 @@ body input[type="file"]:focus-visible{outline:2px solid var(--control-strong);ou
 body :is(.cbi-button-action.important,.cbi-button-positive.important,.cbi-button-apply,.cbi-input-apply){border-color:transparent}
 
 /* Native disabled attributes can change without MDC wrapper classes changing. */
-body .ml-text-field.mdc-text-field--filled .mdc-text-field__input:disabled,
-body .ml-text-field.mdc-text-field--filled .mdc-text-field__input:disabled::placeholder,
-body .ml-text-field.mdc-text-field--filled .mdc-text-field__input:disabled::-webkit-input-placeholder{
+body .ml-text-field.mdc-text-field--filled:not(.mdc-text-field--disabled) .mdc-text-field__input:disabled,
+body .ml-text-field.mdc-text-field--filled:not(.mdc-text-field--disabled) .mdc-text-field__input:disabled::placeholder,
+body .ml-text-field.mdc-text-field--filled:not(.mdc-text-field--disabled) .mdc-text-field__input:disabled::-webkit-input-placeholder
  color:var(--disabled);-webkit-text-fill-color:var(--disabled);opacity:1
 }
