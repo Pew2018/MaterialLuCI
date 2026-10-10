@@ -144,7 +144,7 @@ try{
   assert.equal(await page.locator("#modal_overlay>.modal").evaluate(el=>el.lastChild.tagName),"P","adapter changed the business modal children");
   await page.evaluate(()=>{
    window.fixtureProgressRoot=document.querySelector("#ml-mdc-wait-progress");
-   window.fixtureProgressAnimation=fixtureProgressRoot.querySelector(".mdc-linear-progress__primary-bar").getAnimations()[0];
+   window.fixtureProgressAnimation=fixtureProgressRoot.querySelector(".mdc-linear-progress__primary-bar").getAnimations().find(a=>a.effect.getTiming().iterations===Infinity);
    window.fixtureProgressTime=fixtureProgressAnimation.currentTime;
   });
   await page.waitForFunction(()=>typeof fixtureProgressAnimation.currentTime==="number"&&fixtureProgressAnimation.currentTime>fixtureProgressTime,null,{timeout:5000});
@@ -152,7 +152,7 @@ try{
   await page.evaluate(()=>fixtureUI.changes.displayStatus("notice spinning",E("p","正在等待配置被应用… 29")));
   await page.waitForTimeout(100);
   assert(await page.evaluate(()=>document.querySelector("#ml-mdc-wait-progress")===fixtureProgressRoot),"countdown restarted MDC component");
-  assert(await page.evaluate(()=>fixtureProgressRoot.querySelector(".mdc-linear-progress__primary-bar").getAnimations()[0]===fixtureProgressAnimation),"countdown restarted animation");
+  assert(await page.evaluate(()=>fixtureProgressRoot.querySelector(".mdc-linear-progress__primary-bar").getAnimations().includes(fixtureProgressAnimation)),"countdown restarted animation");
   assert.equal(await page.locator("#ml-mdc-wait-progress").count(),1);
   assert.equal(await page.locator("#ml-mdc-wait-progress .mdc-linear-progress__bar-inner").first().evaluate(el=>getComputedStyle(el).borderColor),await page.evaluate(()=>{const probe=document.createElement("span");probe.style.color="var(--control-accent)";document.body.append(probe);const color=getComputedStyle(probe).color;probe.remove();return color;}));
   await page.waitForTimeout(300);
