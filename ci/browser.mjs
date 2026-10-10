@@ -49,16 +49,15 @@ try{
   await page.evaluate(()=>document.querySelector("#real-widget input[type=checkbox]").disabled=true);
   assert.equal(await page.locator("#real-widget .ml-switch-hit .mdc-switch").isDisabled(),true);
   if(name==="chromium"){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:"dist/previews/desktop-light.png"});await page.locator("#fixture-clients").scrollIntoViewIfNeeded();await page.screenshot({path:"dist/previews/desktop-tables.png"});}
-  if((await page.locator("#ml-appearance-entry").getAttribute("open"))!=="true")await page.locator("#ml-appearance-entry>summary").click();await page.waitForSelector("#ml-appearance");
+  assert.equal(await page.locator("#ml-appearance-entry").evaluate(el=>el.open),true);await page.waitForSelector("#ml-appearance");
   assert.equal(await page.locator(".ml-swatch-item").count(),20);
-  await page.locator(".ml-choice").filter({hasText:"跟随系统"}).click();
+  await page.locator(".ml-mode-option").filter({hasText:"跟随系统"}).click();
   await page.getByRole("radio",{name:"深色",exact:true}).click();await page.waitForSelector(".ml-backdrop",{state:"detached"});
   assert.equal(await page.locator("html").getAttribute("data-theme"),"dark");
   await page.locator("#ml-hex").fill("#FFFF00");await page.locator("#ml-hex").dispatchEvent("input");
   assert.equal(await page.evaluate(()=>MaterialAppearance.prefs.seed),"#FFFF00");
   await page.locator("#ml-hex").fill("#42A5F5");await page.locator("#ml-hex").dispatchEvent("input");
   assert.equal(await page.locator("#fixture-name").inputValue(),"Unapplied draft");
-  await page.locator("#ml-appearance-entry>summary").click();
   const button=page.locator("#fixture-start");
   const normal=await colors(button);assert.equal(normal.radius,"2px");
   await button.hover();const hovered=await colors(button);assert.equal(hovered.color,normal.color);
