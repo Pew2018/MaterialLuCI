@@ -181,8 +181,8 @@ export async function verifyUpstreamPages(browser,name,base){
    assert.equal(buttonStyle.border,"rgba(0, 0, 0, 0)","button border reset");
    assert(buttonStyle.dx<3&&buttonStyle.dy<4,"long mixed-language button label centered: "+JSON.stringify(buttonStyle));
    for(const id of ["audit-submit","audit-reset"]){
-    const style=await page.locator("#"+id).evaluate(el=>({align:getComputedStyle(el).textAlign,border:getComputedStyle(el).borderTopColor,parent:el.parentElement.className,height:el.parentElement.getBoundingClientRect().height}));
-    assert.equal(style.align,"center");assert.equal(style.border,"rgba(0, 0, 0, 0)");
+    const style=await page.locator("#"+id).evaluate(el=>({align:getComputedStyle(el).textAlign,border:getComputedStyle(el).borderTopColor,borderWidth:getComputedStyle(el).borderTopWidth,parent:el.parentElement.className,height:el.parentElement.getBoundingClientRect().height}));
+    assert.equal(style.align,"center");assert(style.border==="rgba(0, 0, 0, 0)"||style.borderWidth==="0px","native input button has no visible border: "+JSON.stringify(style));
     assert.equal(style.parent,"ml-native-button ml-mdc-feedback mdc-button","native input button uses one visual wrapper");
     assert(style.height>=48,"native input button wrapper target size");
    }
