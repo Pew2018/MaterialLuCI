@@ -28,7 +28,7 @@ export async function verifyMDCControls(browser,name,base){
   const box=document.createElement("div");box.id="migration-widgets";
   const radio=realRadio.render();box.append(radio);
   window.realCheck=new ui.Checkbox("0",{id:"real-check",name:"checkbox-value",hiddenname:"checkbox-marker"});
-  box.append(realCheck.render());document.getElementById("maincontent").append(box);
+  const checkNode=realCheck.render();checkNode.querySelector("label").textContent="选择复选项";box.append(checkNode);document.getElementById("maincontent").append(box);
   window.originalRadioInputs=[...radio.querySelectorAll("input")];window.originalRadioChildren=[...radio.querySelector(".cbi-radio").childNodes];
   window.selectionEvents={click:0,change:0};for(const input of box.querySelectorAll("input:not([type=hidden])"))for(const key of ["click","change"])input.addEventListener(key,()=>selectionEvents[key]++);
  });
@@ -46,7 +46,8 @@ export async function verifyMDCControls(browser,name,base){
  await page.evaluate(async()=>{
   const ui=await L.require("ui");window.nativeModalInput=document.createElement("input");nativeModalInput.type="text";nativeModalInput.id="mdc-real-modal-input";nativeModalInput.value="retained draft";
   const row=document.createElement("div");row.className="right";const cancel=document.createElement("button");cancel.id="mdc-real-modal-close";cancel.textContent="关闭";cancel.onclick=()=>ui.hideModal();row.append(cancel);
-  window.nativeModal=ui.showModal("兼容性检查",[nativeModalInput,row]);window.modalBusinessChildren=[...nativeModal.childNodes];window.modalOriginalFirst=document.getElementById("modal_overlay").firstElementChild;
+  const fieldFrame=document.createElement("div");fieldFrame.append(nativeModalInput);
+  window.nativeModal=ui.showModal("兼容性检查",[fieldFrame,row]);window.modalBusinessChildren=[...nativeModal.childNodes];window.modalOriginalFirst=document.getElementById("modal_overlay").firstElementChild;
  });
  await page.waitForFunction(()=>document.getElementById("modal_overlay")._mlMdcDialog?.isOpen);
  assert(await page.evaluate(()=>document.getElementById("modal_overlay").firstElementChild===modalOriginalFirst&&modalBusinessChildren.every((node,i)=>nativeModal.childNodes[i]===node)));
