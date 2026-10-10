@@ -16,6 +16,10 @@
   root.classList.add("ml-mdc-menu");document.body.append(root);
   const menu=new MDCMenu(root,undefined,undefined,el=>{const list=new MDCList(el);list.disabledItemsFocusable=false;return list;});menu.setIsHoisted(true);menu.setFixedPosition(true);
   menu.wrapFocus=true;menu.hasTypeahead=true;root._mlMdcMenu=menu;
+  // v14 transition callbacks may arrive after an opposite user action.
+  // Do not let a superseded opened/closed event steal focus or select state.
+  root.addEventListener('MDCMenuSurface:opened',event=>{if(!menu.open)event.stopImmediatePropagation();},true);
+  root.addEventListener('MDCMenuSurface:closed',event=>{if(menu.open)event.stopImmediatePropagation();},true);
   if(root.classList.contains('ml-action-menu')){menu.setDefaultFocusState(DefaultFocusState.NONE);root.addEventListener('MDCMenuSurface:opened',()=>{if(menu.open)root.querySelector('.mdc-deprecated-list')?.focus({preventScroll:true});});}
   return menu;
  }

@@ -34,12 +34,13 @@ export async function verifyMDCExtras(browser,name,base){
  await page.evaluate(()=>{extraSelect.disabled=false;extraSelect.value="auto";});
  await page.waitForFunction(()=>!extraSelect._mlMdcSelect.disabled&&extraSelect._mlMdcSelect.value==="auto");
  await anchor.focus();await page.keyboard.press("Enter");await page.waitForSelector(".ml-select-menu.mdc-menu-surface--open");
- await page.keyboard.press("Escape");await page.waitForFunction(()=>document.querySelector("#real-select .mdc-select__anchor")===document.activeElement);assert(await anchor.evaluate(el=>el===document.activeElement),"select did not restore focus");
+ await page.keyboard.press("Escape");await page.waitForSelector(".ml-select-menu.mdc-menu-surface--animating-open",{state:"detached"});await page.waitForSelector(".ml-select-menu.mdc-menu-surface--animating-closed",{state:"detached"});await page.waitForFunction(()=>document.querySelector("#real-select .mdc-select__anchor")===document.activeElement);assert(await anchor.evaluate(el=>el===document.activeElement),"select did not restore focus");
  // Native validity and original form-reset behavior remain authoritative.
  await page.evaluate(()=>{extraSelect.required=true;extraSelect.value="";});
  await page.waitForFunction(()=>extraSelect._mlMdcSelect.selectedIndex===-1);
  assert.equal(await page.evaluate(()=>extraSelect.checkValidity()),false);
  await page.waitForFunction(()=>document.querySelector("#real-select .mdc-select__anchor").getAttribute("aria-invalid")==="true");
+ await page.waitForFunction(()=>document.querySelector("#real-select .mdc-select__anchor")===document.activeElement,null,{timeout:3000});
  assert(await anchor.evaluate(el=>el===document.activeElement),"invalid native select did not focus the visible control");
  await page.evaluate(()=>{extraSelect.required=false;extraSelect.value="auto";extraSelect.form?.reset();});
  await page.waitForFunction(()=>extraSelect._mlMdcSelect.value==="auto");
