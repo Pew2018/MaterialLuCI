@@ -41,7 +41,7 @@
    const sync=()=>{
     if(syncing)return;syncing=true;
     try{
-     instance.disabled=!!input.disabled;
+     if(root.classList.contains("mdc-text-field--disabled")!==!!input.disabled)instance.disabled=!!input.disabled;
      instance.valid=input.getAttribute("aria-invalid")!=="true"&&!input.classList.contains("cbi-input-invalid")&&!input.closest(".cbi-value-error");
      if(input===document.activeElement&&!root.classList.contains("mdc-text-field--focused"))instance.foundation.activateFocus();
     }finally{syncing=false;}
