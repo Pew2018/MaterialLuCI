@@ -2,7 +2,7 @@
 /* Official MDC presentation around the ORIGINAL LuCI fields. No values,
    events, validators, names, IDs or widget instances are replaced. */
 (function(){
- const fields=new Map();
+ const fields=new Map(),waitingForBlur=new WeakSet();
  const eligible=input=>input.tagName==="TEXTAREA"||["text","password","email","url","tel","search","number"].includes(input.type);
  function enhance(scope){
   const inputs=[...(scope.matches?.("input,textarea")?[scope]:[]),...scope.querySelectorAll("input,textarea")];
@@ -13,6 +13,14 @@
    // button.previousElementSibling. Reuse these frames, append decorations.
    const peers=[...parent.querySelectorAll("input,textarea,select")].filter(el=>el.type!=="hidden");
    const reuse=parent.matches("div,span,label")&&!parent.matches(".cbi-value,.cbi-value-field,.cbi-map,.cbi-section,.modal,.ml-group")&&peers.length===1&&parent.firstElementChild===input;
+   // Moving an already focused bare input can blur it and emit change.
+   // Defer decoration until its natural blur instead of interrupting editing.
+   if(!reuse&&input===document.activeElement){
+    if(!waitingForBlur.has(input)){
+     waitingForBlur.add(input);input.addEventListener("blur",()=>{waitingForBlur.delete(input);if(input.isConnected)enhance(input);},{once:true});
+    }
+    continue;
+   }
    const root=reuse?parent:document.createElement("span");
    if(!reuse){parent.insertBefore(root,input);root.append(input);}
    const addedClasses=["ml-text-field","mdc-text-field","mdc-text-field--filled","mdc-text-field--no-label"];
