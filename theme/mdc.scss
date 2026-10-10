@@ -1,4 +1,10 @@
 @use "@material/linear-progress";
+@use "@material/ripple/styles" as ripple-styles;
+@use "@material/icon-button/styles" as icon-button-styles;
+@use "@material/checkbox";
+@use "@material/radio/styles" as radio-styles;
+@use "@material/form-field";
+@use "@material/dialog";
 @use "@material/line-ripple/mdc-line-ripple";
 @use "@material/textfield";
 @use "@material/button/styles" as button-styles;
@@ -6,6 +12,9 @@
 @use "@material/switch" as switch;
 @include linear-progress.core-styles;
 @include textfield.core-styles;
+@include checkbox.core-styles;
+@include form-field.core-styles;
+@include dialog.core-styles;
 
 /* v14 defaults use icons and dark OFF thumbs. MD1 adaptation uses the
    official 36x14 track / 20px thumb with neutral OFF and accent ON. */

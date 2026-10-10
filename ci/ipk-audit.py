@@ -36,6 +36,14 @@ if a.candidate:
  assert all(assets+n in files for n in ["mdc-textfield.js","textfield.js","icons/expand-more.svg"])
  assert "mdc-textfield.js?v=" in header and "textfield.js?v=" in header
  assert "MDCTextField" in files[assets+"mdc-textfield.js"].decode()
+ assert all(assets+n in files for n in ["mdc-controls.js","controls.js"])
+ assert "mdc-controls.js?v=" in header and "controls.js?v=" in header
+ controls=files[assets+"mdc-controls.js"].decode()
+ for component in ["MDCRipple","MDCDialog","MDCCheckbox","MDCRadio","MDCFormField"]:assert component in controls,component
+ shared_css=files[assets+"mdc-linear-progress.css"].decode()
+ for cls in ["mdc-button","mdc-icon-button","mdc-dialog","mdc-checkbox","mdc-radio"]:assert cls in shared_css,cls
+ assert "tap-ripple" not in files[assets+"feedback.js"].decode()
+ checks["official_controls_bundled"]=True
  assert "mdc-text-field" in files[assets+"mdc-linear-progress.css"].decode()
  assert " · " not in files[assets+"app.js"].decode()
  checks["official_textfield_bundle"]=True

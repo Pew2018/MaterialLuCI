@@ -144,7 +144,7 @@
  if(narrow.addEventListener)narrow.addEventListener("change",drawerResize);else narrow.addListener(drawerResize);
  drawerResize();
  function finishDialog(){
-  if(!dialog)return;const old=dialog;dialog=null;old.backdrop.remove();document.body.classList.remove("ml-dialog-open");
+  if(!dialog)return;const old=dialog;dialog=null;MaterialControls.closeDialog(old.backdrop);old.backdrop.remove();document.body.classList.remove("ml-dialog-open");
   old.inert.forEach(([el,value])=>el.inert=value);if(old.focus?.isConnected)old.focus.focus({preventScroll:true});
  }
  function closeDialog(){if(!dialog)return;if(history.state?.materialluci==="dialog"&&history.state.id===dialog.id)history.back();else finishDialog();}
@@ -158,14 +158,15 @@
   dialog.inert.forEach(([el])=>el.inert=true);document.body.classList.add("ml-dialog-open");document.body.append(bg);
   history.pushState({materialluci:"dialog",id},"",location.href);
   bg.addEventListener("click",e=>{if(e.target===bg)closeDialog();});
-  bg.addEventListener("keydown",e=>{if(e.key==="Escape"){e.preventDefault();closeDialog();}trap(e,panel);});
+  bg.addEventListener("keydown",e=>{if(e.key==="Escape"){e.preventDefault();closeDialog();}});
+  MaterialControls.dialog(bg,panel);
   MaterialFeedback.bind(bg);viewport();(focusables(panel)[0]||cancel).focus({preventScroll:true});
  }
  function choose(title,options,value,onChange){
   const body=node("div",{role:"radiogroup","aria-label":title});
   for(const [key,label] of options){
-   const b=node("button",{type:"button",class:"ml-option",role:"radio","aria-checked":key===value},[node("span",{text:label}),node("span",{class:"ml-radio","aria-hidden":"true"})]);
-   b.addEventListener("click",()=>{if(!dialog)return;body.querySelectorAll("[aria-checked]").forEach(e=>e.setAttribute("aria-checked",String(e===b)));onChange(key);closeDialog();});body.append(b);
+   const b=node("button",{type:"button",class:"ml-option",role:"radio","aria-checked":key===value},[node("span",{text:label}),node("span",{class:"ml-radio","aria-hidden":"true"},[node("input",{type:"radio",name:"ml-choice-"+sequence,tabindex:-1,"aria-hidden":"true",...(key===value?{checked:""}:{})})])]);
+   b.addEventListener("click",()=>{if(!dialog)return;body.querySelectorAll("[aria-checked]").forEach(e=>e.setAttribute("aria-checked",String(e===b)));body.querySelectorAll('input[type="radio"]').forEach(input=>{input.checked=input.closest(".ml-option")===b;});onChange(key);closeDialog();});body.append(b);
   }
   openDialog(title,body);
  }
@@ -281,7 +282,7 @@
    }
   }
   // Keep original selects and LuCI dropdowns authoritative, including keyboard behavior.
-  appearanceEntry(root);window.MaterialTextFields?.enhance(root);MaterialFeedback.bind(root);
+  appearanceEntry(root);window.MaterialTextFields?.enhance(root);MaterialControls.enhance(root);MaterialFeedback.bind(root);
  }
  window.addEventListener("popstate",()=>{if(dialog&&(!history.state||history.state.materialluci!=="dialog"||history.state.id!==dialog.id))finishDialog();setDrawer(false);});
  if(document.querySelector('input[name="luci_password"]'))document.body.classList.add("ml-login");

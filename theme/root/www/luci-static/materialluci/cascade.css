@@ -188,8 +188,6 @@ body .ml-swatch-item{--button-bg:transparent;--button-hover-bg:var(--hover);--bu
 .ml-login .cbi-value-title{max-width:none;width:auto;font-size:13px;margin-bottom:4px}
 .ml-login .ml-footer{max-width:360px;margin:24px auto 0}
 [data-ripple=control]{position:relative;overflow:hidden;isolation:isolate}
-.tap-ripple{position:absolute;z-index:1;border-radius:50%;pointer-events:none;background:currentColor;opacity:0;transform:scale(0);animation:ml-ripple 360ms ease-out forwards}
-@keyframes ml-ripple{0%{opacity:var(--ripple-opacity);transform:scale(0)}55%{opacity:var(--ripple-opacity)}100%{opacity:0;transform:scale(1)}}
 button>span:not(.tap-ripple),button>svg{position:relative;z-index:2}
 .cbi-tooltip{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.2)}
 ::selection{background:var(--action-tonal);color:var(--on-action-tonal)}
@@ -482,3 +480,59 @@ body .ml-toolbar-inner #indicators .ml-poll-action{color:var(--toolbar-ink)!impo
 @media(hover:hover){body .ml-toolbar-inner #indicators .ml-poll-action:hover{background:var(--toolbar-state-hover)}}
 body .ml-toolbar-inner #indicators .ml-poll-action:active{background:var(--toolbar-state-pressed)}
 body .ml-toolbar-inner :is(button.ml-icon-button,#indicators .ml-poll-action):focus-visible{outline:2px solid var(--toolbar-ink)!important;outline-offset:-4px}
+
+/* Official MDC controls use the established classic geometry and tokens.
+   Preserve LuCI text nodes and action roles; never apply the default blue. */
+body .ml-mdc-feedback.mdc-button{height:auto;letter-spacing:normal;text-transform:none;font-family:inherit}
+body .ml-mdc-feedback:is(.ml-option,.ml-swatch-item){display:flex}
+body .ml-mdc-feedback>.mdc-button__ripple,body .ml-mdc-feedback>.mdc-icon-button__ripple{
+ position:absolute!important;inset:0!important;width:100%;height:100%;margin:0;padding:0;z-index:0!important;pointer-events:none;border-radius:inherit
+}
+body .ml-mdc-feedback{--mdc-ripple-color:currentColor;--mdc-ripple-fg-opacity:var(--ripple-opacity);isolation:isolate}
+body .ml-mdc-feedback>.mdc-button__ripple::before,body .ml-mdc-feedback>.mdc-icon-button__ripple::before,body .ml-mdc-feedback.mdc-ripple-surface::before{opacity:0!important}
+body .ml-native-button.mdc-button{display:inline-block;padding:0;min-height:0;min-width:0;border:0;background:transparent;box-shadow:none;vertical-align:middle}
+body .ml-native-button>.mdc-button__ripple{z-index:2!important}
+body .ml-mdc-feedback .mdc-button__label{font:inherit;letter-spacing:inherit;text-transform:none}
+body .ml-mdc-feedback.mdc-icon-button{vertical-align:middle}
+body #indicators .ml-poll-action.mdc-icon-button{overflow:hidden}
+body .ml-mdc-selection{
+ position:relative;width:auto;height:auto;padding:0;margin:0;box-sizing:border-box;font:inherit;letter-spacing:normal;color:inherit;vertical-align:baseline;
+ --mdc-theme-primary:var(--control-accent);--mdc-theme-secondary:var(--control-accent);
+ --mdc-checkbox-selected-icon-color:var(--control-accent);--mdc-checkbox-selected-checkmark-color:var(--surface);
+ --mdc-checkbox-unselected-icon-color:var(--muted);--mdc-checkbox-disabled-selected-icon-color:var(--disabled);--mdc-checkbox-disabled-unselected-icon-color:var(--disabled);
+ --mdc-radio-selected-icon-color:var(--control-accent);--mdc-radio-unselected-icon-color:var(--muted);
+ --mdc-radio-disabled-selected-icon-color:var(--disabled);--mdc-radio-disabled-unselected-icon-color:var(--disabled)
+}
+body .ml-mdc-selection>input.mdc-checkbox__native-control,body .ml-mdc-selection>input.mdc-radio__native-control{
+ position:static;inset:auto;width:18px;height:18px;opacity:0;z-index:auto;cursor:inherit
+}
+body .ml-mdc-selection>.mdc-checkbox__background,body .ml-mdc-selection>.mdc-radio__background{
+ position:absolute;left:var(--ml-selection-left,0px);top:var(--ml-selection-top,0px);width:18px;height:18px;pointer-events:none
+}
+body .ml-mdc-selection>.mdc-checkbox__ripple,body .ml-mdc-selection>.mdc-radio__ripple{
+ left:calc(var(--ml-selection-left,0px) - 15px);top:calc(var(--ml-selection-top,0px) - 15px);width:48px;height:48px;pointer-events:none
+}
+body .ml-mdc-selection:focus-within>.mdc-checkbox__background,body .ml-mdc-selection:focus-within>.mdc-radio__background{outline:2px solid var(--control-strong);outline-offset:2px}
+body .ml-radio.ml-mdc-selection{width:16px;height:16px;border:0;flex:none;display:inline-block!important}
+body .ml-radio.ml-mdc-selection::after{display:none}
+body .ml-radio.ml-mdc-selection>input{position:absolute;inset:0;width:16px;height:16px;margin:0;pointer-events:none}
+body .ml-radio.ml-mdc-selection>.mdc-radio__background{left:0;top:0;width:16px;height:16px}
+body .ml-radio.ml-mdc-selection .mdc-radio__inner-circle{border-color:var(--control-accent)}
+/* The original modal is MDC's surface/container, keeping every LuCI child
+   and the established wide dialogs / keyboard viewport layout in place. */
+body .ml-mdc-dialog{font:inherit;color:var(--ink);--mdc-dialog-container-color:var(--surface)}
+body .ml-mdc-dialog .mdc-dialog__container{opacity:1;transform:none;transition:none}
+body .ml-dialog.mdc-dialog__surface{min-width:0;max-width:100%;background:var(--surface);font:inherit;letter-spacing:normal}
+body .ml-dialog-body.mdc-dialog__content{padding:0;margin:0;color:inherit;font:inherit;letter-spacing:normal}
+body #modal_overlay>.modal.mdc-dialog__surface{opacity:1;transform:none;font:inherit;letter-spacing:normal}
+body #modal_overlay>.modal.mdc-dialog__content{color:var(--ink)}
+
+body .ml-mdc-feedback.mdc-button:not(:disabled){color:var(--button-ink,var(--ink))}
+body .ml-mode-option{--button-ink:var(--ink)}
+body .ml-mode-option[aria-checked=true]{--button-ink:var(--on-action-tonal)}
+body .ml-native-button:has(:is(.cbi-button-apply,.cbi-input-apply,.action-primary)){--mdc-ripple-color:var(--on-accent)}
+body .ml-dialog-body.mdc-dialog__content{border:0}
+
+body .ml-mdc-feedback.mdc-button{display:inline-block;min-width:0}
+body .ml-sidebar .ml-mdc-feedback.mdc-button,body .ml-mdc-feedback:is(.ml-option,.ml-swatch-item){display:flex}
+body .ml-mdc-feedback:is(.cbi-button-negative,.cbi-button-remove,.cbi-input-remove){min-width:112px}

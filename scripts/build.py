@@ -23,7 +23,7 @@ resource_dir=stage/"www/luci-static/resources"
 assets=stage/"www/luci-static/materialluci"
 css=(assets/"base.css").read_text()+(assets/"cascade.css").read_text().replace('@import url("base.css");',"")
 (assets/"cascade.css").write_text(css);(assets/"base.css").unlink()
-for name in ("palette","startup","feedback","textfield","app","wait"):
+for name in ("palette","startup","feedback","controls","textfield","app","wait"):
  subprocess.run([str(ROOT/"node_modules/.bin/esbuild"),str(assets/(name+".js")),"--minify","--target=es2020","--outfile="+str(assets/(name+".min.js"))],check=True)
  (assets/(name+".js")).unlink();(assets/(name+".min.js")).rename(assets/(name+".js"))
 # Only the official linear-progress package and required helpers are bundled.
@@ -36,6 +36,9 @@ subprocess.run([str(ROOT/"node_modules/.bin/esbuild"),str(ROOT/"theme/mdc-switch
 subprocess.run([str(ROOT/"node_modules/.bin/esbuild"),str(ROOT/"theme/mdc-textfield-entry.js"),
  "--bundle","--minify","--format=iife","--global-name=MaterialMDCTextField","--target=es2020",
  "--outfile="+str(assets/"mdc-textfield.js")],check=True)
+subprocess.run([str(ROOT/"node_modules/.bin/esbuild"),str(ROOT/"theme/mdc-controls-entry.js"),
+ "--bundle","--minify","--format=iife","--global-name=MaterialMDCControls","--target=es2020",
+ "--outfile="+str(assets/"mdc-controls.js")],check=True)
 subprocess.run([str(ROOT/"node_modules/.bin/sass"),"--load-path="+str(ROOT/"node_modules"),
  "--style=compressed","--no-source-map","--quiet-deps",str(ROOT/"theme/mdc.scss"),
  str(assets/"mdc-linear-progress.css")],check=True)

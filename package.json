@@ -12,6 +12,12 @@
     "sass": "1.89.2",
     "@material/switch": "14.0.0",
     "@material/textfield": "14.0.0",
-    "@material/button": "14.0.0"
+    "@material/button": "14.0.0",
+    "@material/ripple": "14.0.0",
+    "@material/icon-button": "14.0.0",
+    "@material/checkbox": "14.0.0",
+    "@material/radio": "14.0.0",
+    "@material/form-field": "14.0.0",
+    "@material/dialog": "14.0.0"
   }
 }

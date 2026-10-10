@@ -33,8 +33,9 @@ export async function verifySixUI(browser,name,base){
   await page.waitForTimeout(550);const before=await parent.getAttribute("aria-expanded");
   await parent.locator(child).click();
   assert.notEqual(await parent.getAttribute("aria-expanded"),before);
-  assert.equal(await parent.locator(".tap-ripple").count(),1);
-  assert.equal(await parent.locator("..").locator(":scope > .tap-ripple").count(),0);
+  assert.equal(await parent.locator(":scope > .mdc-button__ripple").count(),1);
+  assert(await parent.evaluate(el=>!!el._mlMdcRipple&&el.classList.contains("mdc-ripple-upgraded--foreground-activation")));
+  assert.equal(await parent.locator("..").evaluate(el=>!!el._mlMdcRipple),false);
  }
  assert.equal(await parent.getAttribute("data-ripple"),"control");
  assert.equal(await parent.locator(".ml-nav-chevron").evaluate(el=>getComputedStyle(el).backgroundColor),"rgba(0, 0, 0, 0)");
@@ -43,7 +44,7 @@ export async function verifySixUI(browser,name,base){
  await parent.dispatchEvent("pointerdown",{pointerId:8,isPrimary:true,button:0,clientX:40,clientY:200,pointerType:"touch"});
  await parent.dispatchEvent("pointercancel",{pointerId:8,isPrimary:true});
  await parent.dispatchEvent("pointerup",{pointerId:8,isPrimary:true,button:0,clientX:40,clientY:250,pointerType:"touch"});
- assert.equal(await parent.locator(".tap-ripple").count(),0);
+ assert.equal(await parent.evaluate(el=>el.classList.contains("mdc-ripple-upgraded--foreground-activation")),false);
  await page.keyboard.press("Escape");
  // Appearance settings open by default; desktop reflows and remains expanded.
  const appearance=page.locator("#ml-appearance-entry");
