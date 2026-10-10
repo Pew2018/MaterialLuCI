@@ -619,3 +619,5 @@ body .ml-mdc-selection:has(>input[type=radio]:disabled)>.mdc-radio__background :
 /* Center official inner circles in the retained 18px/16px classic frames. */
 body .ml-mdc-selection>.mdc-radio__background .mdc-radio__inner-circle{border-width:9px}
 body .ml-radio.ml-mdc-selection>.mdc-radio__background .mdc-radio__inner-circle{border-width:8px}
+
+body .ml-mdc-menu{overflow-anchor:none}

@@ -14,7 +14,7 @@
  function replaceItems(list,items){clearItems(list);list.replaceChildren(...items);for(const li of items){li._mlMdcRipple=new MDCRipple(li);li._mlMdcRipple.disabled=li.getAttribute("aria-disabled")==="true";}}
  function portalMenu(root){
   root.classList.add("ml-mdc-menu");document.body.append(root);
-  const menu=new MDCMenu(root,undefined,undefined,el=>{const list=new MDCList(el);list.disabledItemsFocusable=false;return list;});menu.setIsHoisted(true);menu.setFixedPosition(false);
+  const menu=new MDCMenu(root,undefined,undefined,el=>{const list=new MDCList(el);list.disabledItemsFocusable=false;return list;});menu.setIsHoisted(true);menu.setFixedPosition(true);
   menu.wrapFocus=true;menu.hasTypeahead=true;root._mlMdcMenu=menu;
   // v14 transition callbacks may arrive after an opposite user action.
   // Do not let a superseded opened/closed event steal focus or select state.
@@ -90,7 +90,7 @@
   }};
   sync();
   instance=new MDCSelect(root,undefined,undefined,undefined,undefined,el=>{menu=portalMenu(el);return menu;});
-  popup.addEventListener("MDCMenuSurface:opening",()=>{anchorRect=anchor.getBoundingClientRect();});escapeFocus(popup,anchor);
+  popup.addEventListener("MDCMenuSurface:opening",()=>{anchorRect=null;});popup.addEventListener("MDCMenuSurface:opened",()=>{anchorRect=anchor.getBoundingClientRect();});escapeFocus(popup,anchor);
   instance.useDefaultValidation=false;root._mlMdcSelect=instance;select._mlMdcSelect=instance;selects.set(select,entry);
   root.addEventListener("MDCSelect:change",()=>{
    if(syncing||select.disabled)return;
@@ -113,7 +113,7 @@
   const arrow=owner.querySelector(":scope > .open"),ul=owner.querySelector(":scope > ul:not(.preview)");
   if(!arrow||!ul)return;
   const popup=make("div","mdc-menu mdc-menu-surface ml-action-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","menu");list.tabIndex=-1;popup.append(list);
-  const menu=portalMenu(popup);let ownerRect=null;popup.addEventListener("MDCMenuSurface:opening",()=>{ownerRect=owner.getBoundingClientRect();});popup.id="ml-menu-"+(++sequence);owner._mlMdcMenu=menu;
+  const menu=portalMenu(popup);let ownerRect=null;popup.addEventListener("MDCMenuSurface:opening",()=>{ownerRect=null;});popup.addEventListener("MDCMenuSurface:opened",()=>{ownerRect=owner.getBoundingClientRect();});popup.id="ml-menu-"+(++sequence);owner._mlMdcMenu=menu;
   const oldRole=arrow.getAttribute("role"),oldTab=arrow.getAttribute("tabindex");arrow.setAttribute("role","button");arrow.tabIndex=0;
   escapeFocus(popup,arrow);
   arrow.setAttribute("aria-label",document.documentElement.lang.startsWith("zh")?"更多应用选项":"More apply options");arrow.setAttribute("aria-haspopup","menu");arrow.setAttribute("aria-controls",popup.id);arrow.setAttribute("aria-expanded","false");
@@ -124,7 +124,7 @@
    const rows=[...ul.children].filter(li=>li.tagName==="LI");
    replaceItems(list,rows.map(li=>{const el=item(li.textContent,li.getAttribute("data-value")||"",li.hasAttribute("unselectable")||li.getAttribute("aria-disabled")==="true",li.hasAttribute("selected"));el.setAttribute("role","menuitem");el._nativeChoice=li;return el;}));
    menu.layout();menu.items.forEach((li,i)=>menu.setEnabled(i,li.getAttribute("aria-disabled")!=="true"));
-   menu.setAnchorElement(owner);menu.setIsHoisted(true);menu.setFixedPosition(false);menu.open=true;arrow.setAttribute("aria-expanded","true");
+   menu.setAnchorElement(owner);menu.setIsHoisted(true);menu.setFixedPosition(true);menu.open=true;arrow.setAttribute("aria-expanded","true");
   }
   function key(event){if(["Enter"," ","ArrowDown","ArrowUp"].includes(event.key))open(event);}
   function click(event){if(event.target===arrow||arrow.contains(event.target))open(event);}
@@ -178,7 +178,7 @@
   if(relevant&&!pending){pending=true;queueMicrotask(()=>{pending=false;enhance(document);});}
  });
  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["aria-label","title"]});
- function closeMenus(event){for(const e of selects.values()){const r=e.anchor.getBoundingClientRect();if(event?.type!=="scroll"||!e.rect||Math.abs(r.top-e.rect.top)>1||Math.abs(r.left-e.rect.left)>1)e.menu.open=false;}for(const [el,e] of actions){const r=el.getBoundingClientRect();if(event?.type!=="scroll"||!e.rect||Math.abs(r.top-e.rect.top)>1||Math.abs(r.left-e.rect.left)>1)el._mlMdcMenu.open=false;}for(const el of tips.keys())el._mlMdcTooltip.hide();}
+ function closeMenus(event){for(const e of selects.values()){if(event?.type==="scroll"&&!e.rect)continue;const r=e.anchor.getBoundingClientRect();if(event?.type!=="scroll"||!e.rect||Math.abs(r.top-e.rect.top)>1||Math.abs(r.left-e.rect.left)>1)e.menu.open=false;}for(const [el,e] of actions){if(event?.type==="scroll"&&!e.rect)continue;const r=el.getBoundingClientRect();if(event?.type!=="scroll"||!e.rect||Math.abs(r.top-e.rect.top)>1||Math.abs(r.left-e.rect.left)>1)el._mlMdcMenu.open=false;}for(const el of tips.keys())el._mlMdcTooltip.hide();}
  // Menus close during viewport movement instead of remaining detached from anchors.
  window.addEventListener("resize",closeMenus);document.addEventListener("scroll",event=>{if(!event.target.closest?.(".ml-mdc-menu"))closeMenus(event);},{capture:true,passive:true});
  document.addEventListener("change",event=>{if(event.target.closest("#ml-appearance"))feedback(document.documentElement.lang.startsWith("zh")?"已保存此浏览器的主题设置":"Theme preferences saved in this browser");});
