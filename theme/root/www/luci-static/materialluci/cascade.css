@@ -499,7 +499,7 @@ body .ml-native-button>.mdc-button__ripple{z-index:2!important}
 body .ml-mdc-feedback .mdc-button__label{font:inherit;letter-spacing:inherit;text-transform:none}
 body .ml-mdc-feedback.mdc-icon-button{vertical-align:middle}
 body #indicators .ml-poll-action.mdc-icon-button{overflow:hidden}
-body .ml-mdc-selection{
+body .ml-mdc-select.mdc-selection{
  position:relative;width:auto;height:auto;padding:0;margin:0;box-sizing:border-box;font:inherit;letter-spacing:normal;color:inherit;vertical-align:baseline;
  --mdc-theme-primary:var(--control-accent);--mdc-theme-secondary:var(--control-accent);
  --mdc-checkbox-selected-icon-color:var(--control-accent);--mdc-checkbox-selected-checkmark-color:var(--surface);
@@ -507,16 +507,16 @@ body .ml-mdc-selection{
  --mdc-radio-selected-icon-color:var(--control-accent);--mdc-radio-unselected-icon-color:var(--muted);
  --mdc-radio-disabled-selected-icon-color:var(--disabled);--mdc-radio-disabled-unselected-icon-color:var(--disabled)
 }
-body .ml-mdc-selection>input.mdc-checkbox__native-control,body .ml-mdc-selection>input.mdc-radio__native-control{
+body .ml-mdc-select.mdc-selection>input.mdc-checkbox__native-control,body .ml-mdc-select.mdc-selection>input.mdc-radio__native-control{
  position:static;inset:auto;width:18px;height:18px;opacity:0;z-index:auto;cursor:inherit
 }
-body .ml-mdc-selection>.mdc-checkbox__background,body .ml-mdc-selection>.mdc-radio__background{
+body .ml-mdc-select.mdc-selection>.mdc-checkbox__background,body .ml-mdc-select.mdc-selection>.mdc-radio__background{
  position:absolute;left:var(--ml-selection-left,0px);top:var(--ml-selection-top,0px);width:18px;height:18px;pointer-events:none
 }
-body .ml-mdc-selection>.mdc-checkbox__ripple,body .ml-mdc-selection>.mdc-radio__ripple{
+body .ml-mdc-select.mdc-selection>.mdc-checkbox__ripple,body .ml-mdc-select.mdc-selection>.mdc-radio__ripple{
  left:calc(var(--ml-selection-left,0px) - 15px);top:calc(var(--ml-selection-top,0px) - 15px);width:48px;height:48px;pointer-events:none
 }
-body .ml-mdc-selection:focus-within>.mdc-checkbox__background,body .ml-mdc-selection:focus-within>.mdc-radio__background{outline:2px solid var(--control-strong);outline-offset:2px}
+body .ml-mdc-select.mdc-selection:focus-within>.mdc-checkbox__background,body .ml-mdc-select.mdc-selection:focus-within>.mdc-radio__background{outline:2px solid var(--control-strong);outline-offset:2px}
 body .ml-radio.ml-mdc-selection{width:16px;height:16px;border:0;flex:none;display:inline-block!important}
 body .ml-radio.ml-mdc-selection::after{display:none}
 body .ml-radio.ml-mdc-selection>input{position:absolute;inset:0;width:16px;height:16px;margin:0;pointer-events:none}
@@ -543,7 +543,7 @@ body .ml-mdc-feedback:is(.cbi-button-negative,.cbi-button-remove,.cbi-input-remo
 
 body .ml-native-button.mdc-button:not(:disabled){display:inline-flex;align-items:center;justify-content:center;font:inherit;color:inherit;border-radius:2px}
 
-body .ml-mdc-selection.mdc-form-field>label{margin:0;padding:0}
+body .ml-mdc-select.mdc-selection.mdc-form-field>label{margin:0;padding:0}
 
 /* LuCI owns one modal node, reused as MDC container/surface/content.
    Undo the wrapper's full-height and content flex sizing on that node. */
@@ -582,16 +582,16 @@ body .ml-mdc-menu .mdc-deprecated-list-item__text{overflow-wrap:anywhere;line-he
 body .ml-mdc-menu .mdc-deprecated-list-item--disabled{color:var(--disabled)}
 body .ml-mdc-menu .mdc-deprecated-list-item--selected{background:var(--action-tonal);color:var(--on-action-tonal)}
 body .ml-mdc-menu .mdc-deprecated-list-item__ripple::before,body .ml-mdc-menu .mdc-deprecated-list-item__ripple::after{background:var(--control-accent)}
-body .ml-mdc-select{display:inline-flex;min-width:160px;max-width:100%;width:100%;vertical-align:middle;font:inherit;--mdc-select-disabled-dropdown-icon-color:var(--disabled)}
-body .ml-mdc-select .mdc-select__anchor{height:48px;width:100%;padding:8px 0;background:transparent;border-radius:0;font:inherit;color:var(--ink)}
-body .ml-mdc-select .mdc-select__selected-text{color:var(--ink);font:inherit;letter-spacing:normal;padding:0;overflow:hidden;text-overflow:ellipsis}
-body .ml-mdc-select .mdc-select__selected-text-container{padding:0;min-width:0}
-body .ml-mdc-select .mdc-select__dropdown-icon{margin:0 8px 0 12px}
-body .ml-mdc-select .mdc-select__dropdown-icon-graphic{fill:var(--muted)}
-body .ml-mdc-select .mdc-line-ripple::before{border-bottom-color:var(--muted)}
-body .ml-mdc-select .mdc-line-ripple::after{border-bottom-color:var(--control-accent)}
-body .ml-mdc-select.mdc-select--disabled .mdc-select__selected-text{color:var(--disabled)}
-body .ml-mdc-select.mdc-select--invalid .mdc-line-ripple::before{border-bottom-color:var(--danger)}
+body .ml-mdc-select.mdc-select{display:inline-flex;min-width:160px;max-width:100%;width:100%;vertical-align:middle;font:inherit;--mdc-select-disabled-dropdown-icon-color:var(--disabled)}
+body .ml-mdc-select.mdc-select .mdc-select__anchor{height:48px;width:100%;padding:8px 0;background:transparent;border-radius:0;font:inherit;color:var(--ink)}
+body .ml-mdc-select.mdc-select .mdc-select__selected-text{color:var(--ink);font:inherit;letter-spacing:normal;padding:0;overflow:hidden;text-overflow:ellipsis}
+body .ml-mdc-select.mdc-select .mdc-select__selected-text-container{padding:0;min-width:0}
+body .ml-mdc-select.mdc-select .mdc-select__dropdown-icon{margin:0 8px 0 12px}
+body .ml-mdc-select.mdc-select .mdc-select__dropdown-icon-graphic{fill:var(--muted)}
+body .ml-mdc-select.mdc-select .mdc-line-ripple::before{border-bottom-color:var(--muted)}
+body .ml-mdc-select.mdc-select .mdc-line-ripple::after{border-bottom-color:var(--control-accent)}
+body .ml-mdc-select.mdc-select.mdc-select--disabled .mdc-select__selected-text{color:var(--disabled)}
+body .ml-mdc-select.mdc-select.mdc-select--invalid .mdc-line-ripple::before{border-bottom-color:var(--danger)}
 body select.ml-mdc-native-select{position:absolute!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;max-width:1px!important;opacity:0;clip-path:inset(50%);padding:0!important;margin:0!important;pointer-events:none}
 body .ml-preference-snackbar{z-index:60;pointer-events:none;padding-bottom:max(8px,env(safe-area-inset-bottom))}
 body .ml-preference-snackbar .mdc-snackbar__surface{background:#323232;color:#fff;border-radius:2px;min-width:288px;max-width:min(568px,calc(100vw - 24px));pointer-events:auto}
@@ -599,3 +599,7 @@ body .ml-preference-snackbar .mdc-snackbar__label{font:inherit;color:#fff}
 body .mdc-tooltip{z-index:70;pointer-events:none}
 body .mdc-tooltip__surface{background:#616161;color:#fff;border-radius:2px;font:400 12px/1.4 Roboto,"Noto Sans",system-ui,sans-serif;padding:6px 8px}
 @media(prefers-reduced-motion:reduce){.ml-mdc-menu,.ml-preference-snackbar,.mdc-tooltip__surface-animation{animation:none!important;transition:none!important}}
+
+/* Native fallback controls follow the same browser color scheme. */
+:root{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+body select:not(.ml-mdc-native-select){background-color:transparent;color:var(--ink)}

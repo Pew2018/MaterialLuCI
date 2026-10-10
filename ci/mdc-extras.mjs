@@ -99,7 +99,10 @@ export async function verifyMDCExtras(browser,name,base){
  await page.waitForSelector(".ml-preference-snackbar.mdc-snackbar--open");
  assert.equal(await page.locator(".ml-preference-snackbar .mdc-snackbar__label").textContent(),"已保存此浏览器的主题设置");
  await page.screenshot({path:"dist/previews/extras-"+name+"-snackbar.png"});
- await page.locator("#real-select").scrollIntoViewIfNeeded();await anchor.click();
+ await page.locator("#real-select").scrollIntoViewIfNeeded();
+ assert.equal(await anchor.evaluate(el=>getComputedStyle(el).backgroundColor),"rgba(0, 0, 0, 0)","MDC default fill overrode dark select");
+ assert.equal(await root.locator(".mdc-select__selected-text").evaluate(el=>getComputedStyle(el).color),"rgba(255, 255, 255, 0.87)","MDC default text overrode dark select");
+ await anchor.click();
  await page.screenshot({path:"dist/previews/extras-"+name+"-select-dark.png"});await page.keyboard.press("Escape");
  // Accent text must remain readable on raised menus/dialogs, including
  // their white pressed overlay. Saved seeds are never modified.

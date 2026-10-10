@@ -147,8 +147,8 @@ try{
    window.fixtureProgressAnimation=fixtureProgressRoot.querySelector(".mdc-linear-progress__primary-bar").getAnimations()[0];
    window.fixtureProgressTime=fixtureProgressAnimation.currentTime;
   });
-  await page.waitForTimeout(220);
-  assert(await page.evaluate(()=>fixtureProgressAnimation.currentTime>fixtureProgressTime),"indeterminate animation does not advance");
+  await page.waitForFunction(()=>typeof fixtureProgressAnimation.currentTime==="number"&&fixtureProgressAnimation.currentTime>fixtureProgressTime,null,{timeout:5000});
+  assert(await page.evaluate(()=>fixtureProgressAnimation.playState==="running"),"indeterminate animation is not running");
   await page.evaluate(()=>fixtureUI.changes.displayStatus("notice spinning",E("p","正在等待配置被应用… 29")));
   await page.waitForTimeout(100);
   assert(await page.evaluate(()=>document.querySelector("#ml-mdc-wait-progress")===fixtureProgressRoot),"countdown restarted MDC component");
