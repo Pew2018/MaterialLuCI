@@ -267,9 +267,6 @@ try{
   console.log(name+": menu hierarchy, native widgets, field submission, tables, dark states, density, drawers, modals, keyboard viewport and login passed");
  }
 }finally{server.kill();
-for(const file of ["desktop-light.png","desktop-tables.png","desktop-dark-tables.png","opkg-desktop.png","mobile-dark.png","mobile-drawer.png","mobile-keyboard.png","mdc-apply-dark.png","mdc-wait-mobile.png"]){
- const path="dist/previews/"+file;
- if(fs.existsSync(path))console.log("MATERIALLUCI_PREVIEW "+JSON.stringify({file,base64:fs.readFileSync(path).toString("base64")}));
-}
+console.log("Preview PNGs and source identity are uploaded as a workflow artifact.");
 
 }

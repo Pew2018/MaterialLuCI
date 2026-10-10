@@ -74,6 +74,22 @@ export async function verifySixUI(browser,name,base){
  assert.equal(await page.locator('meta[name="theme-color"],meta[name="apple-mobile-web-app-status-bar-style"]').count(),0);
  assert(!await page.locator('meta[name="viewport"]').getAttribute("content").then(v=>v.includes("viewport-fit=cover")));
  assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),56);
+ const inventory=await page.locator('input[type="checkbox"]').evaluateAll(nodes=>nodes.map(input=>({
+  name:input.name,converted:input.classList.contains("ml-switch-source"),
+  instance:!!input.parentElement.querySelector(".mdc-switch")?._mlMdcSwitch,
+  checked:input.checked,disabled:input.disabled
+ })));
+ fs.writeFileSync("dist/previews/switch-inventory-"+name+".json",JSON.stringify(inventory,null,2));
+ assert(inventory.every(item=>!item.converted||item.instance),"converted checkbox lacks MDC instance");
+
+ // Keep preview loading at the content area's upper edge, without unrelated
+ // sample sections. Removing controls also exercises instance disposal.
+ await page.evaluate(()=>{
+  window.disposedSwitch=document.querySelector("#legacy-switch + .mdc-switch");
+  const view=document.getElementById("view");document.getElementById("maincontent").replaceChildren(view);
+  scrollTo(0,0);
+ });
+ await page.waitForFunction(()=>!disposedSwitch._mlMdcSwitch);
  // Use the actual pinned LuCI View.__init__ lifecycle with controlled data.
  await page.evaluate(async()=>{
   window.fixtureViewClass=await L.require("view");
@@ -85,6 +101,8 @@ export async function verifySixUI(browser,name,base){
  await page.waitForSelector("#view > .ml-progress-host .ml-task-progress");
  assert.equal(await page.locator("#view > .spinning").count(),1);
  const progress=page.locator("#view .mdc-linear-progress__primary-bar");
+ await progress.scrollIntoViewIfNeeded();
+ await page.waitForFunction(()=>{const el=document.querySelector("#view .mdc-linear-progress__primary-bar");return el?.getAnimations().some(a=>typeof a.currentTime==="number"&&a.playState==="running");});
  const start=await progress.evaluate(el=>el.getAnimations()[0]?.currentTime);
  await page.waitForTimeout(160);assert(await progress.evaluate((el,t)=>el.getAnimations()[0]?.currentTime>t,start),"body progress animation frozen");
  if(name==="chromium")await page.screenshot({path:"dist/previews/status-loading.png"});
@@ -104,13 +122,6 @@ export async function verifySixUI(browser,name,base){
  await page.evaluate(async()=>{await fixtureFailedPromise;document.getElementById("view").replaceChildren();});
  assert.equal(await page.locator(".ml-task-progress").count(),0);
 
- const inventory=await page.locator('input[type="checkbox"]').evaluateAll(nodes=>nodes.map(input=>({
-  name:input.name,converted:input.classList.contains("ml-switch-source"),
-  instance:!!input.parentElement.querySelector(".mdc-switch")?._mlMdcSwitch,
-  checked:input.checked,disabled:input.disabled
- })));
- fs.writeFileSync("dist/previews/switch-inventory-"+name+".json",JSON.stringify(inventory,null,2));
- assert(inventory.every(item=>!item.converted||item.instance),"converted checkbox lacks MDC instance");
  // Resource URLs come from the freshly built package, with a cache suffix.
  const urls=await page.locator('script[src*="/materialluci/"],link[href*="/materialluci/"]').evaluateAll(nodes=>nodes.map(el=>el.src||el.href));
  assert(urls.every(url=>new URL(url).searchParams.has("v")));

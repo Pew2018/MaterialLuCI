@@ -345,3 +345,9 @@ body .ml-switch-hit .mdc-switch>.mdc-switch__track{width:36px}
 body .ml-switch-hit .mdc-switch>.mdc-switch__handle-track{width:16px;left:6px;transition-duration:150ms}
 body .ml-switch-hit .mdc-switch>.mdc-switch__focus-ring-wrapper{position:absolute}
 body .ml-switch-hit .mdc-switch .mdc-switch__icons{visibility:hidden}
+
+/* Pause/play are fixed local SVGs; the original text node is left for LuCI updates. */
+.ml-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#indicators .ml-poll-action{font-size:0!important;width:48px;flex:none;padding:0;text-decoration:none}
+#indicators .ml-poll-action::before{content:"";display:block;width:24px;height:24px;background:currentColor;-webkit-mask:url("icons/pause.svg") center/24px 24px no-repeat;mask:url("icons/pause.svg") center/24px 24px no-repeat}
+#indicators .ml-poll-action[data-paused=true]::before{-webkit-mask-image:url("icons/play.svg");mask-image:url("icons/play.svg")}

@@ -46,7 +46,7 @@
   const reset=()=>setTimeout(sync,0);
   document.addEventListener("reset",reset,true);
   switches.set(input,{control,destroy(){
-   attrs.disconnect();instance.destroy();document.removeEventListener("reset",reset,true);
+   attrs.disconnect();instance.destroy();control._mlMdcSwitch=null;document.removeEventListener("reset",reset,true);
    input.removeEventListener("change",sync);input.removeEventListener("input",sync);
    for(const key of Object.keys(descriptors))delete input[key];
    input.classList.remove("ml-switch","ml-switch-source");
@@ -233,9 +233,9 @@
   // are layout containers; only their leaf content groups own surfaces.
   main.classList.remove("ml-card-surface");
   main.querySelectorAll(".ml-card-surface").forEach(el=>el.classList.remove("ml-card-surface"));
-  const candidates=[...main.querySelectorAll(".cbi-section,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab]")];
+  const candidates=[...main.querySelectorAll(".cbi-section,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab]")].filter(section=>!section.closest("#ml-appearance,.modal,.cbi-value,table,.table"));
   for(const section of candidates){
-   if(section.closest("#ml-appearance,.modal,.cbi-value,table,.table")||section.querySelector(".cbi-section,fieldset,section:not(.ml-group)"))continue;
+   if(candidates.some(child=>child!==section&&section.contains(child)))continue;
    section.classList.add("ml-card-surface");
   }
 
