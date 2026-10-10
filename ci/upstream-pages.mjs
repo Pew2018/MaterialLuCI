@@ -4,7 +4,8 @@ import crypto from "node:crypto";
 export async function verifyUpstreamPages(browser,name,base){
  for(const [size,viewport] of [["mobile",{width:390,height:844}],["desktop",{width:1280,height:900}]]){
   const page=await browser.newPage({viewport}),errors=[];
-  page.on("pageerror",e=>errors.push(e.message));
+  page.on("pageerror",e=>{errors.push(e.message);console.error(name,size,e.message);});
+  page.on("console",msg=>{if(msg.type()==="error")console.error("browser:",msg.text());});
   let release;
   await page.route("**/preview-ready",r=>{release=()=>r.fulfill({status:200,body:"ready"});});
   await page.goto(base+"/upstream.html");
@@ -18,7 +19,7 @@ export async function verifyUpstreamPages(browser,name,base){
   assert(await bar.evaluate((el,t)=>el.getAnimations()[0].currentTime>t,before));
   await page.screenshot({path:"dist/previews/"+name+"-"+size+"-upstream-loading.png"});
   await release();
-  await page.waitForSelector("#upstream-wireless .assoclist");
+  try{await page.waitForSelector("#upstream-wireless .assoclist");}catch(e){console.error(await page.locator("#maincontent").innerText());throw e;}
   await page.waitForSelector("#ml-appearance-entry[open]");
   await page.waitForSelector(".ml-view-progress",{state:"detached"});
   assert.equal(await page.locator("#ml-appearance h2").allTextContents().then(x=>x.includes("关于")||x.includes("About")),false);
