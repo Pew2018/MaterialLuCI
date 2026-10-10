@@ -37,7 +37,7 @@
   // Sibling decoration preserves ui.Select.node.firstChild and original label.
   select.after(root);
   const oldTab=select.getAttribute("tabindex"),oldHidden=select.getAttribute("aria-hidden"),restore=[],optionHooks=new WeakSet();
-  let instance,menu,syncing=false,queued=false,signature="";
+  let instance,menu,syncing=false,queued=false,signature="",anchorRect=null;
   function queue(){if(!queued){queued=true;queueMicrotask(()=>{queued=false;if(select.isConnected)sync();});}}
   function sync(){
    if(!simple(select)){entry.destroy();return;}
@@ -60,7 +60,7 @@
     }
    }finally{syncing=false;}
   }
-  const entry={root,anchor,get menu(){return menu;},destroy(){
+  const entry={root,anchor,get menu(){return menu;},get rect(){return anchorRect;},destroy(){
    observer.disconnect();instance?.destroy();popup.remove();root.remove();select.classList.remove("ml-mdc-native-select");select._mlMdcSelect=null;
    select.removeEventListener("input",queue);select.removeEventListener("change",queue);select.removeEventListener("focus",focus);select.removeEventListener("invalid",invalid);
    select.form?.removeEventListener("reset",reset);restore.forEach(fn=>fn());
@@ -69,6 +69,7 @@
   }};
   sync();
   instance=new MDCSelect(root,undefined,undefined,undefined,undefined,el=>{menu=portalMenu(el);return menu;});
+  popup.addEventListener("MDCMenuSurface:opening",()=>{anchorRect=anchor.getBoundingClientRect();});
   instance.useDefaultValidation=false;root._mlMdcSelect=instance;select._mlMdcSelect=instance;selects.set(select,entry);
   root.addEventListener("MDCSelect:change",()=>{
    if(syncing||select.disabled)return;
@@ -148,9 +149,9 @@
   if(relevant&&!pending){pending=true;queueMicrotask(()=>{pending=false;enhance(document);});}
  });
  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["aria-label","title"]});
- function closeMenus(){for(const e of selects.values())e.menu.open=false;for(const el of actions.keys())el._mlMdcMenu.open=false;for(const el of tips.keys())el._mlMdcTooltip.hide();}
+ function closeMenus(event){for(const e of selects.values()){const r=e.anchor.getBoundingClientRect();if(event?.type!=="scroll"||!e.rect||Math.abs(r.top-e.rect.top)>1||Math.abs(r.left-e.rect.left)>1)e.menu.open=false;}for(const el of actions.keys())el._mlMdcMenu.open=false;for(const el of tips.keys())el._mlMdcTooltip.hide();}
  // Menus close during viewport movement instead of remaining detached from anchors.
- window.addEventListener("resize",closeMenus);document.addEventListener("scroll",event=>{if(!event.target.closest?.(".ml-mdc-menu"))closeMenus();},{capture:true,passive:true});
+ window.addEventListener("resize",closeMenus);document.addEventListener("scroll",event=>{if(!event.target.closest?.(".ml-mdc-menu"))closeMenus(event);},{capture:true,passive:true});
  document.addEventListener("change",event=>{if(event.target.closest("#ml-appearance"))feedback(document.documentElement.lang.startsWith("zh")?"已保存此浏览器的主题设置":"Theme preferences saved in this browser");});
  document.addEventListener("click",event=>{if(event.target.closest("#ml-appearance .ml-swatch-item,#ml-appearance .ml-mode-option"))feedback(document.documentElement.lang.startsWith("zh")?"已保存此浏览器的主题设置":"Theme preferences saved in this browser");});
  window.addEventListener("pagehide",event=>{if(!event.persisted){stopped=true;observer.disconnect();for(const e of [...selects.values()])e.destroy();for(const e of [...actions.values()])e.destroy();for(const e of [...tips.values()])e.destroy();if(notice){clearTimeout(notice.timer);notice.instance.destroy();notice.root.remove();notice=null;}}});

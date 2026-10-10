@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 export async function verifyMDCExtras(browser,name,base){
  const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
- page.on("pageerror",e=>errors.push(e.message));
+ page.on("pageerror",e=>{errors.push(e.message);console.error("extras browser error",e.message);});
  await page.goto(base);await page.waitForFunction(()=>window.MaterialExtras&&window.fixtureSelect);
  await page.waitForFunction(()=>document.querySelector("#real-select select")?._mlMdcSelect);
  assert(await page.evaluate(()=>fixtureSelect.node.firstChild.tagName==="SELECT"),"LuCI Select firstChild contract changed");
@@ -12,7 +12,10 @@ export async function verifyMDCExtras(browser,name,base){
  });
  const root=page.locator("#real-select .ml-mdc-select"),anchor=root.locator(".mdc-select__anchor");
  const choose=async value=>{
-  await anchor.click();await page.locator('.ml-select-menu.mdc-menu-surface--open [data-value="'+value+'"]').click();
+  await page.evaluate(()=>{window.menuTrace=[];for(const e of ["MDCMenuSurface:opening","MDCMenuSurface:opened","MDCMenuSurface:closing","MDCMenuSurface:closed"])document.addEventListener(e,event=>menuTrace.push([e,event.target.className]));});
+  await anchor.click();
+  console.log(name+" select after click",await page.evaluate(()=>({trace:menuTrace,root:extraSelect._mlMdcSelect.root?.className,menu:document.querySelector(".ml-select-menu")?.outerHTML,selected:extraSelect._mlMdcSelect.value,focus:document.activeElement?.outerHTML})));
+  await page.locator('.ml-select-menu.mdc-menu-surface--open [data-value="'+value+'"]').click();
   await page.waitForTimeout(160);
  };
  await choose("manual");assert.equal(await page.evaluate(()=>fixtureSelect.getValue()),"manual");assert.equal(await page.evaluate(()=>extraChanges),1,"selection fired multiple native changes");
