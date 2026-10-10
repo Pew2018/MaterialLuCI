@@ -88,6 +88,20 @@ function primarySurfaceForRgb(rgb, dark) {
   if(!dark && colorHex(rgb)==="#2196F3") surface=rgbForHex("#1976D2");
   return surface;
 }
+// App-bar ink is independent of action-button ink. Keep the chosen hue,
+// improving mid-tone legibility without changing the saved swatch or buttons.
+function toolbarColors(primary) {
+  const light=foregroundForRgb(primary).color===LIGHT_FOREGROUND;
+  const ink=light ? [255,255,255] : [33,33,33], start=rgbToOklab(primary)[0];
+  let background=primary;
+  for(let step=0;step<=200;step++){
+    background=toneRgb(primary,start+(light ? -start : 1-start)*step/200);
+    if(contrastRatio(relativeLuminance(ink),relativeLuminance(background))>=7.1)break;
+  }
+  const state=alpha=>colorHex(mixRgb(ink,background,alpha));
+  return {toolbarSurface:colorHex(background),onToolbar:colorHex(ink),
+    toolbarHover:state(.08),toolbarPressed:state(.12)};
+}
 function generateThemePalette(seed, dark) {
   const rgb=rgbForHex(seed);
   const surface=dark ? [33,33,33] : [255,255,255];
@@ -106,7 +120,7 @@ function generateThemePalette(seed, dark) {
   const navIcon=readableTone(rgb,navBackgrounds,dark,3.1);
   const navLabel=readableTone(rgb,navBackgrounds,dark);
   return {
-    seed,primarySurface:colorHex(primary),primaryPressed:colorHex(primaryPressed),
+    seed,...toolbarColors(primary),primarySurface:colorHex(primary),primaryPressed:colorHex(primaryPressed),
     primarySurfaceDark:colorHex(primarySurfaceForRgb(rgb,true)),onPrimary,
     accentInk:colorHex(ink),controlAccent:colorHex(control),controlStrong:colorHex(ink),
     actionPrimary:colorHex(primary),onActionPrimary:onPrimary,

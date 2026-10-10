@@ -25,7 +25,7 @@ h4{font-size:14px;font-weight:500}
 .ml-title{font-size:20px;font-weight:500;line-height:1.2;flex:1;margin:0;color:inherit}
 body button.ml-icon-button{width:48px;height:48px;min-width:48px;min-height:48px;border:0;border-radius:0;padding:12px;margin:0;background:transparent;color:inherit;box-shadow:none;display:inline-flex;align-items:center;justify-content:center;--button-bg:transparent;--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed)}
 .ml-icon-button svg{width:24px;height:24px;fill:currentColor}
-:root[data-toolbar=true] .ml-toolbar{background:var(--primary-surface);color:var(--on-primary)}
+:root[data-toolbar=true] .ml-toolbar{background:var(--toolbar-surface,var(--primary-surface));color:var(--on-toolbar,var(--on-primary))}
 :root[data-toolbar=false][data-icons=true] .ml-icon-button{color:var(--accent-ink)}
 #indicators{font-size:11px;display:flex;gap:4px;flex:none}
 #indicators [data-indicator]{text-shadow:none;white-space:nowrap;border-radius:2px;padding:2px 4px;background:var(--log);color:var(--muted)!important}
@@ -374,7 +374,7 @@ body{background:var(--page)}
 body .ml-toolbar,:root[data-toolbar=true] body .ml-toolbar{
  height:64px;padding-top:8px;background:var(--browser-surface,var(--page))
 }
-:root[data-toolbar=true] .ml-toolbar-inner{background:var(--primary-surface);color:var(--on-primary)}
+:root[data-toolbar=true] .ml-toolbar-inner{background:var(--toolbar-surface,var(--primary-surface));color:var(--on-toolbar,var(--on-primary))}
 .ml-sidebar{top:64px;height:calc(100dvh - 64px)}
 body::after{content:"";position:fixed;bottom:0;left:0;right:0;height:env(safe-area-inset-bottom,0px);background:var(--browser-surface,var(--page));pointer-events:none;z-index:40}
 @media(max-width:1023px){.ml-sidebar{top:var(--ml-vv-top);height:var(--ml-vv-height)}}
@@ -468,3 +468,17 @@ body .ml-text-field>.cbi-button-add{flex:none;align-self:center;position:relativ
 body .ml-sidebar button.mdc-button:not(:disabled){color:var(--button-ink)}
 
 @media(min-width:1280px){#ml-appearance [data-group=material] .ml-swatches{grid-template-columns:repeat(6,minmax(0,1fr))}}
+
+/* One ink owner for title, navigation controls and polling on each app bar.
+   Override generic action hover/pressed ink and accent-colored focus rings. */
+.ml-toolbar-inner{--toolbar-ink:var(--ink);--toolbar-state-hover:var(--hover);--toolbar-state-pressed:var(--pressed)}
+:root[data-toolbar=true] .ml-toolbar-inner{--toolbar-ink:var(--on-toolbar);--toolbar-state-hover:var(--toolbar-hover);--toolbar-state-pressed:var(--toolbar-pressed)}
+body .ml-toolbar-inner .ml-title{color:var(--toolbar-ink);opacity:1;text-shadow:none}
+body .ml-toolbar-inner button.ml-icon-button{
+ --button-ink:var(--toolbar-ink);--button-hover-bg:var(--toolbar-state-hover);--button-pressed-bg:var(--toolbar-state-pressed);
+ color:var(--toolbar-ink);opacity:1
+}
+body .ml-toolbar-inner #indicators .ml-poll-action{color:var(--toolbar-ink)!important;background:transparent;opacity:1}
+@media(hover:hover){body .ml-toolbar-inner #indicators .ml-poll-action:hover{background:var(--toolbar-state-hover)}}
+body .ml-toolbar-inner #indicators .ml-poll-action:active{background:var(--toolbar-state-pressed)}
+body .ml-toolbar-inner :is(button.ml-icon-button,#indicators .ml-poll-action):focus-visible{outline:2px solid var(--toolbar-ink)!important;outline-offset:-4px}

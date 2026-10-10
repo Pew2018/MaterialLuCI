@@ -2,6 +2,7 @@ import {chromium,webkit} from "playwright";
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
 import fs from "node:fs";
+import {verifyToolbar} from "./toolbar.mjs";
 import {verifySixUI} from "./six-ui.mjs";
 import {verifyUpstreamPages} from "./upstream-pages.mjs";
 const server=spawn("python3",["ci/server.py"],{stdio:"inherit"}),base="http://127.0.0.1:8765";
@@ -263,7 +264,7 @@ try{
   await keyboard.evaluate(()=>{fixtureViewport.height=844;fixtureViewport.dispatchEvent(new Event("resize"));});
   await keyboard.waitForFunction(()=>getComputedStyle(document.documentElement).getPropertyValue("--ml-keyboard-space")==="0px");
   assert.equal(await keyboard.locator("#keyboard-last-field").inputValue(),"last draft");
-  await keyboard.close();await verifySixUI(browser,name,base);await verifyUpstreamPages(browser,name,base);await browser.close();
+  await keyboard.close();await verifyToolbar(browser,name,base);await verifySixUI(browser,name,base);await verifyUpstreamPages(browser,name,base);await browser.close();
   console.log(name+": menu hierarchy, native widgets, field submission, tables, dark states, density, drawers, modals, keyboard viewport and login passed");
  }
 }finally{server.kill();

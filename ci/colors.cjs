@@ -5,6 +5,8 @@ const seeds=["#42A5F5","#2196F3","#CC6F4E","#E6A545","#7DC22F","#9575CD","#26C6D
 for(let i=0;i<512;i++)seeds.push("#"+((i*2654435761)>>>0).toString(16).padStart(8,"0").slice(-6).toUpperCase());
 for(const seed of seeds)for(const dark of [false,true]){
  const p=P.generate(seed,dark);assert.equal(p.seed,seed);
+ assert(P.contrast(p.onToolbar,p.toolbarSurface)>=7,seed+" toolbar");
+ for(const state of [p.toolbarHover,p.toolbarPressed])assert(P.contrast(p.onToolbar,state)>=4.5,seed+" toolbar state");
  for(const [fg,bg] of [[p.onPrimary,p.primarySurface],[p.onPrimary,p.primaryPressed],[p.onActionSecondary,p.actionSecondary],[p.onActionSecondary,p.actionSecondaryPressed]])assert(P.contrast(fg,bg)>=4.5,seed+" "+dark+" "+fg+"/"+bg);
  for(const bg of dark?["#121212","#202020","#212121"]:["#FFFFFF","#FAFAFA","#EEEEEE"]){assert(P.contrast(p.accentInk,bg)>=4.5);assert(P.contrast(p.controlAccent,bg)>=3);}
 }
