@@ -85,6 +85,15 @@ export async function verifyUpstreamPages(browser,name,base){
    }
   }
   await page.setViewportSize(viewport);
+  for(const mode of ["light","dark"]){
+   await page.evaluate(v=>MaterialAppearance.set("mode",v),mode);
+   assert.equal(await field.evaluate(el=>getComputedStyle(el.closest(".ml-text-field")).backgroundColor),"rgba(0, 0, 0, 0)","MDC default filled color must not override the MD1 surface");
+   await field.scrollIntoViewIfNeeded();
+   await page.screenshot({path:"dist/previews/"+name+"-"+size+"-mdc-textfields-"+mode+".png"});
+   await reset.scrollIntoViewIfNeeded();
+   await page.screenshot({path:"dist/previews/"+name+"-"+size+"-reset-button-"+mode+".png"});
+  }
+  await page.evaluate(()=>MaterialAppearance.set("mode","light"));
   // Match bytes served by the test HTTP server to the manifest IN the IPK.
   const identity=await (await page.request.get(base+"/luci-static/materialluci/build.json")).json();
   assert.equal(identity.commit,process.env.GITHUB_SHA);

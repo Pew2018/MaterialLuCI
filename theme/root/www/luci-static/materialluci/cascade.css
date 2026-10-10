@@ -431,7 +431,7 @@ body .ml-mode-option[aria-checked=true]{background:var(--action-tonal);color:var
  #ml-appearance [data-group=material]{grid-area:material}
  #ml-appearance [data-group=custom]{grid-area:custom}
  #ml-appearance .ml-group+.ml-group{margin-top:0;border:0}
- #ml-appearance [data-group=oneplus],#ml-appearance [data-group=material],#ml-appearance [data-group=custom]{border-top:1px solid var(--divider)}
+ #ml-appearance .ml-group[data-group=oneplus],#ml-appearance .ml-group[data-group=material],#ml-appearance .ml-group[data-group=custom]{border-top:1px solid var(--divider)}
  #ml-appearance [data-group=custom]>.ml-text-field{max-width:360px}
 }
 /* Secondary destructive actions use the same MD1 geometry as other actions. */
@@ -441,7 +441,7 @@ body :is(.cbi-button-negative,.cbi-button-remove,.cbi-input-remove){
 }
 /* MDC Text Field owns the underline, focus animation and interaction state.
    Retain the original field element, LuCI widget frame, labels and validation. */
-body .ml-text-field{display:inline-flex;position:relative;width:100%;max-width:100%;min-width:0;height:48px;min-height:48px;padding:0 4px;border-radius:0;background:transparent;overflow:visible;border-bottom-color:var(--muted);font:inherit}
+body .ml-text-field.mdc-text-field--filled{display:inline-flex;position:relative;width:100%;max-width:100%;min-width:0;height:48px;min-height:48px;padding:0 4px;border-radius:0;background:transparent;overflow:visible;border-bottom-color:var(--muted);font:inherit}
 body .ml-text-field:hover{background:transparent}
 body .ml-text-field .mdc-text-field__ripple{display:none}
 body .ml-text-field>input.mdc-text-field__input,body .ml-text-field>textarea.mdc-text-field__input{
@@ -449,8 +449,8 @@ body .ml-text-field>input.mdc-text-field__input,body .ml-text-field>textarea.mdc
 }
 body .ml-text-field.mdc-text-field--textarea{height:auto;min-height:120px;align-items:stretch}
 body .ml-text-field>textarea.mdc-text-field__input{height:auto;min-height:120px;padding:12px 0;resize:vertical}
-body .ml-text-field>.mdc-line-ripple::before{border-bottom-color:var(--muted)}
-body .ml-text-field>.mdc-line-ripple::after{border-bottom-color:var(--control-accent)}
+body .ml-text-field.mdc-text-field--filled>.mdc-line-ripple::before{border-bottom-color:var(--muted)}
+body .ml-text-field.mdc-text-field--filled>.mdc-line-ripple::after{border-bottom-color:var(--control-accent)}
 body .ml-text-field.mdc-text-field--invalid>.mdc-line-ripple::after,body .ml-text-field.mdc-text-field--invalid>.mdc-line-ripple::before{border-bottom-color:var(--danger)}
 body .ml-text-field.mdc-text-field--disabled{border-bottom-color:var(--disabled);background:transparent}
 body .ml-text-field.mdc-text-field--disabled>.mdc-text-field__input{color:var(--disabled)}
