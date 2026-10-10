@@ -17,5 +17,33 @@
  function observe(n){if(!n||n===overlay)return;stopModal();overlay=n;new MutationObserver(sync).observe(overlay,{childList:true,subtree:true,attributes:true,attributeFilter:["class","aria-busy"]});overlay.addEventListener("scroll",queuePosition,{passive:true});sync();}
  observe(document.getElementById("modal_overlay"));new MutationObserver(records=>{for(const record of records){if(record.type==="attributes")sync();for(const n of record.addedNodes)if(n.nodeType===1&&n.id==="modal_overlay")observe(n);}}).observe(document.body,{childList:true,attributes:true,attributeFilter:["class"]});
  window.addEventListener("resize",queuePosition,{passive:true});window.visualViewport?.addEventListener("resize",queuePosition,{passive:true});window.visualViewport?.addEventListener("scroll",queuePosition,{passive:true});
+
+ // LuCI View.__init__ inserts #view > .spinning, then replaces its
+ // children only after load AND render resolve. Observe that structural
+ // lifecycle, independent of locale and sidebar menu tasks.
+ let viewTask=null,viewScope=null;
+ function failView(message){
+  if(!viewTask)return;
+  viewTask.stop();viewTask=null;
+  const busy=viewScope?.querySelector(":scope > .spinning");
+  if(busy){busy.classList.remove("spinning");busy.setAttribute("role","alert");busy.textContent=t("视图载入失败：","View loading failed: ")+(message||t("请刷新页面重试。","Reload the page to retry."));}
+ }
+ function syncView(records=[]){
+  const scope=document.getElementById("view");
+  if(viewTask&&(!scope||scope!==viewScope||!scope.isConnected||!scope.querySelector(":scope > .spinning"))){viewTask.stop();viewTask=null;}
+  // LuCI.error reports rejected load/render promises via a danger notification.
+  const error=records.flatMap(r=>[...r.addedNodes]).filter(n=>n.nodeType===1).map(n=>n.matches(".alert-message.danger")?n:n.querySelector(".alert-message.danger")).find(Boolean);
+  if(error&&viewTask){failView(error.textContent.trim());return;}
+  const busy=scope?.querySelector(":scope > .spinning"),determinate=scope?.querySelector('.cbi-progressbar,[role="progressbar"][aria-valuenow]');
+  if(viewTask&&determinate){viewTask.stop();viewTask=null;}
+  if(busy&&!determinate&&!viewTask){viewScope=scope;viewTask=startTask(t("正在载入视图","Loading view"),{scope});viewTaskNode();}
+ }
+ function viewTaskNode(){const el=viewScope.querySelector(":scope > .ml-progress-host");if(el)el.classList.add("ml-view-progress");}
+ const viewObserver=new MutationObserver(syncView);
+ viewObserver.observe(document.getElementById("maincontent")||document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["class"]});
+ syncView();
+ window.addEventListener("unhandledrejection",e=>{if(viewTask)failView(e.reason?.message);});
+ window.addEventListener("pagehide",()=>{viewTask=null;for(const token of [...tasks.keys()])stopTask(token);stopModal();});
+
  window.MaterialWait={sync,isActive:()=>!!root,start:startTask,stop:stopTask,activeCount:()=>tasks.size};
 })();

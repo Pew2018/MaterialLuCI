@@ -335,3 +335,15 @@ body .ml-sidebar button.ml-nav-parent:hover{background:var(--hover)}
    Do not extend the accented toolbar into a synthetic system status strip. */
 .ml-toolbar-inner{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 @media(min-width:1024px){.ml-toolbar-inner{padding-left:24px;padding-right:24px}}
+
+.ml-progress-host{width:100%;min-width:0;height:4px;position:relative;margin:0 0 12px;pointer-events:none}
+.ml-task-progress{position:relative;width:100%;height:4px;border-radius:0}
+.ml-task-progress .mdc-linear-progress__bar-inner{border-color:var(--control-accent)}
+.ml-task-progress .mdc-linear-progress__buffer-bar{background:var(--action-tonal)}
+.ml-task-progress .mdc-linear-progress__buffer-dots{background-image:none}
+#view:has(>.ml-view-progress)>.spinning{background-image:none;padding-left:0}
+@media(prefers-reduced-motion:reduce){
+ .ml-task-progress .mdc-linear-progress__primary-bar{width:35%;transform:translateX(0)}
+ .ml-task-progress .mdc-linear-progress__secondary-bar{display:none}
+ .ml-task-progress .mdc-linear-progress__bar-inner{transform:scaleX(1)}
+}
