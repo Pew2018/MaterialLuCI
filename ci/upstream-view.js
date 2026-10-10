@@ -8,8 +8,8 @@
    device data. This is not a connected router or an iPhone Safari test. */
 function badge(icon,title) {
  var pairs=Array.prototype.slice.call(arguments,2);
- return E('span',{class:'ifacebadge large',title:title},[
-  E('img',{src:icon}),L.itemlist(E('span'),pairs)
+ return E('span',{class:'ifacebadge'},[
+  E('img',{src:icon,title:title||''}),L.itemlist(E('span'),pairs)
  ]);
 }
 return view.extend({

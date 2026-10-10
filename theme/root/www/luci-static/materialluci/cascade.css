@@ -434,3 +434,5 @@ body::after{content:"";position:fixed;bottom:0;left:0;right:0;height:env(safe-ar
 @media(hover:hover){body .ml-sidebar button.ml-nav-parent:hover{background:var(--hover)}}
 @media(hover:none){body .ml-sidebar button.ml-nav-parent:hover{background:transparent}}
 :root[data-toolbar=true] #indicators .ml-poll-action{color:var(--on-primary)!important;background:transparent}
+
+.ml-view-progress + #view > .spinning{background-image:none;padding-left:0}
