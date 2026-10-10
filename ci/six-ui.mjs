@@ -7,7 +7,7 @@ export async function verifySixUI(browser,name,base){
  // An initially paused LuCI indicator has no native handler; the theme must
  // make that same indicator resume polling without reloading the page.
  await page.evaluate(async()=>{
-  const poll=await L.require("poll"),ui=await L.require("ui");window.testPoll=poll;poll.stop();
+  const poll=await L.require("poll"),ui=await L.require("ui");window.testPoll=poll;const originalRequire=L.require.bind(L);L.require=(name,...args)=>name==="poll"?Promise.resolve(poll):originalRequire(name,...args);poll.stop();
   document.querySelector('#indicators [data-indicator="poll-status"]')?.remove();
   ui.showIndicator("poll-status","Paused",null,"inactive");
  });
