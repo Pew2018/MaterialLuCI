@@ -27,7 +27,7 @@ try{
   assert.equal(await page.locator('#ml-menu-tree a[href="/cgi-bin/luci/admin/network/network"]').count(),1);
   assert.equal(await page.locator('#ml-menu-tree .ml-nav-parent[aria-controls]').count(),4);
   assert.equal(await page.locator('#ml-menu-tree a[href="/cgi-bin/luci/admin/network/network/devices"]').count(),0);
-  assert.equal(await page.locator("#ml-appearance-entry").getAttribute("open"),"true");
+  assert.equal(await page.locator("#ml-appearance-entry").evaluate(el=>el.open),true);
   assert.equal(await page.locator("#fixture-theme-field + #ml-appearance-entry").count(),1);
   assert.equal(await page.locator('input[name=optionA]').getAttribute("role"),null);
   assert.equal(await page.locator('input[name=optionB]').getAttribute("role"),null);
