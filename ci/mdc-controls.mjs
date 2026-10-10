@@ -34,6 +34,8 @@ export async function verifyMDCControls(browser,name,base){
  });
  await page.waitForFunction(()=>document.querySelector("#real-check")._mlMdcSelection&&document.querySelector("#real-radio .cbi-radio")._mlMdcSelection);
  assert(await page.evaluate(()=>originalRadioInputs.every(input=>input.isConnected)&&originalRadioChildren.every((node,i)=>document.querySelector("#real-radio .cbi-radio").childNodes[i]===node)));
+ console.log(name+": radio hit geometry",await page.locator("#real-radio .cbi-radio").nth(1).evaluate(el=>[el,...el.children].map(n=>{const r=n.getBoundingClientRect(),s=getComputedStyle(n);return {tag:n.tagName,cls:n.className,x:r.x,y:r.y,width:r.width,height:r.height,position:s.position,display:s.display,margin:s.margin,padding:s.padding,pointerEvents:s.pointerEvents,transform:s.transform};})));
+ await page.screenshot({path:"dist/previews/mdc-radio-"+name+".png"});
  await page.locator("#real-radio .cbi-radio").nth(1).locator(":scope > span:not(.mdc-radio__background):not(.mdc-radio__ripple):not(.mdc-radio__focus-ring)").first().click();
  assert.equal(await page.evaluate(()=>realRadio.getValue()),"two");
  assert.deepEqual(await page.evaluate(()=>selectionEvents),{click:1,change:1});

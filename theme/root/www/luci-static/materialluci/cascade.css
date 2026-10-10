@@ -607,3 +607,5 @@ body select:not(.ml-mdc-native-select){background-color:transparent;color:var(--
 /* MDC paints the selection control; remove WebKit native radio hit slop. */
 body .ml-mdc-selection>input:is(.mdc-checkbox__native-control,.mdc-radio__native-control){appearance:none;-webkit-appearance:none}
 body .ml-mdc-select.mdc-select .mdc-select__ripple::before,body .ml-mdc-select.mdc-select .mdc-select__ripple::after{background-color:var(--control-accent)}
+
+body .ml-mdc-selection>input:is(.mdc-checkbox__native-control,.mdc-radio__native-control){position:static!important;display:inline-block;width:18px!important;height:18px!important;min-width:18px;max-width:18px;min-height:18px;max-height:18px;padding:0!important;margin:0!important;transform:none}
