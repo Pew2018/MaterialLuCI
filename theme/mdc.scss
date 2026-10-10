@@ -1,7 +1,11 @@
 @use "@material/linear-progress";
+@use "@material/line-ripple/mdc-line-ripple";
+@use "@material/textfield";
+@use "@material/button/styles" as button-styles;
 @use "@material/switch/styles";
 @use "@material/switch" as switch;
 @include linear-progress.core-styles;
+@include textfield.core-styles;
 
 /* v14 defaults use icons and dark OFF thumbs. MD1 adaptation uses the
    official 36x14 track / 20px thumb with neutral OFF and accent ON. */

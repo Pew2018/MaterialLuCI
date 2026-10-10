@@ -97,29 +97,29 @@
  function renderMenus(entries){
   if(!Array.isArray(entries))throw new TypeError("Incompatible menu adapter. Reload the updated theme resources.");
   const host=document.getElementById("ml-menu-tree");host.replaceChildren();
+  const activeIndex=entries.findIndex(entry=>entry.active||entry.children?.some(child=>child.active));
   for(const [i,entry] of entries.entries()){
    const children=Array.isArray(entry.children)?entry.children:[],
-    expanded=!!entry.active||children.some(child=>child.active),
+    expanded=i===activeIndex,
     group=node("section",{class:"ml-nav-group"});
    if(expanded)group.dataset.active="true";
    if(children.length){
     const list=node("div",{id:"ml-nav-children-"+i,class:"ml-nav-children"});list.hidden=!expanded;
-    const toggle=node("button",{type:"button",class:"ml-nav-parent","aria-controls":list.id,"aria-expanded":String(expanded),"aria-label":t("展开或收起："+entry.title,"Expand or collapse: "+entry.title)},[
-     node("span",{class:"ml-nav-parent-label",text:entry.title}),
-     node("span",{class:"ml-nav-chevron","aria-hidden":"true",text:"⌄"})
+    const toggle=node("button",{type:"button",class:"ml-nav-parent mdc-button","aria-controls":list.id,"aria-expanded":String(expanded),"aria-label":t("展开或收起："+entry.title,"Expand or collapse: "+entry.title)},[
+     node("span",{class:"ml-nav-parent-label mdc-button__label",text:entry.title}),
+     node("span",{class:"ml-nav-chevron mdc-button__icon","aria-hidden":"true"})
     ]);
     toggle.addEventListener("click",()=>{
      const open=list.hidden;
-     list.hidden=!open;toggle.setAttribute("aria-expanded",String(open));group.dataset.active=String(open);
+     for(const other of host.querySelectorAll("button[aria-controls]")){
+      const selected=other===toggle&&open;
+      document.getElementById(other.getAttribute("aria-controls")).hidden=!selected;
+      other.setAttribute("aria-expanded",String(selected));
+      other.closest(".ml-nav-group").dataset.active=String(selected);
+     }
     });
     const header=node("div",{class:"ml-nav-row ml-nav-row-action"},[toggle]);group.append(header);
-    // A parent row is only an expander. Preserve a distinct parent route
-    // as a clearly named child destination instead of a second group-title link.
-    if(entry.url&&!children.some(child=>child.url===entry.url)){
-     const direct=node("a",{href:entry.url,class:"ml-nav-entry-link",text:entry.title+" · "+t("概览","Overview")});
-     if(entry.active&&!children.some(child=>child.active))direct.setAttribute("aria-current","page");
-     list.append(direct);
-    }
+    // Parent routes are not duplicated as synthetic overview entries.
     for(const child of children){
      const a=node("a",{href:child.url,text:child.title});
      if(child.active)a.setAttribute("aria-current","page");
@@ -178,7 +178,7 @@
   if(document.getElementById("ml-appearance"))return;
   const host=node("section",{id:"ml-appearance"});container.append(host);
   const group=title=>{const g=node("section",{class:"ml-group"},[node("h2",{text:title})]);host.append(g);return g;};
-  const general=group(t("界面","Appearance"));
+  const general=group(t("界面","Appearance"));general.dataset.group="general";
   const modeLabels={system:t("跟随系统","System"),light:t("浅色","Light"),dark:t("深色","Dark")};
   const mode=node("div",{class:"ml-mode-options",role:"radiogroup","aria-label":t("显示模式","Display mode")});
   for(const [key,label] of Object.entries(modeLabels)){
@@ -189,11 +189,11 @@
   general.append(prefSwitch("cards",t("分组卡片","Grouped cards"),t("为设置分组添加小圆角表面。","Use small cornered surfaces for groups.")));
   const palettes=[["OnePlus Classic",[["OnePlus Blue","#42A5F5"],["Golden","#CC6F4E"],["Lemon Yellow","#E6A545"],["Grass Green","#7DC22F"],["Charm Purple","#9575CD"],["Sky Blue","#26C6DA"],["Vigour Red","#F06292"],["Fashion Pink","#BA68C8"]]],["Material Colors",[["Blue","#2196F3"],["Teal","#009688"],["Green","#4CAF50"],["Red","#F44336"],["Orange","#FF9800"],["Purple","#9C27B0"],["Cyan","#00BCD4"],["Indigo","#3F51B5"],["Pink","#E91E63"],["Blue Grey","#607D8B"],["Deep Orange","#FF5722"],["Light Green","#8BC34A"]]]];
   function updateSwatches(){host.querySelectorAll(".ml-swatch-item").forEach(b=>{const active=b.dataset.seed===appearance.prefs.seed;b.setAttribute("aria-pressed",String(active));const s=b.querySelector(".ml-swatch");s.textContent=active?"✓":"";s.style.color=MaterialPalette.generate(b.dataset.seed,false).swatchForeground;});}
-  for(const [title,colors] of palettes){const g=group(title),grid=node("div",{class:"ml-swatches"});for(const [label,color] of colors){const b=textButton(label,()=>{appearance.set("seed",color);hex.value=color;error.textContent="";hex.setAttribute("aria-invalid","false");updateSwatches();},"ml-swatch-item");b.dataset.seed=color;const sw=node("span",{class:"ml-swatch","aria-hidden":"true"});sw.style.background=color;b.prepend(sw);grid.append(b);}g.append(grid);}
+  for(const [title,colors] of palettes){const g=group(title);g.dataset.group=title==="OnePlus Classic"?"oneplus":"material";const grid=node("div",{class:"ml-swatches"});for(const [label,color] of colors){const b=textButton(label,()=>{appearance.set("seed",color);hex.value=color;error.textContent="";hex.setAttribute("aria-invalid","false");updateSwatches();},"ml-swatch-item");b.dataset.seed=color;const sw=node("span",{class:"ml-swatch","aria-hidden":"true"});sw.style.background=color;b.prepend(sw);grid.append(b);}g.append(grid);}
   const custom=group(t("自定义强调色","Custom accent")),label=node("label",{for:"ml-hex",text:"HEX"}),hex=node("input",{id:"ml-hex",type:"text",maxlength:7,autocomplete:"off",spellcheck:"false","aria-describedby":"ml-hex-error"}),error=node("div",{id:"ml-hex-error",class:"ml-field-error",role:"status"});
   hex.value=appearance.prefs.seed;hex.addEventListener("input",()=>{const pos=hex.selectionStart;hex.value="#"+hex.value.replace(/[^0-9a-f]/gi,"").slice(0,6).toUpperCase();hex.setSelectionRange(Math.min(pos,hex.value.length),Math.min(pos,hex.value.length));const valid=/^#[0-9A-F]{6}$/.test(hex.value);hex.setAttribute("aria-invalid",String(!valid));error.textContent=valid?"":t("请输入 6 位 HEX 颜色值","Enter a 6 digit HEX color");if(valid){appearance.set("seed",hex.value);updateSwatches();}});
-  custom.append(label,hex,error);
-  const ranges=group(t("额外着色范围","Additional accent areas"));
+  custom.dataset.group="custom";custom.append(label,hex,error);
+  const ranges=group(t("额外着色范围","Additional accent areas"));ranges.dataset.group="ranges";general.after(ranges);host.append(custom);
   ranges.append(prefSwitch("toolbar",t("顶栏背景","Toolbar background"),t("使用派生主表面和对应文字色。","Use the derived primary surface.")),prefSwitch("categories",t("分组标题","Section headings"),t("使用可读的强调色文字。","Use contrast adjusted accent text.")),prefSwitch("icons",t("导航与返回图标","Navigation and back icons"),t("为中性顶栏图标着色。","Accent icons in the neutral toolbar.")));
 
   updateSwatches();MaterialFeedback.bind(host);
@@ -281,7 +281,7 @@
    }
   }
   // Keep original selects and LuCI dropdowns authoritative, including keyboard behavior.
-  appearanceEntry(root);MaterialFeedback.bind(root);
+  appearanceEntry(root);window.MaterialTextFields?.enhance(root);MaterialFeedback.bind(root);
  }
  window.addEventListener("popstate",()=>{if(dialog&&(!history.state||history.state.materialluci!=="dialog"||history.state.id!==dialog.id))finishDialog();setDrawer(false);});
  if(document.querySelector('input[name="luci_password"]'))document.body.classList.add("ml-login");

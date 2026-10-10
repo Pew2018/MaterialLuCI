@@ -37,7 +37,8 @@ body button.ml-icon-button{width:48px;height:48px;min-width:48px;min-height:48px
 .ml-sidebar a,.ml-sidebar button{display:flex;align-items:center;min-height:44px;padding:10px 20px;color:var(--ink);font:inherit;font-size:14px;text-decoration:none;line-height:1.4}
 .ml-nav-parent{flex:1;justify-content:space-between;gap:16px;width:100%;border:0;border-radius:0;background:transparent;color:var(--ink);text-align:left;font-weight:500;cursor:pointer;--button-bg:transparent;--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed)}
 .ml-nav-parent-label{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.ml-nav-chevron{flex:none;color:var(--muted);font-size:18px;line-height:1;transform:rotate(0deg);transition:transform 140ms ease,color 140ms ease}
+.ml-nav-chevron{flex:none;width:24px;height:24px;color:var(--muted);transform:rotate(0deg);transition:transform 140ms ease,color 140ms ease}
+.ml-nav-chevron::before{content:"";display:block;width:24px;height:24px;background:currentColor;-webkit-mask:url("icons/expand-more.svg") center/24px no-repeat;mask:url("icons/expand-more.svg") center/24px no-repeat}
 .ml-nav-parent[aria-expanded=true] .ml-nav-chevron{transform:rotate(180deg);color:var(--accent-ink)}
 .ml-nav-parent[aria-expanded=true]{color:var(--accent-ink)}
 .ml-nav-children{overflow:hidden}
@@ -353,30 +354,6 @@ body .ml-switch-hit .mdc-switch .mdc-switch__icons{visibility:hidden}
 #indicators .ml-poll-action::before{content:"";display:block;width:24px;height:24px;background:currentColor;-webkit-mask:url("icons/pause.svg") center/24px 24px no-repeat;mask:url("icons/pause.svg") center/24px 24px no-repeat}
 #indicators .ml-poll-action[data-paused=true]::before{-webkit-mask-image:url("icons/play.svg");mask-image:url("icons/play.svg")}
 
-/* Responsive appearance settings: expanded permanently on desktop, compact
-   single-column controls in the mobile drawer-era viewport. */
-#ml-appearance-entry{max-width:none}
-#ml-appearance{max-width:none;width:100%;padding:8px 0 16px}
-.ml-mode-options{display:flex;flex-wrap:wrap;gap:4px}
-body .ml-mode-option{min-height:40px;padding:8px 12px;border:1px solid var(--divider);background:transparent;color:var(--ink);box-shadow:none}
-body .ml-mode-option[aria-checked=true]{background:var(--action-tonal);color:var(--on-action-tonal);border-color:var(--control-accent)}
-@media(min-width:1024px){
- .ml-appearance-entry>summary{display:none}
- #ml-appearance{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 32px;padding:16px 0}
- #ml-appearance>.ml-group:first-child{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px}
- #ml-appearance>.ml-group:first-child>h2{grid-column:1/-1}
- #ml-appearance .ml-swatches{grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
- #ml-appearance .ml-group{min-width:0}
- #ml-appearance .ml-setting-row{gap:24px}
-}
-@media(max-width:1023px){
- #ml-appearance-entry>summary{min-height:48px}
- #ml-appearance{display:block;padding:8px 16px 20px}
- #ml-appearance .ml-swatches{grid-template-columns:repeat(4,minmax(0,1fr))}
- #ml-appearance .ml-mode-options{width:100%}
- body .ml-mode-option{flex:1 1 auto}
-}
-
 /* Keep the desktop navigation and content on one canvas. Content groups,
    rather than nested badges, carry the optional card surface. */
 :root[data-theme=dark] .ml-sidebar{border-right-color:rgba(255,255,255,.12)}
@@ -418,21 +395,71 @@ body::after{content:"";position:fixed;bottom:0;left:0;right:0;height:env(safe-ar
 #maincontent .ml-chart-surface svg rect{fill:transparent!important}
 #maincontent .ml-view-progress{display:block!important;position:relative;z-index:1;width:100%;height:4px;min-height:4px;margin:8px 0 12px;overflow:hidden}
 #maincontent .ml-view-progress .mdc-linear-progress{height:4px;display:block}
-#ml-appearance-entry,#ml-appearance-entry .ml-group{min-width:0}
-#ml-appearance-entry>summary{color:var(--ink);font-size:16px;font-weight:500}
-#ml-appearance .ml-setting-row{flex-wrap:wrap}
-#ml-appearance .ml-mode-options{flex:1 1 100%;min-width:0}
-@media(min-width:1024px){
- #ml-appearance-entry>summary{display:list-item;list-style:none;pointer-events:none}
- #ml-appearance{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 32px}
- #ml-appearance>.ml-group:first-child{display:block;grid-column:auto}
- #ml-appearance .ml-group+.ml-group{margin-top:0}
- #ml-appearance .ml-swatches{grid-template-columns:repeat(4,minmax(0,1fr))}
-}
-@media(min-width:1600px){#ml-appearance{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:1023px){#ml-appearance{padding:8px 0 20px}}
 @media(hover:hover){body .ml-sidebar button.ml-nav-parent:hover{background:var(--hover)}}
 @media(hover:none){body .ml-sidebar button.ml-nav-parent:hover{background:transparent}}
 :root[data-toolbar=true] #indicators .ml-poll-action{color:var(--on-primary)!important;background:transparent}
 
 .ml-view-progress + #view > .spinning{background-image:none;padding-left:0}
+
+/* One typography and spacing system for the browser appearance settings. */
+:root{--mdc-typography-font-family:Roboto,"Noto Sans",system-ui,sans-serif;--mdc-theme-primary:var(--control-accent);--mdc-theme-on-surface:var(--ink);--mdc-theme-error:var(--danger)}
+#ml-appearance-entry{max-width:none;margin:16px 0 20px;min-width:0}
+#ml-appearance-entry>summary{color:var(--ink);font-size:16px;font-weight:500;line-height:1.4;padding:12px 0;min-height:48px}
+#ml-appearance{max-width:none;width:100%;min-width:0;padding:8px 0 20px;font:inherit}
+#ml-appearance *{font-family:inherit}
+#ml-appearance .ml-group{min-width:0;margin:0;padding:0;border:0}
+#ml-appearance .ml-group+.ml-group{margin-top:16px;border-top:1px solid var(--divider)}
+#ml-appearance h2{font-size:13px;font-weight:500;line-height:1.25;padding:16px 0 8px;margin:0}
+#ml-appearance .ml-setting-row{min-height:68px;gap:12px;flex-wrap:nowrap;padding:10px 0}
+#ml-appearance .ml-row-copy strong{font-size:16px;font-weight:400;line-height:1.3}
+#ml-appearance .ml-row-copy small{font-size:13.5px;line-height:1.35;margin-top:3px}
+#ml-appearance [data-group=general]>.ml-setting-row:first-of-type{flex-wrap:wrap}
+.ml-mode-options{display:flex;flex:1 1 100%;min-width:0;gap:8px;flex-wrap:wrap}
+body .ml-mode-option{flex:1;min-height:48px;padding:10px 12px;white-space:nowrap;background:transparent;color:var(--ink);box-shadow:none;border:1px solid var(--divider)}
+body .ml-mode-option[aria-checked=true]{background:var(--action-tonal);color:var(--on-action-tonal);border-color:var(--control-accent)}
+#ml-appearance .ml-swatches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 8px;padding:8px 0}
+#ml-appearance .ml-swatch-item{min-width:0;min-height:68px;line-height:1.4}
+#ml-appearance [data-group=custom]>label{display:block;font-size:14px;line-height:1.4;margin:10px 0 6px}
+#ml-appearance .ml-field-error:empty{display:none}
+@media(min-width:1024px){
+ #ml-appearance-entry>summary{display:block;list-style:none;pointer-events:none}
+ #ml-appearance-entry>summary::-webkit-details-marker{display:none}
+ #ml-appearance{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"general ranges" "oneplus material" "custom custom";gap:24px 32px;padding:8px 0 24px}
+ #ml-appearance [data-group=general]{grid-area:general}
+ #ml-appearance [data-group=ranges]{grid-area:ranges}
+ #ml-appearance [data-group=oneplus]{grid-area:oneplus}
+ #ml-appearance [data-group=material]{grid-area:material}
+ #ml-appearance [data-group=custom]{grid-area:custom}
+ #ml-appearance .ml-group+.ml-group{margin-top:0;border:0}
+ #ml-appearance [data-group=oneplus],#ml-appearance [data-group=material],#ml-appearance [data-group=custom]{border-top:1px solid var(--divider)}
+ #ml-appearance [data-group=custom]>.ml-text-field{max-width:360px}
+}
+/* Secondary destructive actions use the same MD1 geometry as other actions. */
+body :is(.cbi-button-negative,.cbi-button-remove,.cbi-input-remove){
+ --button-bg:var(--action-tonal);--button-hover-bg:var(--tonal-pressed);--button-pressed-bg:var(--tonal-pressed);--button-ink:var(--danger);
+ background:var(--button-bg);color:var(--button-ink);border-color:transparent;min-height:48px;min-width:112px;padding:12px 16px;border-radius:2px;white-space:nowrap
+}
+/* MDC Text Field owns the underline, focus animation and interaction state.
+   Retain the original field element, LuCI widget frame, labels and validation. */
+body .ml-text-field{display:inline-flex;position:relative;width:100%;max-width:100%;min-width:0;height:48px;min-height:48px;padding:0 4px;border-radius:0;background:transparent;overflow:visible;border-bottom-color:var(--muted);font:inherit}
+body .ml-text-field:hover{background:transparent}
+body .ml-text-field .mdc-text-field__ripple{display:none}
+body .ml-text-field>input.mdc-text-field__input,body .ml-text-field>textarea.mdc-text-field__input{
+ flex:1 1 auto;min-width:0;width:100%;max-width:100%;height:100%;min-height:48px;margin:0;padding:10px 0;border:0!important;border-radius:0;box-shadow:none!important;background:transparent;color:var(--ink);font:inherit;line-height:1.4;caret-color:var(--control-accent)
+}
+body .ml-text-field.mdc-text-field--textarea{height:auto;min-height:120px;align-items:stretch}
+body .ml-text-field>textarea.mdc-text-field__input{height:auto;min-height:120px;padding:12px 0;resize:vertical}
+body .ml-text-field>.mdc-line-ripple::before{border-bottom-color:var(--muted)}
+body .ml-text-field>.mdc-line-ripple::after{border-bottom-color:var(--control-accent)}
+body .ml-text-field.mdc-text-field--invalid>.mdc-line-ripple::after,body .ml-text-field.mdc-text-field--invalid>.mdc-line-ripple::before{border-bottom-color:var(--danger)}
+body .ml-text-field.mdc-text-field--disabled{border-bottom-color:var(--disabled);background:transparent}
+body .ml-text-field.mdc-text-field--disabled>.mdc-text-field__input{color:var(--disabled)}
+body .ml-text-field>button{flex:none;align-self:center;position:relative;z-index:1;margin-left:8px}
+#maincontent .controls .ml-text-field{flex:1 1 160px;width:100%}
+@media(max-width:599px),(pointer:coarse){body .ml-text-field>.mdc-text-field__input{font-size:16px}}
+
+body .ml-sidebar button.mdc-button{width:100%;height:auto;text-transform:none;letter-spacing:normal;justify-content:flex-start;text-align:left;font:inherit}
+body .ml-sidebar button.mdc-button .mdc-button__label{flex:1;min-width:0;font:inherit}
+body .ml-sidebar button.mdc-button .mdc-button__icon{width:24px;height:24px;margin:0 0 0 12px}
+
+body .ml-text-field>.cbi-button-add{flex:none;align-self:center;position:relative;z-index:1;margin-left:8px}

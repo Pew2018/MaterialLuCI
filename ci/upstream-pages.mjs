@@ -26,6 +26,65 @@ export async function verifyUpstreamPages(browser,name,base){
   assert.equal(await page.locator("#ml-appearance-entry").evaluate(el=>el.open),true);
   await page.locator("#ml-appearance-entry").scrollIntoViewIfNeeded();
   await page.screenshot({path:"dist/previews/"+name+"-"+size+"-upstream-settings.png"});
+  // Use real LuCI form widgets, not replacement test inputs.
+  await page.waitForFunction(()=>document.querySelector('input[id$=".hostname"]')?.closest(".ml-text-field")?._mlMdcTextField);
+  const field=page.locator('input[id$=".hostname"]');
+  assert(await field.evaluate(el=>!!el.closest(".ml-text-field")._mlMdcTextField));
+  await field.evaluate(el=>{window.textFieldChanges=0;el.addEventListener("change",()=>window.textFieldChanges++);});
+  await field.fill("router-draft");await field.press("Tab");
+  assert.equal(await page.evaluate(()=>textFieldChanges),1);
+  assert.equal(await page.evaluate(()=>previewName.formvalue("theme")),"router-draft");
+  await page.evaluate(()=>previewName.getUIElement("theme").setValue("router-external"));
+  assert.equal(await field.inputValue(),"router-external");
+  await field.focus();
+  await page.waitForFunction(()=>document.querySelector('input[id$=".hostname"]').closest(".ml-text-field").querySelector(".mdc-line-ripple").classList.contains("mdc-line-ripple--active"));
+  const textarea=page.locator("textarea");
+  assert(await textarea.evaluate(el=>el.parentElement.firstElementChild===el&&!!el.parentElement._mlMdcTextField));
+  await page.evaluate(()=>previewTextarea.getUIElement("theme").setValue("retained notes"));
+  assert.equal(await textarea.inputValue(),"retained notes");
+  assert.equal(await page.evaluate(()=>previewTextarea.formvalue("theme")),"retained notes");
+  const password=page.locator('input[id$=".password"]');
+  const reveal=password.locator("..").locator("button");
+  assert(await password.evaluate(el=>el.nextElementSibling.tagName==="BUTTON"));
+  await reveal.click();assert.equal(await password.getAttribute("type"),"text");
+  await reveal.click();assert.equal(await password.getAttribute("type"),"password");
+  await field.evaluate(el=>el.disabled=true);
+  assert(await field.evaluate(el=>el.closest(".ml-text-field").classList.contains("mdc-text-field--disabled")));
+  await field.evaluate(el=>{el.disabled=false;el.readOnly=true;});
+  assert(await field.evaluate(el=>el.readOnly));
+  await field.evaluate(el=>{el.readOnly=false;el.setAttribute("aria-invalid","true");});
+  await page.waitForFunction(()=>document.querySelector('input[id$=".hostname"]').closest(".ml-text-field").classList.contains("mdc-text-field--invalid"));
+  await field.evaluate(el=>el.setAttribute("aria-invalid","false"));
+  await field.scrollIntoViewIfNeeded();
+  await page.screenshot({path:"dist/previews/"+name+"-"+size+"-mdc-textfields.png"});
+  const listInput=page.locator(".cbi-dynlist .add-item > input");
+  await listInput.fill("192.0.2.2");
+  await page.locator(".cbi-dynlist .cbi-button-add").click();
+  assert.deepEqual(await page.evaluate(()=>previewList.formvalue("theme")),["192.0.2.1","192.0.2.2"]);
+  await listInput.fill("192.0.2.3");await listInput.press("Enter");
+  assert.deepEqual(await page.evaluate(()=>previewList.formvalue("theme")),["192.0.2.1","192.0.2.2","192.0.2.3"]);
+  const reset=page.getByRole("button",{name:"执行重置",exact:true});
+  await reset.scrollIntoViewIfNeeded();
+  assert((await reset.boundingBox()).height>=48);
+  assert.equal(await reset.evaluate(el=>getComputedStyle(el).borderRadius),"2px");
+  assert.equal(await reset.evaluate(el=>getComputedStyle(el).borderTopColor),"rgba(0, 0, 0, 0)");
+  await reset.click();assert.equal(await page.evaluate(()=>resetPreviewClicks),1);
+  await page.screenshot({path:"dist/previews/"+name+"-"+size+"-reset-button.png"});
+  for(const width of [320,390,768,1024,1280,1600]){
+   await page.setViewportSize({width,height:900});
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"appearance overflow "+width);
+   assert(await page.locator("#ml-appearance-entry").evaluate(el=>el.open));
+   const layout=await page.locator("#ml-appearance").evaluate(el=>getComputedStyle(el).display);
+   assert.equal(layout,width>=1024?"grid":"block");
+   assert.equal(await page.locator("#ml-appearance").evaluate(el=>getComputedStyle(el).fontFamily),await field.evaluate(el=>getComputedStyle(el).fontFamily));
+   if(width>=1024){
+    const general=await page.locator('[data-group=general] h2').boundingBox(),ranges=await page.locator('[data-group=ranges] h2').boundingBox();
+    assert(Math.abs(general.y-ranges.y)<1,"first setting headings misaligned");
+    const oneplus=await page.locator('[data-group=oneplus] h2').boundingBox(),material=await page.locator('[data-group=material] h2').boundingBox();
+    assert(Math.abs(oneplus.y-material.y)<1,"palette headings misaligned");
+   }
+  }
+  await page.setViewportSize(viewport);
   // Match bytes served by the test HTTP server to the manifest IN the IPK.
   const identity=await (await page.request.get(base+"/luci-static/materialluci/build.json")).json();
   assert.equal(identity.commit,process.env.GITHUB_SHA);
@@ -50,10 +109,20 @@ export async function verifyUpstreamPages(browser,name,base){
   await page.screenshot({path:"dist/previews/"+name+"-"+size+"-upstream-switch.png"});
   if(size==="mobile")await page.locator("#ml-menu-button").click();
   const parent=page.locator(".ml-nav-parent").filter({hasText:"网络"});
+  assert.equal(await page.locator(".ml-nav-entry-link").count(),0);
   const address=page.url();const expanded=await parent.getAttribute("aria-expanded");
   await parent.click();
   assert.notEqual(await parent.getAttribute("aria-expanded"),expanded);assert.equal(page.url(),address);
   await page.screenshot({path:"dist/previews/"+name+"-"+size+"-upstream-sidebar.png"});
+  for(const title of ["系统","服务","网络","状态"]){
+   const toggle=page.locator("button.ml-nav-parent").filter({hasText:title});
+   await toggle.click();
+   assert((await page.locator('button.ml-nav-parent[aria-expanded=true]').count())<=1);
+   await toggle.focus();await page.keyboard.press("Enter");
+   assert((await page.locator('button.ml-nav-parent[aria-expanded=true]').count())<=1);
+   assert.equal(page.url(),address);
+  }
+  await parent.click();
   if(size==="mobile")await page.keyboard.press("Escape");
   await page.evaluate(async()=>{const ui=await L.require("ui");ui.showIndicator("poll-status","Paused",null,"inactive");});
   await page.waitForSelector(".ml-poll-action");

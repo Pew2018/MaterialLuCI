@@ -10,6 +10,8 @@
     "playwright": "1.55.1",
     "@material/linear-progress": "14.0.0",
     "sass": "1.89.2",
-    "@material/switch": "14.0.0"
+    "@material/switch": "14.0.0",
+    "@material/textfield": "14.0.0",
+    "@material/button": "14.0.0"
   }
 }

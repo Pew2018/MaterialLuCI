@@ -33,6 +33,12 @@ checks={
  "about_absent":'"关于"' not in files[assets+"app.js"].decode() and '"About"' not in files[assets+"app.js"].decode(),
 }
 if a.candidate:
+ assert all(assets+n in files for n in ["mdc-textfield.js","textfield.js","icons/expand-more.svg"])
+ assert "mdc-textfield.js?v=" in header and "textfield.js?v=" in header
+ assert "MDCTextField" in files[assets+"mdc-textfield.js"].decode()
+ assert "mdc-text-field" in files[assets+"mdc-linear-progress.css"].decode()
+ assert " · " not in files[assets+"app.js"].decode()
+ checks["official_textfield_bundle"]=True
  identity=json.loads(files[assets+"build.json"])
  assert identity["commit"]==a.sha and str(identity["run_id"])==a.run
  assert identity["cache"] in header and a.sha in header

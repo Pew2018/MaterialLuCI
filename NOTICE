@@ -17,4 +17,4 @@ Licensed under Apache License 2.0.
 
 The appearance color algorithm is reproduced with the user's authorization from
 their supplied TurboIMS Classic WebUI Design Spec v1.0. No IMS or KernelSU
-backend code is included. No MDC or Material Web dependencies are included.
+backend code is included. MDC Web 14.0.0 components are bundled locally under the MIT license (see\nlicenses/MDC-Web-MIT.txt). Material Icons expand_more is from Google's\nmaterial-design-icons src/navigation/expand_more/materialicons/24px.svg,\nlicensed under Apache License 2.0. No CDN requests are used.
