@@ -142,6 +142,8 @@ try{
   assert.equal(await page.locator("#ml-mdc-wait-progress").getAttribute("aria-valuenow"),null);
   assert.equal(await page.evaluate(()=>document.querySelector("#ml-mdc-wait-progress").parentElement.id),"modal_overlay");
   assert.equal(await page.locator("#modal_overlay>.modal").evaluate(el=>el.lastChild.tagName),"P","adapter changed the business modal children");
+  await page.waitForSelector("#modal_overlay.mdc-dialog--open:not(.mdc-dialog--opening)");
+  await page.waitForFunction(()=>document.querySelector("#ml-mdc-wait-progress .mdc-linear-progress__primary-bar").getAnimations().some(a=>/indeterminate/.test(a.animationName)&&a.playState==="running"&&a.currentTime>0));
   await page.evaluate(()=>{
    window.fixtureProgressRoot=document.querySelector("#ml-mdc-wait-progress");
    window.fixtureProgressAnimation=fixtureProgressRoot.querySelector(".mdc-linear-progress__primary-bar").getAnimations().find(a=>/indeterminate/.test(a.animationName));
