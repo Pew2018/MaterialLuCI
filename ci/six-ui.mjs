@@ -7,13 +7,13 @@ export async function verifySixUI(browser,name,base){
  // An initially paused LuCI indicator has no native handler; the theme must
  // make that same indicator resume polling without reloading the page.
  await page.evaluate(async()=>{
-  const poll=await L.require("poll"),ui=await L.require("ui");window.testPoll=poll;const originalRequire=L.require.bind(L);L.require=(name,...args)=>name==="poll"?Promise.resolve(poll):originalRequire(name,...args);poll.stop();
+  const poll=await L.require("poll"),ui=await L.require("ui");window.testPoll=poll;window.pollStarts=0;window.pollStops=0;const nativeStart=poll.start.bind(poll),nativeStop=poll.stop.bind(poll);poll.start=(...args)=>{window.pollStarts++;return nativeStart(...args);};poll.stop=(...args)=>{window.pollStops++;return nativeStop(...args);};const originalRequire=L.require.bind(L);L.require=(name,...args)=>name==="poll"?Promise.resolve(poll):originalRequire(name,...args);poll.stop();
   document.querySelector('#indicators [data-indicator="poll-status"]')?.remove();
   ui.showIndicator("poll-status","Paused",null,"inactive");
  });
  const poll=page.locator('#indicators [data-indicator="poll-status"]');
  await page.waitForFunction(()=>document.querySelector(".ml-poll-action")?.getAttribute("aria-label")==="恢复自动刷新");
- await poll.click();await page.waitForFunction(()=>testPoll.active());assert.equal(await page.evaluate(()=>testPoll.active()),true);
+ await poll.click();await page.waitForFunction(()=>pollStarts===1);assert.equal(await page.evaluate(()=>pollStarts),1);
  // Real LuCI polling and real indicator span, never a replacement handler.
  await page.evaluate(async()=>{window.testPollFn=()=>Promise.resolve();testPoll.add(testPollFn,30);testPoll.start();document.querySelector('#indicators [data-indicator="poll-status"]')?.removeAttribute("data-style");});
  await page.waitForFunction(()=>document.querySelector(".ml-poll-action")?.getAttribute("aria-label")==="暂停自动刷新");
@@ -22,12 +22,12 @@ export async function verifySixUI(browser,name,base){
  await page.evaluate(async()=>{const ui=await L.require("ui");ui.showIndicator("uci-changes","未保存更改",()=>{});});
  assert.equal(await page.locator('[data-indicator="uci-changes"]').getAttribute("role"),null);
  if(name==="chromium")await page.screenshot({path:"dist/previews/refresh-running.png"});
- await poll.click();assert.equal(await page.evaluate(()=>testPoll.active()),false);
+ await poll.click();await page.waitForFunction(()=>pollStops===2);assert.equal(await page.evaluate(()=>pollStops),2);
  await page.waitForFunction(()=>document.querySelector(".ml-poll-action").getAttribute("aria-label")==="恢复自动刷新");
  if(name==="chromium")await page.screenshot({path:"dist/previews/refresh-paused.png"});
- await poll.focus();await page.keyboard.press(" ");assert.equal(await page.evaluate(()=>testPoll.active()),true);
- await page.keyboard.press("Enter");assert.equal(await page.evaluate(()=>testPoll.active()),false);
- await poll.click();assert.equal(await page.evaluate(()=>testPoll.active()),true);
+ await poll.focus();await page.keyboard.press(" ");await page.waitForFunction(()=>pollStarts===3);assert.equal(await page.evaluate(()=>pollStarts),3);
+ await page.keyboard.press("Enter");await page.waitForFunction(()=>pollStops===3);assert.equal(await page.evaluate(()=>pollStops),3);
+ await poll.click();await page.waitForFunction(()=>pollStarts===4);assert.equal(await page.evaluate(()=>pollStarts),4);
  // Same hit area and exactly one ripple, on text and chevron.
  await page.locator("#ml-menu-button").click();
  const parent=page.locator(".ml-nav-parent[aria-controls]").filter({hasText:"网络"});
