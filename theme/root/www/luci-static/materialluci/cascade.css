@@ -942,3 +942,16 @@ body .ml-brand-input:disabled{color:var(--disabled);border-bottom-color:var(--di
  #ml-appearance .ml-brand-color-fields{width:100%}
 }
 @media(min-width:768px) and (max-width:1023px){#ml-appearance .ml-brand-controls{flex-basis:52%}}
+
+/* Drawer headings have list alignment, independent of centered action buttons.
+   The label grows beside the chevron; its text must start at the drawer inset. */
+body .ml-sidebar button.ml-nav-parent.mdc-button{
+ display:flex;justify-content:flex-start;text-align:left
+}
+body .ml-sidebar button.ml-nav-parent.mdc-button>.ml-nav-parent-label.mdc-button__label{
+ display:block;flex:1 1 auto;min-width:0;text-align:left;white-space:nowrap;
+ overflow:hidden;text-overflow:ellipsis
+}
+body .ml-sidebar button.ml-nav-parent.mdc-button>.ml-nav-chevron{
+ flex:0 0 24px;margin:0 0 0 12px
+}
