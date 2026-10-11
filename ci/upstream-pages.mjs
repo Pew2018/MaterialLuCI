@@ -215,6 +215,22 @@ export async function verifyUpstreamPages(browser,name,base){
      assert(Math.abs(text.y+text.height/2-anchor.y-anchor.height/2)<1,"language/design selected text center");
     }
    }
+   await listInput.fill("");
+   assert.equal(await listInput.evaluate(el=>el.parentElement.classList.contains("mdc-text-field")),false,"LuCI dynamic list keeps its native add-item frame");
+   await listInput.scrollIntoViewIfNeeded();
+   await page.screenshot({path:"dist/previews/"+name+"-"+size+"-problem-dns-"+mode+".png"});
+   const dropdowns=page.locator("#native-dropdown-audit .cbi-dropdown");
+   for(let i=0;i<await dropdowns.count();i++){
+    const geometry=await dropdowns.nth(i).evaluate(el=>{
+     const selected=el.querySelector('li[display]'),arrow=el.querySelector(':scope>.open'),r=el.getBoundingClientRect();
+     const range=document.createRange();range.selectNodeContents(selected);const text=range.getBoundingClientRect(),a=arrow.getBoundingClientRect();
+     return {textCenter:Math.abs(text.y+text.height/2-r.y-r.height/2),arrowCenter:Math.abs(a.y+a.height/2-r.y-r.height/2),border:getComputedStyle(arrow).borderTopWidth,height:r.height};
+    });
+    assert(geometry.textCenter<4&&geometry.arrowCenter<2,"native dropdown text/arrow centering "+JSON.stringify(geometry));
+    assert.equal(geometry.border,"0px");
+   }
+   await page.locator("#native-dropdown-audit").scrollIntoViewIfNeeded();
+   await page.screenshot({path:"dist/previews/"+name+"-"+size+"-problem-dropdown-"+mode+".png"});
    await field.scrollIntoViewIfNeeded();
    await page.screenshot({path:"dist/previews/"+name+"-"+size+"-mdc-textfields-"+mode+".png"});
    await reset.scrollIntoViewIfNeeded();
