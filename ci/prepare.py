@@ -119,7 +119,7 @@ html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>
 system=ROOT/"luci-fixture/modules/luci-mod-system/htdocs/luci-static/resources"
 shutil.copytree(system,output/"luci-static/resources",dirs_exist_ok=True)
 for name in ("reboot","flash"):
- source=(system/("view/system/"+name+".js")).read_text()
+ source=((ROOT/"immortal-fixture/modules/luci-mod-system/htdocs/luci-static/resources/view/system/flash.js") if name=="flash" else system/("view/system/"+name+".js")).read_text()
  assert "'require view';" in source
  source=source.replace("'require view';","'require baseclass as view';",1)
  (view_dir/("materialluci-native-"+name+".js")).write_text(source)
