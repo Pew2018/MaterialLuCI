@@ -49,7 +49,9 @@
    const sync=()=>{
     if(syncing)return;syncing=true;
     try{
-     if(root.classList.contains("mdc-text-field--disabled")!==input.matches(":disabled"))instance.disabled=input.matches(":disabled");
+     // Do not write input.disabled for an inherited fieldset state: that
+     // would leave the original input disabled after its fieldset is enabled.
+     root.classList.toggle("mdc-text-field--disabled",input.matches(":disabled"));
      instance.valid=input.getAttribute("aria-invalid")!=="true"&&!input.classList.contains("cbi-input-invalid")&&!input.closest(".cbi-value-error");
      if(input===document.activeElement&&!root.classList.contains("mdc-text-field--focused"))instance.foundation.activateFocus();
     }finally{syncing=false;}

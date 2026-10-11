@@ -83,6 +83,7 @@ export async function verifySharedStates(page,name,mode,size){
  });
  await page.locator("#inherited-disabled-fields").evaluate(el=>el.disabled=true);
  await page.waitForFunction(()=>document.querySelector("#fieldset-text").closest(".ml-text-field").classList.contains("mdc-text-field--disabled")&&document.querySelector("#fieldset-select")._mlMdcSelect.disabled);
+ assert.equal(await page.locator("#fieldset-text").evaluate(el=>el.disabled),false,"inherited presentation must not write the native disabled property");
  assert.equal(await page.locator("#fieldset-text").evaluate(el=>getComputedStyle(el).color),native.expected.disabled);
  assert.equal(await page.locator("#fieldset-select + .ml-mdc-select .mdc-select__selected-text").evaluate(el=>getComputedStyle(el).color),native.expected.disabled);
  assert.equal(await page.locator("#fieldset-select").inputValue(),"t");
