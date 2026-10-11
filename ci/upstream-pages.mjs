@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import crypto from "node:crypto";
+import {verifySharedStates} from "./shared-states.mjs";
 export async function verifyUpstreamPages(browser,name,base){
  for(const [size,viewport] of [["mobile",{width:390,height:844}],["desktop",{width:1280,height:900}]]){
   const page=await browser.newPage({viewport}),errors=[];
@@ -210,6 +211,7 @@ export async function verifyUpstreamPages(browser,name,base){
    assert.equal(await page.locator("#audit-bare-button").evaluate(el=>getComputedStyle(el).outlineWidth),"2px","native action keeps a visible keyboard focus outline");
    const fileStyle=await page.locator("#audit-file").evaluate(el=>({border:getComputedStyle(el).borderBottomWidth,width:el.getBoundingClientRect().width}));
    assert.equal(fileStyle.border,"0px");assert(fileStyle.width>0);
+   await verifySharedStates(page,name,mode,size);
    await page.evaluate(()=>{window.auditActions=0;window.auditSubmits=0;});
    await page.locator("#audit-button").focus();
    assert.equal(await page.locator("#audit-button").evaluate(el=>getComputedStyle(el).borderTopColor),"rgba(0, 0, 0, 0)");

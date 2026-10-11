@@ -273,6 +273,21 @@
   main.classList.remove("ml-card-surface");
   const isPlot=svg=>!!svg.querySelector("polyline,polygon")&&!!svg.querySelector("line,text")&&!svg.closest(".mdc-select,.mdc-button,.mdc-icon-button,.ml-icon-button,.ml-mdc-selection,.ml-toolbar,.ml-sidebar");
   for(const svg of main.querySelectorAll("#view svg"))if(isPlot(svg))svg.parentElement?.classList.add("ml-chart-surface");
+  // Recognize the actual legacy flashops direct-child groups. Add only
+  // presentation classes; forms, their children and business events stay put.
+  for(const section of main.querySelectorAll(".cbi-section")){
+   const heads=[...section.children].filter(el=>el.tagName==="H3");
+   const legacy=!main.querySelector("#view")&&["flashops","flash"].includes(main.dataset.mlPage)&&heads.length>1;
+   section.classList.toggle("ml-legacy-flash-section",legacy);
+   if(!legacy)continue;
+   const children=[...section.children];
+   children.forEach(el=>el.classList.remove("ml-legacy-card-start","ml-legacy-card-body","ml-legacy-card-end"));
+   for(let i=0;i<heads.length;i++){
+    const start=children.indexOf(heads[i]),end=i+1<heads.length?children.indexOf(heads[i+1]):children.length;
+    const group=children.slice(start,end);heads[i].classList.add("ml-legacy-card-start");
+    group.slice(1).forEach((el,j)=>el.classList.add(j===group.length-2?"ml-legacy-card-end":"ml-legacy-card-body"));
+   }
+  }
   const candidates=[...main.querySelectorAll(".cbi-section,.cbi-section-node,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table,#view [data-table],.ml-chart-surface,#view > .ml-table-scroll,.cbi-map > .ml-table-scroll")]
    .filter(section=>{
     const option=section.closest(".cbi-value");

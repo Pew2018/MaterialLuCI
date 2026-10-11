@@ -26,7 +26,13 @@ try{
    engine+"-reboot-1280-dark.png",
    engine+"-flash-1280-dark.png",
    engine+"-flash-390-dark.png",
-   engine+"-firewall-1280-dark.png"
+   engine+"-firewall-1280-dark.png",
+   engine+"-flashops-legacy-available-390-dark.png",
+   engine+"-flashops-legacy-available-1280-light.png",
+   engine+"-flashops-legacy-limited-390-dark.png",
+   engine+"-mobile-native-states-dark.png",
+   engine+"-desktop-native-states-light.png",
+   engine+"-mobile-autofill-dark.png"
   ]){
    if(!fs.existsSync("dist/previews/"+filename))continue;
    const detail=await browser.newPage();

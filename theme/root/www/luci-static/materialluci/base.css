@@ -1550,7 +1550,7 @@ body.modal-overlay-active #modal_overlay>.modal {
 .cbi-button-action.important {
     color: #fff;
     background: #0069d6;
-    border: 1px solid #0069d6;
+    border: 1px solid transparent;
 }
 
 .cbi-dropdown {

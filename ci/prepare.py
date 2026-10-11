@@ -145,3 +145,18 @@ code=legacy_bootstrap+'\ntoken="fixture"\n'+compile_template((ROOT/"ci/fixtures/
 renderer.write_text(code)
 html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime.replace(json.dumps(env),json.dumps(legacy_env))+"</head>")
 (output/"reboot-legacy.html").write_text(html)
+
+
+# Verbatim Apache-2.0 Lua flashops template from openwrt-18.06.
+# Conditions are rendered by Lua, not rebuilt as a simplified browser fixture.
+legacy_flash_source=(ROOT/"ci/fixtures/flashops-18.06.htm").read_text()
+for variant,reset,upgrade,invalid in (("available",True,True,True),("limited",False,False,False)):
+ flash_env=dict(env)
+ flash_env["dispatchpath"]=[]
+ flash_env["requestpath"]=["admin","system","flashops"]
+ flash_bootstrap=bootstrap.replace('requestpath={"admin","status","overview"}','requestpath={"admin","system","flashops"}')
+ flags="\n".join(key+"="+("true" if value else "false") for key,value in (("reset_avail",reset),("upgrade_avail",upgrade),("backup_invalid",invalid),("image_invalid",invalid)))
+ code=flash_bootstrap+'\ntoken="fixture"\n'+flags+'\n'+compile_template(legacy_flash_source)
+ renderer.write_text(code)
+ html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime.replace(json.dumps(env),json.dumps(flash_env))+"</head>")
+ (output/("flashops-legacy-"+variant+".html")).write_text(html)
