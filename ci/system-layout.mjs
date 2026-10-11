@@ -6,7 +6,7 @@ export async function verifySystemLayout(browser,engine,base){
   await page.addInitScript(mode=>{localStorage.setItem('materialluci-design','m3e');localStorage.setItem('materialluci-mode',mode);},mode);
   await page.goto(base+'/system.html');
   await page.waitForSelector('#view [data-tab-title][data-tab-active=true]');
-  await page.waitForSelector('#view md-switch',{state:'attached'});
+  await page.waitForSelector('#view [data-tab=timesync] md-switch',{state:'attached'});
   for(const name of ['general','logging','timesync','zram','general']){
    await page.locator('.cbi-tabmenu li[data-tab="'+name+'"] a').click();
    const pane=page.locator('#view [data-tab-title][data-tab="'+name+'"]');
