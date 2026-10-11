@@ -27,7 +27,9 @@ export async function verifyLegacyFlash(browser,name,base){
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"legacy flash overflow");
    const groups=await page.locator(".ml-legacy-flash-section").evaluate(el=>[...el.children].map(child=>({class:child.className,bg:getComputedStyle(child).backgroundColor,x:child.getBoundingClientRect().x,width:child.getBoundingClientRect().width})));
    const expected=await page.evaluate(()=>{const p=document.createElement("span");p.style.backgroundColor="var(--card)";document.body.append(p);const c=getComputedStyle(p).backgroundColor;p.remove();return c;});
-   assert(groups.every(el=>el.bg===expected),"each original group segment paints a complete card");
+   console.log("legacy flash card paint",name,variant,width,mode,{groups,expected,root:await page.locator("html").getAttribute("data-cards")});
+   await page.screenshot({path:"dist/previews/"+name+"-flashops-legacy-"+variant+"-"+width+"-"+mode+".png",fullPage:true});
+   assert(groups.every(el=>el.bg===expected),"each original group segment paints a complete card: "+JSON.stringify({groups,expected}));
    assert(groups.every(el=>Math.abs(el.x-groups[0].x)<1&&Math.abs(el.width-groups[0].width)<1),"legacy card boundaries align");
    const buttons=await page.locator("#maincontent input[type=submit]").evaluateAll(xs=>xs.map(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return {h:r.height,radius:s.borderRadius,border:s.borderTopColor,align:s.textAlign,right:r.right,color:s.color,fill:s.webkitTextFillColor};}));
    assert(buttons.every(el=>el.h>=48&&el.radius==="2px"&&el.border==="rgba(0, 0, 0, 0)"&&el.align==="center"&&el.right<=width),"legacy submit geometry and no blue border: "+JSON.stringify(buttons));
