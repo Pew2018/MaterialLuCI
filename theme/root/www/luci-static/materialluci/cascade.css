@@ -813,3 +813,20 @@ body .ml-text-field.mdc-text-field--filled .mdc-text-field__input:disabled:not(:
 body .ml-text-field.mdc-text-field--filled .mdc-text-field__input:disabled:not(:enabled)::-webkit-input-placeholder{
  color:var(--disabled)!important;-webkit-text-fill-color:var(--disabled)!important;opacity:1
 }
+
+/* Native LuCI widgets own their child order; no MDC frame around add-item. */
+body .cbi-dynlist>.add-item{display:flex;align-items:center;min-width:0;gap:8px}
+body .cbi-dynlist>.add-item>input{flex:1 1 auto;width:0;min-width:0;min-height:48px;color:var(--ink);-webkit-text-fill-color:var(--ink)}
+body .cbi-dynlist>.add-item>input::placeholder{color:var(--muted);-webkit-text-fill-color:var(--muted);opacity:1}
+body .cbi-dynlist>.add-item>input::-webkit-input-placeholder{color:var(--muted);-webkit-text-fill-color:var(--muted);opacity:1}
+body .cbi-dynlist>.add-item>input:disabled{color:var(--disabled);-webkit-text-fill-color:var(--disabled)}
+body .cbi-dynlist>.add-item>button{flex:0 0 auto;min-width:40px;width:auto;min-height:40px;height:40px;padding:0 12px;margin:0;border:0;align-self:center}
+body .cbi-dropdown:not(.btn):not(.cbi-button){align-items:center;min-height:48px}
+body .cbi-dropdown:not(.btn):not(.cbi-button)>ul{align-items:center;min-height:48px}
+body .cbi-dropdown:not(.btn):not(.cbi-button)>ul>li[display]{align-self:center;align-items:center;min-height:48px;box-sizing:border-box;padding:8px;line-height:20px}
+body .cbi-dropdown:not(.btn):not(.cbi-button)>.open{align-self:stretch;justify-content:center;min-width:32px;padding:0 4px;border:0;background:transparent;color:var(--muted);line-height:20px}
+body .cbi-dropdown[open]>ul.dropdown{top:100%;min-height:0}
+body .cbi-dropdown[open]>ul.dropdown>li{min-height:40px;padding:8px;line-height:20px}
+/* Override MDC's enabled placeholder state, including no-label fields. */
+body .ml-text-field.mdc-text-field--filled:not(.mdc-text-field--disabled) .mdc-text-field__input::placeholder,
+body .ml-text-field.mdc-text-field--filled:not(.mdc-text-field--disabled) .mdc-text-field__input::-webkit-input-placeholder{color:var(--muted);-webkit-text-fill-color:var(--muted);opacity:1}
