@@ -54,7 +54,7 @@
   }
   const click=event=>{event.preventDefault();event.stopPropagation();if(!input.matches(":disabled"))input.click();syncSelections();};
   el.addEventListener("click",click);el.addEventListener("input",event=>event.stopPropagation());el.addEventListener("change",event=>event.stopPropagation());
-  const key=event=>{if(!radio||!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key))return;event.preventDefault();
+  const key=event=>{if(!radio||!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key))return;event.preventDefault();event.stopImmediatePropagation();
    const group=[...selectionEntries.keys()].filter(n=>n.type==="radio"&&n.name===input.name&&n.form===input.form&&n.getRootNode()===input.getRootNode()&&!n.matches(":disabled"));
    if(!input.name||!group.length)return;const backwards=["ArrowLeft","ArrowUp"].includes(event.key),next=group[(group.indexOf(input)+(backwards?-1:1)+group.length)%group.length];next.click();syncSelections();selectionEntries.get(next)?.control.focus();};
   el.addEventListener("keydown",key);
@@ -68,7 +68,15 @@
   selectionEntries.set(input,entry);root.append(el);syncSelections();geometry();return entry;
  }
  const selectionEntries=new Map();
- function syncSelections(){for(const entry of selectionEntries.values())entry.sync();}
+ function syncSelections(){
+  for(const entry of selectionEntries.values())entry.sync();
+  for(const [input,entry] of selectionEntries){
+   if(input.type!=="radio")continue;
+   const group=[...selectionEntries.keys()].filter(n=>n.type==="radio"&&n.name===input.name&&n.form===input.form&&n.getRootNode()===input.getRootNode()&&!n.matches(":disabled"));
+   const active=group.find(n=>n.checked)||group[0];
+   entry.control.tabIndex=input.matches(":disabled")?-1:!input.name||input===active?0:-1;
+  }
+ }
  function progress(node){
   if(supported("md-linear-progress")){
    node.classList.remove("mdc-linear-progress","mdc-linear-progress--indeterminate","mdc-linear-progress--closed");

@@ -46,6 +46,8 @@ export async function verifyM3Theme(browser,engine,base){
   assert.equal(await page.locator("#m3-radio-a").isChecked(),false);assert.equal(await page.locator("#m3-radio-b").isChecked(),true);
   assert.equal(await page.locator("#m3-selection-fixture md-radio").first().evaluate(el=>el.checked),false);
   await page.keyboard.press("ArrowLeft");assert.equal(await page.locator("#m3-radio-a").isChecked(),true);
+  assert.equal(await page.locator("#m3-selection-fixture md-radio").last().evaluate(el=>el.checked),false,"M3 radio decoration diverged from native group");
+  assert.equal(await page.locator("#m3-selection-fixture md-radio").first().evaluate(el=>el.tabIndex),0);
   await page.evaluate(()=>document.querySelector("#m3-check").indeterminate=true);
   assert.equal(await page.locator("#m3-selection-fixture md-checkbox").evaluate(el=>el.indeterminate),true);
   await page.evaluate(()=>document.querySelector("#m3-selection-fixture").disabled=true);
