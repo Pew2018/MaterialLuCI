@@ -65,7 +65,15 @@ export async function verifyUpstreamPages(browser,name,base){
   await listInput.fill("192.0.2.3");await listInput.press("Enter");
   assert.deepEqual(await page.evaluate(()=>previewList.formvalue("theme")),["192.0.2.1","192.0.2.2","192.0.2.3"]);
   const nativeDropdown=page.locator("#native-vlan-select");
-  await nativeDropdown.focus();await page.keyboard.press("ArrowDown");await page.keyboard.press("ArrowDown");await page.keyboard.press("Enter");
+  await nativeDropdown.scrollIntoViewIfNeeded();
+  await page.mouse.move(0,0);
+  await nativeDropdown.focus();await page.keyboard.press("ArrowDown");
+  await page.waitForFunction(()=>document.querySelector("#native-vlan-select").hasAttribute("open"));
+  await page.waitForTimeout(120);
+  console.log("native-dropdown keyboard before",await nativeDropdown.evaluate(el=>({open:el.hasAttribute("open"),active:document.activeElement.outerHTML,dom:el.outerHTML})));
+  await page.keyboard.press("ArrowDown");
+  console.log("native-dropdown keyboard moved",await nativeDropdown.evaluate(el=>({open:el.hasAttribute("open"),active:document.activeElement.outerHTML})));
+  await page.keyboard.press("Enter");
   assert.equal(await page.evaluate(()=>nativeVlanWidget.getValue()),"u","rich dropdown native keyboard selection preserved");
   await page.evaluate(()=>nativeVlanWidget.setValue("t"));
   const reset=page.getByRole("button",{name:"执行重置",exact:true});
