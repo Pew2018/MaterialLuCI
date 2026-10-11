@@ -3,8 +3,9 @@
 (function(){
  const m3=()=>MaterialAppearance.activeDesign==="m3e";
  const supported=name=>m3()&&!!window.customElements?.get(name);
- function button(label,listener,className){
-  const el=document.createElement(supported("md-outlined-button")?"md-outlined-button":"button");
+ function button(label,listener,className,kind="outlined"){
+  const tag=kind==="text"?"md-text-button":kind==="filled"?"md-filled-button":"md-outlined-button";
+  const el=document.createElement(supported(tag)?tag:"button");
   // Material Web form-associated buttons default to submit, like HTML buttons.
   // Appearance actions must never submit or reset a containing LuCI form.
   el.type="button";el.setAttribute("type","button");
@@ -37,19 +38,51 @@
   const destroy=()=>{if(destroyed)return;destroyed=true;observer.disconnect();document.removeEventListener("reset",reset,true);input.removeEventListener("change",sync);input.removeEventListener("input",sync);for(const key of descriptors)delete input[key];input.classList.remove("ml-switch-source");for(const [key,value] of [["tabindex",saved.tabindex],["aria-hidden",saved.aria]])if(value===null)input.removeAttribute(key);else input.setAttribute(key,value);el.remove();};
   sync();return {control:el,destroy};
  }
+ function selectionControl(input,label){
+  const radio=input.type==="radio",tag=radio?"md-radio":"md-checkbox";
+  if(!supported(tag))return null;
+  const el=document.createElement(tag),root=input.parentElement;
+  el.dataset.mlComponent=radio?"radio":"checkbox";el.setAttribute("aria-label",label);
+  const oldTab=input.getAttribute("tabindex"),oldAria=input.getAttribute("aria-hidden");
+  input.classList.add("ml-m3-selection-source");input.tabIndex=-1;input.setAttribute("aria-hidden","true");root.classList.add("ml-m3-selection");
+  const sync=()=>{el.checked=input.checked;el.disabled=input.matches(":disabled");if(!radio)el.indeterminate=input.indeterminate;};
+  const hooks=[];
+  for(const key of ["checked","disabled","indeterminate"]){
+   if(Object.getOwnPropertyDescriptor(input,key))continue;
+   const d=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,key);
+   Object.defineProperty(input,key,{configurable:true,get(){return d.get.call(this);},set(value){d.set.call(this,value);syncSelections();}});hooks.push(key);
+  }
+  const click=event=>{event.preventDefault();event.stopPropagation();if(!input.matches(":disabled"))input.click();syncSelections();};
+  el.addEventListener("click",click);el.addEventListener("input",event=>event.stopPropagation());el.addEventListener("change",event=>event.stopPropagation());
+  const key=event=>{if(!radio||!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key))return;event.preventDefault();
+   const group=[...selectionEntries.keys()].filter(n=>n.type==="radio"&&n.name===input.name&&n.form===input.form&&n.getRootNode()===input.getRootNode()&&!n.matches(":disabled"));
+   if(!input.name||!group.length)return;const backwards=["ArrowLeft","ArrowUp"].includes(event.key),next=group[(group.indexOf(input)+(backwards?-1:1)+group.length)%group.length];next.click();syncSelections();selectionEntries.get(next)?.control.focus();};
+  el.addEventListener("keydown",key);
+  const change=()=>syncSelections();input.addEventListener("change",change);
+  const attrs=new MutationObserver(change);attrs.observe(document.body,{subtree:true,attributes:true,attributeFilter:["checked","disabled"]});
+  const reset=()=>queueMicrotask(change);document.addEventListener("reset",reset,true);
+  const geometry=()=>{el.style.left=input.offsetLeft+"px";el.style.top=input.offsetTop+"px";};
+  const resize=new ResizeObserver(geometry);resize.observe(root);
+  let destroyed=false;
+  const entry={control:el,sync,destroy(){if(destroyed)return;destroyed=true;attrs.disconnect();resize.disconnect();input.removeEventListener("change",change);document.removeEventListener("reset",reset,true);for(const key of hooks)delete input[key];input.classList.remove("ml-m3-selection-source");root.classList.remove("ml-m3-selection");for(const [key,value] of [["tabindex",oldTab],["aria-hidden",oldAria]])if(value===null)input.removeAttribute(key);else input.setAttribute(key,value);selectionEntries.delete(input);el.remove();}};
+  selectionEntries.set(input,entry);root.append(el);syncSelections();geometry();return entry;
+ }
+ const selectionEntries=new Map();
+ function syncSelections(){for(const entry of selectionEntries.values())entry.sync();}
  function progress(node){
   if(supported("md-linear-progress")){
-   node.classList.remove("mdc-linear-progress","mdc-linear-progress--indeterminate");
+   node.classList.remove("mdc-linear-progress","mdc-linear-progress--indeterminate","mdc-linear-progress--closed");
+   node.dataset.mlProgressEngine="m3";
    node.dataset.mlComponent="progress";
    const el=document.createElement("md-linear-progress");el.indeterminate=true;el.setAttribute("aria-hidden","true");node.replaceChildren(el);
    return {determinate:false,buffer:1,open(){},destroy(){el.remove();}};
   }
-  if(window.MaterialMDC?.MDCLinearProgress)return new MaterialMDC.MDCLinearProgress(node);
+  if(window.MaterialMDC?.MDCLinearProgress){node.dataset.mlProgressEngine="mdc";return new MaterialMDC.MDCLinearProgress(node);}
   node.dataset.mlProgressFallback="true";node.textContent="";return {open(){},destroy(){}};
  }
  function enhance(root){
   if(root.closest?.("[data-ml-component]"))return;
   window.MaterialTextFields?.enhance(root);window.MaterialControls?.enhance(root);window.MaterialFeedback?.bind(root);window.MaterialExtras?.enhance(root);
  }
- window.MaterialComponents={button,switchControl,progress,enhance,isM3:m3};
+ window.MaterialComponents={button,switchControl,selectionControl,progress,enhance,isM3:m3};
 })();

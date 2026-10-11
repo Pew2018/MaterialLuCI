@@ -14,10 +14,10 @@
  identifyPage();
  const zh=document.documentElement.lang.startsWith("zh"),t=(cn,en)=>zh?cn:en;
  const node=(tag,attrs={},children=[])=>{const el=document.createElement(tag);for(const [key,val] of Object.entries(attrs)){if(key==="text")el.textContent=val;else if(key==="class")el.className=val;else el.setAttribute(key,String(val));}for(const child of children)el.append(child);return el;};
- const textButton=(text,fn,cls="text-action")=>{const b=node("button",{type:"button",class:cls},[node("span",{text})]);b.addEventListener("click",fn);return b;};
+ const textButton=(text,fn,cls="text-action")=>{if(cls==="text-action"&&MaterialComponents.isM3())return MaterialComponents.button(text,fn,cls,"text");const b=node("button",{type:"button",class:cls},[node("span",{text})]);b.addEventListener("click",fn);return b;};
  const switches=new Map();
  function switchControl(input,label){
-  if(input.dataset.mlOwner==="appearance"){const entry=MaterialComponents.switchControl(input,label);if(entry){const cleanup=entry.destroy;entry.destroy=()=>{cleanup();switches.delete(input);};switches.set(input,entry);return entry.control;}}
+  {const entry=MaterialComponents.switchControl(input,label);if(entry){const cleanup=entry.destroy;entry.destroy=()=>{cleanup();switches.delete(input);};switches.set(input,entry);return entry.control;}}
   const control=node("button",{type:"button",class:"mdc-switch "+(input.checked?"mdc-switch--selected":"mdc-switch--unselected"),role:"switch","aria-label":label,"aria-checked":String(!!input.checked)},[
    node("span",{class:"mdc-switch__track"}),
    node("span",{class:"mdc-switch__handle-track"},[node("span",{class:"mdc-switch__handle"},[
@@ -91,7 +91,7 @@
 
  const narrow=matchMedia("(max-width: 1023px)");
  let dialog=null,sequence=0,drawerFocus=null,drawerInert=[];
- const focusables=el=>[...el.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled):not([type=hidden]),select:not(:disabled),textarea:not(:disabled),summary,md-switch:not([disabled]),md-outlined-button:not([disabled]),[tabindex="0"]')].filter(n=>n.getClientRects().length&&!n.closest("[inert]"));
+ const focusables=el=>[...el.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled):not([type=hidden]),select:not(:disabled),textarea:not(:disabled),summary,md-switch:not([disabled]),md-outlined-button:not([disabled]),md-text-button:not([disabled]),md-checkbox:not([disabled]),md-radio:not([disabled]),[tabindex="0"]')].filter(n=>n.getClientRects().length&&!n.closest("[inert]"));
  function trap(e,panel){if(e.key!=="Tab")return;const fs=focusables(panel);if(!fs.length)return;const first=fs[0],last=fs[fs.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
  function setDrawer(open,restore=true){
   open=!!open&&narrow.matches&&!document.body.classList.contains("ml-login");

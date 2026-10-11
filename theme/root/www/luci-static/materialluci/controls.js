@@ -12,6 +12,9 @@
   // is used directly by ui.Select. Never insert a wrapper between them.
   const root=input.parentElement;
   if(!root?.matches(".cbi-checkbox,.cbi-radio,.ml-radio,[data-ml-selection]")||root.querySelectorAll("input:not([type=hidden])").length!==1)return;
+  const title=input.getAttribute("aria-label")||input.labels?.[0]?.textContent.trim()||root.textContent.trim()||input.name;
+  const m3=window.MaterialComponents?.selectionControl(input,title);
+  if(m3){input._mlM3Selection=m3;selections.set(input,{destroy(){m3.destroy();input._mlM3Selection=null;selections.delete(input);}});return;}
   const radio=input.type==="radio",kind=radio?"radio":"checkbox",prefix="mdc-"+kind;
   const style=getComputedStyle(root),oldDisplay=style.display,indeterminate=input.indeterminate;
   const existingHooks=["checked","disabled","indeterminate"].some(key=>Object.getOwnPropertyDescriptor(input,key));if(existingHooks)return;
@@ -42,7 +45,7 @@
   if(root.matches?.('input[type="checkbox"],input[type="radio"]'))selection(root);
   root.querySelectorAll?.('input[type="checkbox"],input[type="radio"]').forEach(selection);
  }
- function focusable(panel){return [...panel.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled):not([type=hidden]),select:not(:disabled),textarea:not(:disabled),summary,[tabindex="0"]')].filter(el=>el.getClientRects().length&&!el.closest('[inert],[aria-hidden="true"]'));}
+ function focusable(panel){return [...panel.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled):not([type=hidden]),select:not(:disabled),textarea:not(:disabled),summary,md-switch:not([disabled]),md-checkbox:not([disabled]),md-radio:not([disabled]),md-text-button:not([disabled]),md-outlined-button:not([disabled]),[tabindex="0"]')].filter(el=>el.getClientRects().length&&!el.closest('[inert],[aria-hidden="true"]'));}
  function dialog(root,panel,restore=false){
   if(dialogs.has(root))return dialogs.get(root);
   root.classList.add("mdc-dialog","ml-mdc-dialog");

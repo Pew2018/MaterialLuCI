@@ -5,7 +5,6 @@
  --md-sys-typescale-label-large-line-height:20px;
  --md-switch-track-width:48px;
  --md-linear-progress-track-height:4px;
- --md-linear-progress-track-shape:0px;
 }
 :root[data-design=m3e] body md-outlined-button.ml-mode-option{
  display:inline-flex;flex:1;min-width:0;min-height:48px;padding:0;margin:0;
@@ -26,3 +25,28 @@
 
 /* The shared style selector also needs a visible Classic selection state. */
 body .ml-design-options button[aria-pressed=true]{background:var(--action-tonal);color:var(--on-action-tonal);border-color:var(--control-accent);--button-ink:var(--on-action-tonal)}
+
+/* Official M3 controls own their shadow-tree shapes and animation. */
+:root[data-design=m3e] [data-ml-progress-engine=m3]{
+ display:block;min-height:4px;height:4px;padding:0;border:0;background:transparent;
+ overflow:visible;opacity:1;visibility:visible;transform:none;
+}
+:root[data-design=m3e] [data-ml-progress-engine=m3]>md-linear-progress{
+ display:block;box-sizing:border-box;width:100%;min-width:0;height:4px;margin:0;padding:0;
+ --md-linear-progress-active-indicator-color:var(--md-sys-color-primary);
+ --md-linear-progress-track-color:var(--md-sys-color-secondary-container);
+}
+:root[data-design=m3e] body md-text-button.text-action{
+ display:inline-flex;flex:none;min-height:48px;padding:0;margin:0;border:0;background:transparent;
+ --md-text-button-container-height:48px;
+ --md-text-button-label-text-color:var(--md-sys-color-primary);
+}
+:root[data-design=m3e] .ml-m3-selection{position:relative}
+:root[data-design=m3e] .ml-m3-selection-source{opacity:0;pointer-events:none}
+:root[data-design=m3e] .ml-m3-selection>:is(md-checkbox,md-radio){
+ position:absolute;width:18px;height:18px;margin:0;padding:0;z-index:1;vertical-align:middle;
+}
+:root[data-design=m3e] .ml-radio.ml-m3-selection{border:0;width:18px;height:18px}
+:root[data-design=m3e] .ml-radio.ml-m3-selection::after{display:none}
+#view.ml-view-loading>.spinning{background-image:none!important;padding-left:0}
+#view.ml-view-loading>.spinning::before,#view.ml-view-loading>.spinning::after{display:none}
