@@ -886,7 +886,7 @@ body .ml-legacy-flash-section{padding:0;background:transparent;box-shadow:none}
 body .ml-legacy-flash-section>.ml-legacy-card-start{margin:16px 0 0;padding:16px 18px 8px;border-radius:2px 2px 0 0}
 body .ml-legacy-flash-section>.ml-legacy-card-body{margin:0;padding:0 18px 12px}
 body .ml-legacy-flash-section>.ml-legacy-card-end{margin:0;padding:0 18px 16px;border-radius:0 0 2px 2px}
-:root[data-cards=true] .ml-legacy-flash-section>:is(.ml-legacy-card-start,.ml-legacy-card-body,.ml-legacy-card-end){background:var(--card)}
+:root[data-cards=true] #maincontent .ml-legacy-flash-section>:is(.ml-legacy-card-start,.ml-legacy-card-body,.ml-legacy-card-end){background:var(--card)}
 @media(max-width:599px){
  body .cbi-value-field>input[type=file]{flex-basis:100%;width:100%}
  body .cbi-value-field:has(>input[type=file])>input:is([type=submit],[type=button]){width:100%;min-width:0}
