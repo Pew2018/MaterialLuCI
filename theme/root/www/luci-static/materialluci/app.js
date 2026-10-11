@@ -271,7 +271,8 @@
    value.classList.toggle("ml-section-container",!!section);
   }
   main.classList.remove("ml-card-surface");
-  for(const svg of main.querySelectorAll("#view svg"))if(svg.querySelector("polyline,polygon"))svg.parentElement?.classList.add("ml-chart-surface");
+  const isPlot=svg=>!!svg.querySelector("polyline,polygon")&&!!svg.querySelector("line,text")&&!svg.closest(".mdc-select,.mdc-button,.mdc-icon-button,.ml-icon-button,.ml-mdc-selection,.ml-toolbar,.ml-sidebar");
+  for(const svg of main.querySelectorAll("#view svg"))if(isPlot(svg))svg.parentElement?.classList.add("ml-chart-surface");
   const candidates=[...main.querySelectorAll(".cbi-section,.cbi-section-node,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table,#view [data-table],.ml-chart-surface,#view > .ml-table-scroll,.cbi-map > .ml-table-scroll")]
    .filter(section=>{
     const option=section.closest(".cbi-value");
@@ -295,7 +296,7 @@
   // Identify plots structurally, across every realtime view and vendor route.
   // Do not depend on URL spelling or the serialized inline background color.
   for(const svg of all("#view svg")){
-   if(!svg.querySelector("polyline,polygon"))continue;
+   if(!isPlot(svg))continue;
    const plot=svg.parentElement;
    if(plot&&plot!==main&&plot.id!=="view")plot.classList.add("ml-chart-surface");
   }
