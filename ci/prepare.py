@@ -131,7 +131,18 @@ for name in ("reboot","flash","firewall"):
  maintenance_env["requestpath"]=["admin","system",name]
  maintenance_env["dispatchpath"]=["admin","system",name]
  fixture='<div id="view"></div><script>window.maintenanceKind='+json.dumps(name)+';document.addEventListener("DOMContentLoaded",function(){L.require("ui").then(function(ui){ui.instantiateView("materialluci-maintenance");});});</script>'
- code=bootstrap+'\ninclude("header")\nwrite('+luaquote(fixture)+')\ninclude("footer")'
+ code=bootstrap+'\ndisp_unused=nil\n' # route is compiled through the actual header globals below
+ code=bootstrap.replace('requestpath={"admin","status","overview"}', 'requestpath={"admin","system","'+name+'"}')+'\ninclude("header")\nwrite('+luaquote(fixture)+')\ninclude("footer")'
  renderer.write_text(code)
  html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime.replace(json.dumps(env),json.dumps(maintenance_env))+"</head>")
  (output/(name+".html")).write_text(html)
+
+# Verbatim upstream Lua reboot template; real header route, no synthetic #view.
+legacy_env=dict(env)
+legacy_env["dispatchpath"]=[]
+legacy_env["requestpath"]=["admin","system","reboot"]
+legacy_bootstrap=bootstrap.replace('requestpath={"admin","status","overview"}','requestpath={"admin","system","reboot"}').replace('get=function()return nil end','get=function()return nil end,changes=function()return {fixture=true}end')
+code=legacy_bootstrap+'\ntoken="fixture"\n'+compile_template((ROOT/"ci/fixtures/reboot-18.06.htm").read_text())
+renderer.write_text(code)
+html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime.replace(json.dumps(env),json.dumps(legacy_env))+"</head>")
+(output/"reboot-legacy.html").write_text(html)
