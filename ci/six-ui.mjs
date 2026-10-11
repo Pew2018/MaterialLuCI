@@ -57,7 +57,8 @@ export async function verifySixUI(browser,name,base){
  await page.waitForFunction(()=>document.querySelector("#ml-appearance-entry")?.open);
  assert.equal(await page.locator("#ml-appearance").evaluate(el=>getComputedStyle(el).display),"grid");
  assert.equal(await page.locator("#ml-appearance-entry>summary").evaluate(el=>getComputedStyle(el).pointerEvents),"none");
- assert.equal(await page.locator(".ml-mode-option").count(),3);
+ assert.equal(await page.locator(".ml-mode-options:not(.ml-design-options) .ml-mode-option").count(),3);
+ assert.equal(await page.locator(".ml-design-options [data-design-option]").count(),2);
  const desktopBg=await page.locator(".ml-sidebar").evaluate(el=>getComputedStyle(el).backgroundColor);
  const canvasBg=await page.locator("body").evaluate(el=>getComputedStyle(el).backgroundColor);
  assert.equal(desktopBg,canvasBg,"desktop sidebar and content canvas should share one background");

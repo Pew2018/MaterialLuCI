@@ -22,6 +22,9 @@ header=files["usr/lib/lua/luci/view/themes/materialluci/header.htm"].decode()
 required=["cascade.css","palette.js","startup.js","app.js","feedback.js","wait.js",
  "mdc-linear-progress.js","mdc-linear-progress.css","mdc-switch.js","icons/pause.svg","icons/play.svg"]
 assert all(assets+n in files for n in required)
+if "palette-m3.js?v=" in header:
+ assert all(assets+n in files for n in ("palette-m3.js","material-web.js","components.js","design-m3.css"))
+ assert all(name+"?v=" in header for name in ("palette-m3.js","material-web.js","components.js","design-m3.css"))
 assert "@CACHE@" not in header and "@MENU_CLASS@" not in header
 assert 'mdc-switch.js?v=' in header and 'wait.js?v=' in header
 menus=[n for n in files if n.startswith("www/luci-static/resources/materialluci-menu")];assert len(menus)==1
