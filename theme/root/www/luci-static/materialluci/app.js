@@ -6,10 +6,10 @@
  menuButton=document.getElementById("ml-menu-button"),scrim=document.getElementById("ml-drawer-scrim");
  if(!main||!appearance)return;
  function identifyPage(){
-  const envRoute=window.L?.env?.dispatchpath||window.L?.env?.requestpath||[];
-  const segments=Array.isArray(envRoute)?envRoute.filter(Boolean):typeof envRoute==="string"?envRoute.split(/[\\/]+/).filter(Boolean):[];
-  const fallback=(document.body.dataset.page||"").split(/[\\/-]+/).filter(Boolean);
-  main.dataset.mlPage=segments.at(-1)||fallback.at(-1)||"";
+  const parts=route=>Array.isArray(route)?route.filter(Boolean):typeof route==="string"?route.split(/[\\/-]+/).filter(Boolean):[];
+  const routes=[document.body.dataset.page,window.L?.env?.dispatchpath,window.L?.env?.requestpath,location.pathname];
+  const segments=routes.map(parts).find(route=>route.length&&route[route.length-1]!=="luci")||[];
+  main.dataset.mlPage=segments[segments.length-1]||"";
  }
  identifyPage();
  const zh=document.documentElement.lang.startsWith("zh"),t=(cn,en)=>zh?cn:en;
