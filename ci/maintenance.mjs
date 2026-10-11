@@ -37,6 +37,7 @@ export async function verifyMaintenance(browser,name,base){
     await legacy.setViewportSize({width,height:844});
     await legacy.evaluate(mode=>MaterialAppearance.set("mode",mode),mode);
     assert(await legacy.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"legacy reboot overflow");
+    assert.equal(await legacy.locator("#maincontent").evaluate(el=>getComputedStyle(el).backgroundColor),await legacy.evaluate(()=>{const p=document.createElement("span");p.style.backgroundColor="var(--card)";document.body.append(p);const color=getComputedStyle(p).backgroundColor;p.remove();return color;}),"legacy card must actually paint its surface, not merely carry a class");
     await legacy.screenshot({path:"dist/previews/"+name+"-reboot-legacy-"+width+"-"+mode+".png",fullPage:true});
    }
    await legacy.locator("#legacy-reboot-action").click();
