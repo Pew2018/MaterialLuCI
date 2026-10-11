@@ -31,6 +31,8 @@ export async function verifyLegacyFlash(browser,name,base){
    await page.screenshot({path:"dist/previews/"+name+"-flashops-legacy-"+variant+"-"+width+"-"+mode+".png",fullPage:true});
    assert(groups.every(el=>el.bg===expected),"each original group segment paints a complete card: "+JSON.stringify({groups,expected}));
    assert(groups.every(el=>Math.abs(el.x-groups[0].x)<1&&Math.abs(el.width-groups[0].width)<1),"legacy card boundaries align");
+   const gap=await page.locator(".ml-legacy-flash-section").evaluate(el=>el.nextElementSibling.getBoundingClientRect().top-el.getBoundingClientRect().bottom);
+   assert(gap>=15,"Restore and Firmware must be visually separate cards: "+gap);
    const buttons=await page.locator("#maincontent input[type=submit]").evaluateAll(xs=>xs.map(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return {h:r.height,radius:s.borderRadius,border:s.borderTopColor,align:s.textAlign,right:r.right,color:s.color,fill:s.webkitTextFillColor};}));
    assert(buttons.every(el=>el.h>=48&&el.radius==="2px"&&el.border==="rgba(0, 0, 0, 0)"&&el.align==="center"&&el.right<=width),"legacy submit geometry and no blue border: "+JSON.stringify(buttons));
    assert(buttons.every(el=>el.color===el.fill),"native button ink channels agree");

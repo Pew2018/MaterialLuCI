@@ -882,7 +882,7 @@ body .cbi-value-field:has(>input[type=file])>.cbi-value-description{flex:0 0 100
 body #maincontent[data-ml-page=flashops] form.inline{display:block;margin:0}
 /* Legacy Backup/Restore share one outer section. Paint each existing group
    in contiguous segments instead of reparenting forms or creating nested cards. */
-body .ml-legacy-flash-section{padding:0;background:transparent;box-shadow:none}
+body .ml-legacy-flash-section{padding:0;margin:0 0 16px;background:transparent;box-shadow:none}
 body .ml-legacy-flash-section>.ml-legacy-card-start{margin:16px 0 0;padding:16px 18px 8px;border-radius:2px 2px 0 0}
 body .ml-legacy-flash-section>.ml-legacy-card-body{margin:0;padding:0 18px 12px}
 body .ml-legacy-flash-section>.ml-legacy-card-end{margin:0;padding:0 18px 16px;border-radius:0 0 2px 2px}
