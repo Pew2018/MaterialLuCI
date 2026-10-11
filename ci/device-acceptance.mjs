@@ -90,7 +90,7 @@ async function verify(browser,engine,width,mode,design){
   assert.equal(await page.locator("#view [data-tab-title]:visible").count(),1);
   const field=pane.locator('input[type=text]:not([readonly]),textarea').first();
   if(await field.count()){await field.fill(name==="general"?"AX3000T":"64");}
-  await page.evaluate(()=>{document.activeElement?.blur();scrollTo(0,document.documentElement.scrollHeight);});
+  await page.evaluate(()=>{scrollTo(0,document.documentElement.scrollHeight);});
   await page.waitForTimeout(500);
   const before=await page.evaluate(()=>({y:scrollY,h:document.documentElement.scrollHeight,textarea:document.querySelector("textarea")?.getBoundingClientRect().height,mutations:acceptance.mutations}));
   for(let tick=0;tick<30;tick++){
