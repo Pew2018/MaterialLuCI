@@ -7,7 +7,7 @@ ROOT=pathlib.Path(__file__).resolve().parents[1]
 output=ROOT/"build/preview"
 if output.exists():shutil.rmtree(output)
 shutil.copytree(ROOT/"build/unpacked/www",output)
-upstream=ROOT/(os.environ.get("LUCI_FIXTURE","luci-fixture"))/modules/luci-base/htdocs/luci-static/resources"
+upstream=ROOT/"luci-fixture/modules/luci-base/htdocs/luci-static/resources"
 shutil.copytree(upstream,output/"luci-static/resources",dirs_exist_ok=True)
 for module in (ROOT/"build/unpacked/www/luci-static/resources").glob("materialluci-menu*.js"):
  shutil.copy(module,output/"luci-static/resources"/module.name)
