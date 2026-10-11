@@ -290,6 +290,7 @@
   }
   const candidates=[...main.querySelectorAll(".cbi-section,.cbi-section-node,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table,#view [data-table],.ml-chart-surface,#view > .ml-table-scroll,.cbi-map > .ml-table-scroll")]
    .filter(section=>{
+    if(section.closest(".ml-legacy-flash-section"))return false;
     const option=section.closest(".cbi-value");
     return !section.closest("#ml-appearance,.modal,table,.table")&&
      (!option||option.classList.contains("ml-section-container"))&&
