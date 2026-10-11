@@ -61,6 +61,7 @@ export async function verifySharedStates(page,name,mode,size){
   document.getElementById("ml-control-audit").append(host);
   const button=document.createElement("button");button.type="button";button.className="cbi-button cbi-button-negative";button.id="long-danger-action";button.style.width="176px";
   const label=document.createElement("span");label.textContent="需要换行的危险操作 Long destructive action";button.append(label);host.append(button);
+  const nativeButton=document.createElement("input");nativeButton.type="button";nativeButton.className="cbi-button";nativeButton.id="long-native-action";nativeButton.value="长文字原生按钮 Long native button";nativeButton.style.width="176px";host.append(nativeButton);
   MaterialLuCI.enhance(host);
  });
  for(const kind of ["multiple","size","optgroup","explicit"]){
@@ -124,6 +125,9 @@ export async function verifySharedStates(page,name,mode,size){
   assert.equal(paint.fill,native.expected.ink);assert(paint.shadow.includes("1000px")&&paint.shadow.includes("inset"),"MDC autofill background reset wins");
   await autofill.scrollIntoViewIfNeeded();
   await page.screenshot({path:"dist/previews/"+name+"-"+size+"-autofill-"+mode+".png"});
+  await autofill.evaluate(el=>el.disabled=true);
+  assert.equal(await autofill.evaluate(el=>getComputedStyle(el).webkitTextFillColor),native.expected.disabled,"disabled autofill ink");
+  await autofill.evaluate(el=>el.disabled=false);
   await session.send("CSS.forcePseudoState",{nodeId,forcedPseudoClasses:[]});
   const {nodeId:buttonId}=await session.send("DOM.querySelector",{nodeId:root.nodeId,selector:"#audit-bare-button"});
   for(const [state,token] of [["hover","--button-hover-bg"],["active","--button-pressed-bg"]]){
@@ -134,6 +138,6 @@ export async function verifySharedStates(page,name,mode,size){
   await session.send("CSS.forcePseudoState",{nodeId:buttonId,forcedPseudoClasses:[]});await session.detach();
  }
  await page.locator("#native-select-states").scrollIntoViewIfNeeded();
- await page.screenshot({path:"dist/previews/"+name+"-"+size+"-native-states-"+mode+".png"});
+ await page.locator("#native-select-states").screenshot({path:"dist/previews/"+name+"-"+size+"-native-states-"+mode+".png",animations:"disabled"});
  console.log(name,size,mode+": native/MDC state parity, primary/disabled foreground, long danger and select fallback checked");
 }

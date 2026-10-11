@@ -23,6 +23,7 @@ def compile_template(text):
    if block.endswith("-"):block=block[:-1]
    if block.startswith("-"):block=block[1:]
    if block.startswith("="):result.append("write("+block[1:]+")")
+   elif block.startswith("_"):result.append("write(translate("+luaquote(re.sub(r"\s+"," ",block[1:]).strip())+"))")
    elif block.startswith(":"):result.append("write(translate("+luaquote(block[1:])+"))")
    elif block.startswith("+"):result.append("include("+luaquote(block[1:])+ ")")
    else:result.append(block)
@@ -160,3 +161,17 @@ for variant,reset,upgrade,invalid in (("available",True,True,True),("limited",Fa
  renderer.write_text(code)
  html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime.replace(json.dumps(env),json.dumps(flash_env))+"</head>")
  (output/("flashops-legacy-"+variant+".html")).write_text(html)
+
+
+# Original Lua checksum/confirmation page: oversized image + keep settings,
+# and the erase-settings branch. The original POST controls remain intact.
+for variant,keep in (("keep",True),("erase",False)):
+ upgrade_env=dict(env)
+ upgrade_env["dispatchpath"]=[]
+ upgrade_env["requestpath"]=["admin","system","flashops"]
+ upgrade_bootstrap=bootstrap.replace('requestpath={"admin","status","overview"}','requestpath={"admin","system","flashops"}')
+ upgrade_globals='\nmods["luci.tools.webadmin"]={byte_format=function(n)return tostring(n).." bytes" end}\nluci.i18n.translatef=string.format\ntoken="fixture"\nREQUEST_URI="/cgi-bin/luci/admin/system/flashops"\nchecksum="fixture-md5"\nsha256ch="fixture-sha256"\nsize=2048\nstorage=1024\nkeep='+("true" if keep else "false")+'\n'
+ code=upgrade_bootstrap+upgrade_globals+compile_template((ROOT/"ci/fixtures/upgrade-18.06.htm").read_text())
+ renderer.write_text(code)
+ html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime.replace(json.dumps(env),json.dumps(upgrade_env))+"</head>")
+ (output/("upgrade-legacy-"+variant+".html")).write_text(html)

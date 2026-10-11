@@ -171,7 +171,7 @@ export async function verifyUpstreamPages(browser,name,base){
    assert.equal(await field.evaluate(el=>getComputedStyle(el).webkitTextFillColor),disabled);
    await field.evaluate(el=>el.disabled=false);
    const expectedInk=await page.evaluate(()=>{const p=document.createElement("span");p.style.color="var(--ink)";document.body.append(p);const color=getComputedStyle(p).color;p.remove();return color;});
-   const auditText=page.locator("#ml-control-audit input:not([type=submit]):not([type=reset]):not([type=file]):not([type=button])");
+   const auditText=page.locator("#audit-form input:not([type=submit]):not([type=reset]):not([type=file]):not([type=button])");
    assert.equal(await auditText.count(),8);
    for(let i=0;i<8;i++){
     const control=auditText.nth(i);

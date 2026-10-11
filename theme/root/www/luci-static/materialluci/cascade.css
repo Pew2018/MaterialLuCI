@@ -900,3 +900,12 @@ body .ml-mdc-feedback.mdc-button:is([aria-disabled=true],[disabled]){
  --button-bg:var(--pressed);--button-hover-bg:var(--pressed);--button-pressed-bg:var(--pressed);--button-ink:var(--disabled);
  background:var(--button-bg);color:var(--button-ink);border-color:transparent;box-shadow:none
 }
+
+/* The Lua factory-reset control shares cbi-button-reset with harmless form
+   resets elsewhere. Assign its destructive role only on the flashops route. */
+body #maincontent[data-ml-page=flashops] input.cbi-button-reset[name=reset]{
+ --button-bg:var(--action-tonal);--button-hover-bg:var(--tonal-pressed);--button-pressed-bg:var(--tonal-pressed);--button-ink:var(--danger);
+ background:var(--button-bg);color:var(--button-ink);border-color:transparent
+}
+body .cbi-page-actions>form.inline{display:flex;align-items:center;flex-wrap:wrap;gap:12px;max-width:100%;margin:0}
+@media(max-width:599px){body .cbi-page-actions>form.inline{width:100%}}

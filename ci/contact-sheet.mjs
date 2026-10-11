@@ -32,7 +32,9 @@ try{
    engine+"-flashops-legacy-limited-390-dark.png",
    engine+"-mobile-native-states-dark.png",
    engine+"-desktop-native-states-light.png",
-   engine+"-mobile-autofill-dark.png"
+   engine+"-mobile-autofill-dark.png",
+   engine+"-upgrade-legacy-keep-390-dark.png",
+   engine+"-upgrade-legacy-erase-1280-light.png"
   ]){
    if(!fs.existsSync("dist/previews/"+filename))continue;
    const detail=await browser.newPage();

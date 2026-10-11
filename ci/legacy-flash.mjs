@@ -54,5 +54,35 @@ export async function verifyLegacyFlash(browser,name,base){
   }
   assert.deepEqual(errors,[]);await page.close();
  }
+ for(const variant of ["keep","erase"]){
+  const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];
+  page.on("pageerror",e=>errors.push(e.message));
+  await page.route("**/cgi-bin/luci/admin/system/flashops",route=>route.abort());
+  await page.goto(base+"/upgrade-legacy-"+variant+".html");
+  await page.waitForFunction(()=>!!window.MaterialLuCI);
+  await page.evaluate(()=>{
+   MaterialAppearance.set("seed","#009688");window.upgradeSubmits=[];
+   document.querySelector("#maincontent form").addEventListener("submit",event=>{event.preventDefault();upgradeSubmits.push([...new FormData(event.target,event.submitter).entries()]);});
+  });
+  assert.equal(await page.locator('#maincontent input[name=step]').inputValue(),"2");
+  assert.equal(await page.locator('#maincontent input[name=keep]').inputValue(),variant==="keep"?"1":"");
+  assert((await page.locator("#maincontent").innerText()).includes("fixture-sha256"),"checksum text preserved");
+  assert((await page.locator("#maincontent").innerText()).includes("2048 bytes"),"size text preserved");
+  assert.equal(await page.locator("#maincontent .error").count(),1,"oversized-image warning preserved");
+  assert.equal(await page.locator(".ml-card-surface .ml-card-surface").count(),0);
+  for(const width of [390,1280])for(const mode of ["light","dark"]){
+   await page.setViewportSize({width,height:900});await page.evaluate(mode=>MaterialAppearance.set("mode",mode),mode);
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"legacy confirmation overflow");
+   const style=await page.locator("#maincontent input[type=submit]").evaluateAll(xs=>xs.map(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return {height:r.height,border:s.borderTopColor,right:r.right};}));
+   assert(style.every(x=>x.height>=48&&x.border==="rgba(0, 0, 0, 0)"&&x.right<=width),"legacy confirmation button geometry");
+   await page.screenshot({path:"dist/previews/"+name+"-upgrade-legacy-"+variant+"-"+width+"-"+mode+".png",fullPage:true});
+  }
+  for(const submit of await page.locator("#maincontent input[type=submit]").all())await submit.click();
+  const calls=await page.evaluate(()=>upgradeSubmits);
+  assert.equal(calls.length,2,"both original submit paths preserved");
+  assert(calls.every(entries=>entries.some(([k,v])=>k==="step"&&v==="2")));
+  assert(calls[0].some(([k])=>k==="cancel"),"Cancel submitter name preserved");
+  assert.deepEqual(errors,[]);await page.close();
+ }
  console.log(name+": verbatim Lua flashops, independent forms, multipart files, warnings, conditions and submit spies passed");
 }
