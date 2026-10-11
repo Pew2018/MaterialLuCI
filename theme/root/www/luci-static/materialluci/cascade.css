@@ -92,7 +92,7 @@ input:where(:not([type=checkbox]):not([type=radio]):not([type=button]):not([type
 :focus-visible:not(input):not(textarea):not(select),input[type=checkbox]:focus-visible,input[type=radio]:focus-visible{outline:2px solid var(--control-strong)!important;outline-offset:2px}
 input:where(:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=reset]):not([type=file])):focus-visible,textarea:focus-visible,select:focus-visible{outline:none}
 input[disabled],textarea[disabled],select[disabled]{opacity:1;color:var(--disabled);border-color:var(--disabled);background:transparent}
-.cbi-input-invalid,.cbi-value-error input,input[aria-invalid=true]{border-color:var(--danger)!important}
+.cbi-input-invalid:where(:not([type=button]):not([type=submit]):not([type=reset]):not([type=file]):not([type=checkbox]):not([type=radio]):not([type=hidden])),.cbi-value-error input:where(:not([type=button]):not([type=submit]):not([type=reset]):not([type=file]):not([type=checkbox]):not([type=radio]):not([type=hidden])),input[aria-invalid=true]:where(:not([type=button]):not([type=submit]):not([type=reset]):not([type=file]):not([type=checkbox]):not([type=radio]):not([type=hidden])){border-color:var(--danger)!important}
 input[type=checkbox],input[type=radio]{accent-color:var(--control-accent);width:18px;height:18px}
 .ml-switch-hit{width:48px;height:48px;flex:none;display:inline-grid;place-items:center;vertical-align:middle;border:0;padding:0;position:relative}
 input.ml-switch-source{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;opacity:0!important;pointer-events:none!important;clip:rect(0 0 0 0)!important}

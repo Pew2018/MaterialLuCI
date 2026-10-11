@@ -882,8 +882,8 @@ input[type=file] {
     border: 0;
 }
 
-.cbi-input-invalid,
-.cbi-value-error input {
+.cbi-input-invalid:where(:not([type=button]):not([type=submit]):not([type=reset]):not([type=file]):not([type=checkbox]):not([type=radio]):not([type=hidden])),
+.cbi-value-error input:where(:not([type=button]):not([type=submit]):not([type=reset]):not([type=file]):not([type=checkbox]):not([type=radio]):not([type=hidden])) {
     color: #f00;
     border-color: #f00 !important;
 }
