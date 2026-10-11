@@ -2,6 +2,7 @@
 'require view';
 'require form';
 'require uci';
+'require ui';
 'require view.status.include.30_network as networkStatus';
 'require view.status.include.60_wifi as wifiStatus';
 /* Compatibility fixture: pinned upstream renderers, deterministic read-only
@@ -35,7 +36,7 @@ return view.extend({
   window.previewName=s.option(form.Value,'hostname','设备名称');window.previewName.datatype='hostname';
   window.previewPassword=s.option(form.Value,'password','密码');window.previewPassword.password=true;
   window.previewTextarea=s.option(form.TextValue,'notes','说明');window.previewTextarea.rows=3;
-  window.previewList=s.option(form.DynamicList,'servers','DNS 服务器');window.previewList.datatype='ipaddr';
+  window.previewList=s.option(form.DynamicList,'servers','DNS 服务器');window.previewList.datatype='ipaddr';window.previewList.placeholder='/example.org/10.1.2.3';
   var reset=s.option(form.Button,'reset','恢复到出厂设置');reset.inputstyle='negative important';reset.inputtitle='执行重置';
   // Visual compatibility fixture only; never execute firstboot or any RPC.
   reset.onclick=function(){window.resetPreviewClicks=(window.resetPreviewClicks||0)+1;};
@@ -44,6 +45,7 @@ return view.extend({
    window.previewRendered=true;
    return E('div',{},[
     settings,
+    E('section',{class:'cbi-section',id:'native-dropdown-audit'},[E('h3','VLAN / mtdblock native Dropdown'),new ui.Dropdown('t',{'t':'已标记','u':'未标记','o':'关'},{id:'native-vlan-select',name:'vlan',optional:false}).render(),new ui.Dropdown('0',{'0':'spi0.0','1':'firmware'},{id:'native-mtd-select',name:'mtd',optional:false}).render()]),
     E('section',{class:'cbi-section',id:'upstream-network'},[E('h3','Network'),networkStatus.render(['12','100',[wan],[]])]),
     E('section',{class:'cbi-section',id:'upstream-wireless'},[E('h3','Wireless'),wifiStatus.render([[radio],[net],hints,true,false])])
    ]);
