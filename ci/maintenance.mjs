@@ -6,6 +6,7 @@ export async function verifyMaintenance(browser,name,base){
   await page.goto(base+"/"+kind+".html");
   await page.waitForSelector(kind==="reboot"?"#view>button":kind==="flash"?'.cbi-value[data-name="dl_backup"] button':'#view [data-chain] table');
   await page.waitForFunction(()=>!!window.MaterialLuCI);
+  await page.evaluate(()=>{MaterialAppearance.set("seed","#009688");MaterialAppearance.set("toolbar",true);});
   // Allow the mutation-enhancement frame to run; assert real rendered groups.
   await page.waitForFunction(kind=>kind==="reboot"?document.querySelector("#view.ml-card-surface"):kind==="flash"?document.querySelectorAll(".ml-section-container .cbi-section.ml-card-surface").length===4:document.querySelectorAll("#view [data-table].ml-card-surface").length===2,kind);
   assert.equal(await page.locator(".ml-card-surface .ml-card-surface").count(),0);
@@ -20,6 +21,7 @@ export async function verifyMaintenance(browser,name,base){
    legacy.on("pageerror",e=>legacyErrors.push(e.message));
    await legacy.goto(base+"/reboot-legacy.html");
    await legacy.waitForFunction(()=>!!window.MaterialLuCI);
+   await legacy.evaluate(()=>{MaterialAppearance.set("seed","#009688");MaterialAppearance.set("toolbar",true);});
    await legacy.evaluate(()=>{
     window.legacyCalls=0;
     window.XHR=function(){this.post=(url,data,callback)=>{window.legacyCalls++;window.legacyPost={url,data};};};
