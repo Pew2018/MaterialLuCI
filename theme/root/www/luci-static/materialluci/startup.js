@@ -3,12 +3,12 @@
 (function(){
  const root=document.documentElement, query=matchMedia("(prefers-color-scheme: dark)");
  const get=(key,fallback)=>{try{return localStorage.getItem("materialluci-"+key)||fallback;}catch(_){return fallback;}};
- const prefs={design:get("design","classic"),mode:get("mode","system"),seed:get("seed","#42A5F5"),cards:get("cards","true")==="true",toolbar:get("toolbar","false")==="true",categories:get("categories","false")==="true",icons:get("icons","false")==="true"};
+ const prefs={design:get("design","m3e"),mode:get("mode","system"),seed:get("seed","#42A5F5"),cards:get("cards","true")==="true",toolbar:get("toolbar","false")==="true",categories:get("categories","false")==="true",icons:get("icons","false")==="true"};
  if(!["system","light","dark"].includes(prefs.mode)) prefs.mode="system";
  if(!/^#[0-9a-f]{6}$/i.test(prefs.seed)) prefs.seed="#42A5F5";
  prefs.seed=prefs.seed.toUpperCase();
  if(!["classic","m3e"].includes(prefs.design))prefs.design="classic";
- const activeDesign=prefs.design==="m3e"&&!window.MaterialM3Palette?"classic":prefs.design;root.dataset.design=activeDesign;
+ const activeDesign=prefs.design==="m3e"&&!window.MaterialM3Palette?"classic":prefs.design;root.dataset.design=activeDesign;root.dataset.requestedDesign=prefs.design;root.dataset.designFallback=String(activeDesign!==prefs.design);
  function apply(){
   const dark=prefs.mode==="dark"||(prefs.mode==="system"&&query.matches),m3=activeDesign==="m3e"&&window.MaterialM3Palette?.generate(prefs.seed,dark),p=m3?m3.legacy:MaterialPalette.generate(prefs.seed,dark);
   if(m3){for(const [key,color] of Object.entries(m3.system))root.style.setProperty("--md-sys-color-"+key.replace(/[A-Z]/g,c=>"-"+c.toLowerCase()),color);for(const [key,color] of Object.entries(m3.surfaces))root.style.setProperty("--"+key,color);}

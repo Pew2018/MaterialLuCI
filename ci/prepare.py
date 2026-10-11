@@ -2,12 +2,12 @@
 """Compile real theme templates in Lua 5.1 with explicit fixture globals.
 Browser tests use pinned upstream LuCI JS; only menu/RPC responses are mocked.
 """
-import pathlib,re,json,subprocess,shutil
+import pathlib,re,json,subprocess,shutil,os
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 output=ROOT/"build/preview"
 if output.exists():shutil.rmtree(output)
 shutil.copytree(ROOT/"build/unpacked/www",output)
-upstream=ROOT/"luci-fixture/modules/luci-base/htdocs/luci-static/resources"
+upstream=ROOT/(os.environ.get("LUCI_FIXTURE","luci-fixture"))/modules/luci-base/htdocs/luci-static/resources"
 shutil.copytree(upstream,output/"luci-static/resources",dirs_exist_ok=True)
 for module in (ROOT/"build/unpacked/www/luci-static/resources").glob("materialluci-menu*.js"):
  shutil.copy(module,output/"luci-static/resources"/module.name)
@@ -190,3 +190,12 @@ for name in ("system","sshkeys"):
  renderer.write_text(code)
  html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime.replace(json.dumps(env),json.dumps(system_env))+"</head>")
  (output/(name+".html")).write_text(html)
+
+# Status log uses its actual renderer, separate from the System logging pane.
+source=(status/"view/status/syslog.js").read_text().replace("'require view';","'require baseclass as view';",1)
+(view_dir/"materialluci-native-syslog.js").write_text(source)
+syslog_fixture='<div id="view"></div><script>window.systemFixtureKind="syslog";document.addEventListener("DOMContentLoaded",function(){L.require("ui").then(function(ui){ui.instantiateView("materialluci-system-preview");});});</script>'
+code=bootstrap+'\ninclude("header")\nwrite('+luaquote(syslog_fixture)+')\ninclude("footer")'
+renderer.write_text(code)
+html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime+"</head>")
+(output/"syslog.html").write_text(html)

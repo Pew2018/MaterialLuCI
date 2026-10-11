@@ -20,7 +20,12 @@ const colors=async locator=>locator.evaluate(el=>{const s=getComputedStyle(el);r
 try{
  for(let i=0;i<50;i++){try{if((await fetch(base)).ok)break;}catch{}await pause(200);}
  for(const [name,engine] of [["chromium",chromium],["webkit",webkit]]){
-  const browser=await engine.launch(),page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[],requests=[];
+  const browser=await engine.launch();
+  // Existing Classic regression suites explicitly choose Classic; the package
+  // default is independently tested in the new acceptance suite.
+  const originalNewPage=browser.newPage.bind(browser);
+  browser.newPage=async options=>{const p=await originalNewPage(options);await p.addInitScript(()=>localStorage.setItem("materialluci-design","classic"));return p;};
+  const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[],requests=[];
   await verifyM3Theme(browser,name,base);await verifySystemLayout(browser,name,base);
   page.on("pageerror",e=>errors.push(e.stack||e.message));page.on("request",r=>requests.push(r.url()));
   await page.goto(base);await page.waitForFunction(()=>window.fixtureCheckbox&&window.fixtureSelect&&document.body.dataset.mlMenus==="ready");

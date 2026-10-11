@@ -140,7 +140,7 @@
  }
  function tooltip(anchor){
   const label=anchor.getAttribute("aria-label")||anchor.title;if(!label)return;
-  const known=tips.get(anchor);if(known){known.surface.textContent=label;return;}
+  const known=tips.get(anchor);if(known){if(known.surface.textContent!==label)known.surface.textContent=label;return;}
   const id="ml-tooltip-"+(++sequence),root=make("div","mdc-tooltip"),surface=make("div","mdc-tooltip__surface mdc-tooltip__surface-animation",label);
   root.id=id;root.setAttribute("role","tooltip");root.setAttribute("aria-hidden","true");root.append(surface);document.body.append(root);
   const description=anchor.getAttribute("aria-describedby"),title=anchor.getAttribute("title"),data=anchor.getAttribute("data-tooltip-id");
@@ -172,15 +172,20 @@
   for(const owner of all(".cbi-dropdown.btn,.cbi-dropdown.cbi-button"))actionMenu(owner);
   for(const anchor of all(".ml-icon-button,.ml-poll-action,#ml-drawer-close,button[aria-label]:has(svg):not(.mdc-switch)"))tooltip(anchor);
  }
- let pending=false;
+ let pending=false;const pendingRoots=new Set();
+ const decorative=n=>!!n.closest?.(".mdc-tooltip,.ml-mdc-menu,.mdc-snackbar,[data-ml-component],.mdc-text-field__ripple,.mdc-line-ripple");
  const observer=new MutationObserver(records=>{
   for(const r of records)if(r.type==="attributes"&&r.attributeName==="disabled"&&r.target.tagName==="FIELDSET")for(const [select,entry] of selects)if(r.target.contains(select))entry.sync();
   if(records.some(r=>r.type==="attributes"&&(r.attributeName==="inert"||r.attributeName==="aria-hidden"||r.target===document.body)))for(const el of tips.keys())if(el.closest('[inert],[aria-hidden="true"]'))el._mlMdcTooltip.hide();
   for(const [el,entry] of selects)if(!el.isConnected||!entry.root.isConnected)entry.destroy();
   for(const [el,entry] of actions)if(!el.isConnected)entry.destroy();
   for(const [el,entry] of tips)if(!el.isConnected)entry.destroy();
-  const relevant=records.some(r=>r.type==="childList"&&[...r.addedNodes].some(n=>n.nodeType===1&&!n.matches(".mdc-tooltip,.ml-mdc-menu,.mdc-snackbar"))||r.type==="attributes"&&r.target.matches(".ml-icon-button,.ml-poll-action,#ml-drawer-close"));
-  if(relevant&&!pending){pending=true;queueMicrotask(()=>{pending=false;enhance(document);});}
+  for(const r of records){
+   if(decorative(r.target))continue;
+   if(r.type==="childList")for(const n of r.addedNodes)if(n.nodeType===1&&!decorative(n))pendingRoots.add(n);
+   if(r.type==="attributes"&&r.target.matches(".ml-icon-button,.ml-poll-action,#ml-drawer-close"))pendingRoots.add(r.target);
+  }
+  if(pendingRoots.size&&!pending){pending=true;requestAnimationFrame(()=>{pending=false;const roots=[...pendingRoots];pendingRoots.clear();for(const n of roots)if(n.isConnected&&!roots.some(p=>p!==n&&p.contains(n)))enhance(n);});}
  });
  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["aria-label","title","inert","aria-hidden","class","disabled"]});
  function closeMenus(){for(const e of selects.values())if(e.menu.open)e.menu.open=false;for(const el of actions.keys())if(el._mlMdcMenu.open)el._mlMdcMenu.open=false;for(const el of tips.keys())el._mlMdcTooltip.hide();}

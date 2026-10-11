@@ -2,6 +2,12 @@
 /* Presentation adapters. Native LuCI controls remain the business authority. */
 (function(){
  const m3=()=>MaterialAppearance.activeDesign==="m3e";
+ const stateWatchers=new Map();
+ const stateObserver=new MutationObserver(records=>{
+  for(const [input,sync] of stateWatchers)if(records.some(r=>r.target===input||r.target.contains(input)))sync();
+ });
+ stateObserver.observe(document.body,{subtree:true,attributes:true,attributeFilter:["checked","disabled"]});
+ function watchState(input,sync){stateWatchers.set(input,sync);return {disconnect(){stateWatchers.delete(input);}};}
  const supported=name=>m3()&&!!window.customElements?.get(name);
  function button(label,listener,className,kind="outlined"){
   const tag=kind==="text"?"md-text-button":kind==="filled"?"md-filled-button":"md-outlined-button";
@@ -27,9 +33,7 @@
   }
   input.addEventListener("change",sync);input.addEventListener("input",sync);
   // Effective fieldset disablement is read, never written to input.disabled.
-  const observer=new MutationObserver(sync);
-  observer.observe(input,{attributes:true,attributeFilter:["checked","disabled"]});
-  observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:["disabled"]});
+  const observer=watchState(input,sync);
   const reset=()=>queueMicrotask(sync);document.addEventListener("reset",reset,true);
   el.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();if(!input.matches(":disabled"))input.click();queueMicrotask(sync);});
   // Consume decoration events, not the original checkbox's native events.
@@ -59,7 +63,7 @@
    if(!input.name||!group.length)return;const backwards=["ArrowLeft","ArrowUp"].includes(event.key),next=group[(group.indexOf(input)+(backwards?-1:1)+group.length)%group.length];next.click();syncSelections();selectionEntries.get(next)?.control.focus();};
   el.addEventListener("keydown",key);
   const change=()=>syncSelections();input.addEventListener("change",change);
-  const attrs=new MutationObserver(change);attrs.observe(document.body,{subtree:true,attributes:true,attributeFilter:["checked","disabled"]});
+  const attrs=watchState(input,change);
   const reset=()=>queueMicrotask(change);document.addEventListener("reset",reset,true);
   const geometry=()=>{el.style.left=input.offsetLeft+"px";el.style.top=input.offsetTop+"px";};
   const resize=new ResizeObserver(geometry);resize.observe(root);

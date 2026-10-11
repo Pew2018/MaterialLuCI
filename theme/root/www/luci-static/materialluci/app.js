@@ -378,7 +378,7 @@
  enhance(main);
  const decoration=n=>n.closest("[data-ml-component]")||n.matches(".mdc-button__ripple,.mdc-icon-button__ripple,.mdc-checkbox__background,.mdc-checkbox__ripple,.mdc-checkbox__focus-ring,.mdc-radio__background,.mdc-radio__ripple,.mdc-radio__focus-ring");
  let scheduled=false;const pending=new Set();
- function flush(){scheduled=false;for(const n of pending)if(n.isConnected)enhance(n);pending.clear();}
+ function flush(){scheduled=false;const roots=[...pending];pending.clear();for(const n of roots)if(n.isConnected&&!roots.some(p=>p!==n&&p.contains(n)))enhance(n);}
  const observer=new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&!decoration(n))pending.add(n);if(pending.size&&!scheduled){scheduled=true;requestAnimationFrame(flush);}});
  observer.observe(main,{childList:true,subtree:true});
  const watched=new WeakSet();

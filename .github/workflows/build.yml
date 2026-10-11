@@ -14,9 +14,11 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -80,6 +82,14 @@ jobs:
           path: immortal-fixture
           sparse-checkout: |
             modules/luci-mod-system/htdocs/luci-static/resources/view/system/flash.js
+      - name: Prepare failed-baseline presentation assets for performance comparison
+        run: |
+          mkdir -p build/baseline-assets
+          for file in app.js components.js controls.js extras.js feedback.js startup.js textfield.js wait.js design-m3.css; do
+            git show 4d5ede5c164fbf3791d5296d36cfc2f1e3085cb2:theme/root/www/luci-static/materialluci/$file > build/baseline-assets/$file
+          done
+          git show 4d5ede5c164fbf3791d5296d36cfc2f1e3085cb2:theme/root/www/luci-static/materialluci/base.css > build/baseline-assets/cascade.css
+          git show 4d5ede5c164fbf3791d5296d36cfc2f1e3085cb2:theme/root/www/luci-static/materialluci/cascade.css | sed '/^@import url("base.css");/d' >> build/baseline-assets/cascade.css
       - name: Compile Lua templates and prepare compatibility preview
         run: python3 ci/prepare.py
       - name: Test desktop and mobile layouts in Chromium and WebKit
@@ -89,6 +99,8 @@ jobs:
           git rev-parse HEAD > dist/previews/commit.txt
           sha256sum build/stage/www/luci-static/materialluci/*.js build/stage/www/luci-static/materialluci/*.css build/stage/www/luci-static/materialluci/icons/*.svg > dist/previews/assets.sha256
           node ci/browser.mjs
+      - name: Verify 30 second system stability and native SSH lifecycle
+        run: node ci/device-acceptance.mjs
       - name: Write package identity and validation summary
         if: always()
         run: |
@@ -110,7 +122,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: MaterialLuCI-0.3.0-11-IPK-${{ github.sha }}-AX3000T
+          name: MaterialLuCI-0.3.0-12-IPK-${{ github.sha }}-AX3000T
           path: dist/*.ipk
           if-no-files-found: error
           retention-days: 30

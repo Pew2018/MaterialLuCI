@@ -959,3 +959,14 @@ body .ml-sidebar button.ml-nav-parent.mdc-button>.ml-nav-chevron{
 
 /* Restore actions keep their intrinsic width before and after MDC attaches. */
 .ml-brand-controls>.text-action{flex:0 0 auto}
+
+/* Native pane visibility and compound-list sizing must work in either design.
+   LuCI owns data-tab-active and all original children. */
+body [data-tab-title]:not([data-tab-active=true]){display:none!important}
+body [data-tab-title][data-tab-active=true]{height:auto;min-height:0;overflow:visible}
+body .ml-text-field.mdc-text-field--textarea{align-items:flex-start}
+body .ml-text-field>textarea.mdc-text-field__input{flex:none;box-sizing:border-box}
+body .cbi-dynlist{width:100%;min-width:0;max-width:100%}
+body .cbi-dynlist>.add-item{width:100%;flex-wrap:wrap;gap:12px}
+body .cbi-dynlist>.add-item>input{flex:1 1 220px;width:auto;min-width:0;box-sizing:border-box}
+body .cbi-dynlist>.add-item>button{flex:0 0 auto;height:auto;min-height:48px;min-width:112px;white-space:normal;overflow:visible}

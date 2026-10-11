@@ -3,6 +3,9 @@
 (function(){
  const {MDCRipple,MDCRippleFoundation}=MaterialMDCControls;
  const entries=new Map(),pending=new WeakMap(),reduced=matchMedia("(prefers-reduced-motion: reduce)");
+ const disabledWatchers=new Map();
+ const disabledObserver=new MutationObserver(records=>{for(const [el,sync] of disabledWatchers)if(records.some(r=>r.target===el||r.target.contains(el)||el.contains(r.target)))sync();});
+ disabledObserver.observe(document.body,{attributes:true,subtree:true,attributeFilter:["disabled","aria-disabled"]});
  const selector="button:not(.mdc-switch),div.btn,a.btn,a.cbi-button,a.text-action,.ml-poll-action,.ml-native-button,.ml-sidebar a,.tabs a,.cbi-tabmenu a";
  function disabled(el){return !!(el.matches(":disabled")||el.disabled||el.hasAttribute("disabled")||el.querySelector("input:disabled")||el.closest('[aria-disabled="true"]'));}
  function scrolls(el){const list=[];for(let n=el.parentElement;n;n=n.parentElement)if(n.scrollHeight>n.clientHeight||n.scrollWidth>n.clientWidth)list.push([n,n.scrollTop,n.scrollLeft]);return list;}
@@ -43,7 +46,7 @@
    if(el.matches(".cbi-dropdown"))el.insertBefore(layer,el.lastElementChild);else el.append(layer);
    layer.attach(el.matches(".ml-native-button")?el.querySelector("input,button"):el);
    const sync=()=>{layer.disabled=disabled(el)||reduced.matches;};
-   const attrs=new MutationObserver(sync);attrs.observe(document.body,{attributes:true,subtree:true,attributeFilter:["disabled","aria-disabled"]});
+   disabledWatchers.set(el,sync);const attrs={disconnect(){disabledWatchers.delete(el);}};
    reduced.addEventListener("change",sync);sync();
    entries.set(el,{destroy(){attrs.disconnect();reduced.removeEventListener("change",sync);layer.detach();layer.remove();el.classList.remove("ml-m3-feedback");entries.delete(el);}});
    return;
@@ -81,5 +84,5 @@
   if(roots.size&&!scheduled){scheduled=true;requestAnimationFrame(()=>{scheduled=false;for(const n of roots)if(n.isConnected)enhance(n);roots.clear();});}
  }).observe(document.body,{childList:true,subtree:true});
  window.addEventListener("pagehide",event=>{if(!event.persisted)for(const entry of [...entries.values()])entry.destroy();});
- window.MaterialFeedback={bind:enhance};enhance();
+ window.MaterialFeedback={bind:enhance,counts:()=>({instances:entries.size,disabledWatchers:disabledWatchers.size})};enhance();
 })();
