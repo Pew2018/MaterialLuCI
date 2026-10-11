@@ -27,7 +27,9 @@ export async function verifySystemLayout(browser,engine,base){
   await textarea.fill('Draft notes preserved');assert.equal(await textarea.inputValue(),'Draft notes preserved');
   const h=await textarea.evaluate(el=>el.getBoundingClientRect().height);await page.waitForTimeout(1000);
   assert.equal(await textarea.evaluate(el=>el.getBoundingClientRect().height),h,'textarea flex sizing loop');
-  await page.evaluate(()=>document.activeElement.blur());await page.screenshot({path:'dist/previews/'+engine+'-m3-system-'+width+'-'+mode+'.png',fullPage:true});
+  await page.evaluate(()=>{document.activeElement.blur();scrollTo(0,0);});await page.screenshot({path:'dist/previews/'+engine+'-m3-system-'+width+'-'+mode+'.png',fullPage:true});
+  const timeButtons=page.locator('#view .control-group>button');
+  assert(await timeButtons.evaluateAll(nodes=>nodes.every(el=>parseFloat(getComputedStyle(el).borderRadius)>=24)),'time sync action lost M3 shape');
   await page.goto(base+'/sshkeys.html');
   await page.waitForSelector('#view .add-item button md-ripple');
   const input=page.locator('#view .add-item>input'),button=page.locator('#view .add-item>button');

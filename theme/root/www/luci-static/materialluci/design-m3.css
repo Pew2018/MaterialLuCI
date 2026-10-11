@@ -89,3 +89,8 @@ body .ml-design-options button[aria-pressed=true]{background:var(--action-tonal)
 :root[data-design=m3e] body .cbi-progressbar>div{border-radius:4px;background:var(--md-sys-color-primary)}
 :root[data-design=m3e] body input[type=range]{accent-color:var(--md-sys-color-primary);min-height:48px}
 :root[data-design=m3e] body input[type=file]::file-selector-button{min-height:48px;padding:12px 20px;border:0;border-radius:24px;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);font:inherit;cursor:pointer}
+
+/* Match the native field action rule's specificity, including its exclusions. */
+:root[data-design=m3e] body .cbi-value-field :is(button.cbi-button,input.cbi-button):not(.ml-text-field *):not(.cbi-button-add):not(.cbi-button-up):not(.cbi-button-down){border-radius:24px}
+:root[data-design=m3e] body .cbi-value-field .control-group:not(.ml-text-field){display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+:root[data-design=m3e] body .cbi-dynlist{border:0}
