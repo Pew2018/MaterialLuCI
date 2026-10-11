@@ -831,3 +831,9 @@ body .cbi-dropdown[open]>ul.dropdown>li{min-height:40px;padding:8px;line-height:
 /* Override MDC's enabled placeholder state, including no-label fields. */
 body .ml-text-field.mdc-text-field--filled:not(.mdc-text-field--disabled) .mdc-text-field__input::placeholder,
 body .ml-text-field.mdc-text-field--filled:not(.mdc-text-field--disabled) .mdc-text-field__input::-webkit-input-placeholder{color:var(--muted);-webkit-text-fill-color:var(--muted);opacity:1}
+
+/* Flat Lua content uses maincontent itself as its surface. The ID-level
+   shell rule otherwise overrides the shared card class with transparency. */
+:root[data-cards=true] #maincontent.container.ml-card-surface{width:calc(100% - 64px);margin:16px 32px;padding:16px 18px;background:var(--card);border:0;border-radius:2px;box-shadow:0 1px 3px rgba(0,0,0,.16)}
+:root[data-theme=dark][data-cards=true] #maincontent.container.ml-card-surface{box-shadow:0 1px 3px rgba(0,0,0,.3)}
+@media(max-width:599px){:root[data-cards=true] #maincontent.container.ml-card-surface{width:calc(100% - 32px);margin:16px;padding:16px}}
