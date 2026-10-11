@@ -955,3 +955,6 @@ body .ml-sidebar button.ml-nav-parent.mdc-button>.ml-nav-parent-label.mdc-button
 body .ml-sidebar button.ml-nav-parent.mdc-button>.ml-nav-chevron{
  flex:0 0 24px;margin:0 0 0 12px
 }
+
+/* Restore actions keep their intrinsic width before and after MDC attaches. */
+.ml-brand-controls>.text-action{flex:0 0 auto}
