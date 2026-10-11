@@ -1,0 +1,126 @@
+{
+  "identity": {
+    "source_sha": "53ae6ddfdea1de8e8806ee626059e155bc8b6c39",
+    "actions_run_id": "38155572776",
+    "ipk": "luci-theme-materialluci_0.3.0-12_aarch64_cortex-a53.ipk",
+    "ipk_sha256": "c0d64b79b228eacf23453b4e5eacd2ff47c493c4cecb3436a8a87b194f835ef5",
+    "resource_cache": "0.3.0-12-53ae6ddfdea1"
+  },
+  "ssh_wrap_in_actual_ipk": true,
+  "performance": [
+    {
+      "version": "luci-fixture",
+      "engine": "chromium",
+      "baseline": true,
+      "metrics": {
+        "mutations": 1178,
+        "callbacks": 403,
+        "scans": 93,
+        "scanMs": 6.199999999604188,
+        "longTasks": [],
+        "scrollEvents": 2,
+        "p95FrameMs": 16.800000000000182,
+        "maxFrameMs": 16.800000000000182,
+        "extras": {
+          "selects": 8,
+          "menus": 0,
+          "tooltips": 4
+        },
+        "controls": {
+          "selections": 0,
+          "dialogs": 0
+        }
+      }
+    },
+    {
+      "version": "luci-fixture",
+      "engine": "chromium",
+      "baseline": false,
+      "metrics": {
+        "mutations": 434,
+        "callbacks": 217,
+        "scans": 0,
+        "scanMs": 0,
+        "longTasks": [],
+        "scrollEvents": 2,
+        "p95FrameMs": 16.700000000000273,
+        "maxFrameMs": 16.800000000000182,
+        "counts": {
+          "instances": 48,
+          "disabledWatchers": 48
+        },
+        "extras": {
+          "selects": 8,
+          "menus": 0,
+          "tooltips": 4
+        },
+        "controls": {
+          "selections": 0,
+          "dialogs": 0
+        }
+      }
+    }
+  ],
+  "panes": 40,
+  "max_height_delta": 0,
+  "max_scroll_delta": 0,
+  "ripples": [
+    {
+      "engine": "chromium",
+      "initial": {
+        "instances": 53,
+        "disabledWatchers": 53
+      },
+      "after": {
+        "instances": 53,
+        "disabledWatchers": 53
+      },
+      "actualScroll": {
+        "before": 0,
+        "after": 135
+      },
+      "metrics": {
+        "starts": 4,
+        "events": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "latencies": [
+          0.3999999999650754,
+          0.40000000002328306
+        ],
+        "stamp": 2064.7999999999884
+      },
+      "webkitTouchScroll": "CDP native touch gesture"
+    },
+    {
+      "engine": "webkit",
+      "initial": {
+        "instances": 53,
+        "disabledWatchers": 53
+      },
+      "after": {
+        "instances": 53,
+        "disabledWatchers": 53
+      },
+      "actualScroll": null,
+      "metrics": {
+        "starts": 4,
+        "events": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "latencies": [
+          1,
+          1
+        ],
+        "stamp": 1851
+      },
+      "webkitTouchScroll": "synthetic pointer cancellation only; physical scroll pending"
+    }
+  ]
+}

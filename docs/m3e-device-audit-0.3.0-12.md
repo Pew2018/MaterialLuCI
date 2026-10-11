@@ -53,3 +53,11 @@ Actions 38153062456 passed, but manual review of its valid-key mobile screenshot
 Additional ripple probes use automatic DOM enhancement, native mouse/keyboard/touchscreen tap, cancelled pointer sequences, inherited disabled behavior and before/after component counts. Chromium additionally uses a CDP browser touch gesture and checks scrolling without ripple/action activation. WebKit cancellation is synthetic; physical Safari touch scroll is still pending. The probe counts actual Web Animations calls on the ripple surface and records pointer-to-animation latency; it does not infer smoothness solely from animation state.
 
 The sustained pane test retains the edited field focus while scrolling and dispatching viewport notifications. It does not blur the field to mask focus-restoration behavior. Emulated viewport events do not reproduce a physical mobile keyboard or browser toolbar.
+
+## Final evidence
+
+Theme/package commit: 53ae6ddfdea1de8e8806ee626059e155bc8b6c39. Build Actions 38155572776 passed all checks, with actual-IPK sha256 c0d64b79b228eacf23453b4e5eacd2ff47c493c4cecb3436a8a87b194f835ef5. Read-only artifact review Actions 38157324595 verified the downloaded IPK hash and native SSH key wrapping CSS, and exposed nine original screenshot images for manual review. 40 sustained pane records have maximum document height/scroll change 0px. Probe cleanup restores 53 instances/53 state subscriptions in both engines. Document scans 93 -> 0, mutation records 1178 -> 434, callbacks 403 -> 217; no measured long tasks in either version and essentially unchanged frame timing. This does not demonstrate physical-device smoothness.
+
+Important fixture limit: ci/system-view.js replaces widgets.NetworkSelect with form.Value to avoid network discovery RPC. That NTP field therefore does not have its real rich-dropdown DOM; the system test must not be described as an exact-DOM acceptance for that widget or for the unknown ImmortalWrt fork. Real save/apply/reconnect and physical Safari remain pending. The source-proven defects are fixed, but no unique trigger chain for the reported physical endless upward scrolling has been proven.
+
+Full Chinese report and original reviewed PNGs: [report](m3e-0.3.0-12-final-report.zh-CN.md).
