@@ -18,35 +18,31 @@ export async function verifyMaintenance(browser,name,base){
    // h2/p/hr and an input button directly under maincontent, with no #view.
    const legacy=await browser.newPage({viewport:{width:390,height:844}}),legacyErrors=[];
    legacy.on("pageerror",e=>legacyErrors.push(e.message));
-   await legacy.goto(base+"/reboot.html");
+   await legacy.goto(base+"/reboot-legacy.html");
    await legacy.waitForFunction(()=>!!window.MaterialLuCI);
    await legacy.evaluate(()=>{
-    const main=document.getElementById("maincontent");
-    window.L.env.dispatchpath=[];window.L.env.requestpath=[];
-    document.body.dataset.page="admin-system-reboot";
-    const title=document.createElement("h2");title.textContent="Reboot";
-    const description=document.createElement("p");description.textContent="Restart the device and reconnect after it becomes available.";
-    const rule=document.createElement("hr"),form=document.createElement("form"),action=document.createElement("input");
-    action.type="button";action.id="legacy-reboot-action";action.name="reboot";action.value="Perform reboot";action.className="cbi-button cbi-button-action important";
-    action.addEventListener("click",()=>window.legacyCalls=(window.legacyCalls||0)+1);
-    form.append(action);main.replaceChildren(title,description,rule,form);
-    MaterialLuCI.enhance(main);
+    window.legacyCalls=0;
+    window.XHR=function(){this.post=(url,data,callback)=>{window.legacyCalls++;window.legacyPost={url,data};};};
+    document.querySelector('#maincontent input[type=button]').id="legacy-reboot-action";
    });
    const legacyLayout=await legacy.evaluate(()=>{const main=document.getElementById("maincontent");return {page:main.dataset.mlPage,route:document.body.dataset.page,card:main.classList.contains("ml-card-surface"),children:[...main.children].map(el=>el.tagName.toLowerCase()),view:!!main.querySelector("#view")};});
    assert.equal(legacyLayout.card,true,"legacy reboot surface: "+JSON.stringify(legacyLayout));
    assert.equal(await legacy.locator("#maincontent").getAttribute("data-ml-page"),"reboot","legacy data-page route fallback");
    assert.equal(await legacy.locator("#maincontent hr").evaluate(el=>getComputedStyle(el).display),"none");
-   assert.equal(await legacy.locator("#legacy-reboot-action").getAttribute("name"),"reboot");
+   assert.equal(await legacy.locator("#legacy-reboot-action").getAttribute("onclick"),"reboot(this)");
    assert.equal(await legacy.locator("#legacy-reboot-action").evaluate(el=>getComputedStyle(el).textAlign),"center");
    assert.equal(await legacy.locator("#legacy-reboot-action").evaluate(el=>getComputedStyle(el).borderTopColor),"rgba(0, 0, 0, 0)");
-   await legacy.locator("#legacy-reboot-action").click();
-   assert.equal(await legacy.evaluate(()=>legacyCalls),1,"legacy reboot click callback preserved");
+
    for(const width of [390,1280])for(const mode of ["light","dark"]){
     await legacy.setViewportSize({width,height:844});
     await legacy.evaluate(mode=>MaterialAppearance.set("mode",mode),mode);
     assert(await legacy.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"legacy reboot overflow");
     await legacy.screenshot({path:"dist/previews/"+name+"-reboot-legacy-"+width+"-"+mode+".png",fullPage:true});
    }
+   await legacy.locator("#legacy-reboot-action").click();
+   assert.equal(await legacy.evaluate(()=>legacyCalls),1,"legacy XHR callback invoked once through original onclick");
+   assert.equal(await legacy.locator(".reboot-message").isVisible(),true,"native reboot waiting state preserved");
+   assert.equal(await legacy.evaluate(()=>legacyPost.url.endsWith("/admin/system/reboot/call")),true);
    assert.deepEqual(legacyErrors,[]);
    await legacy.close();
   }else if(kind==="firewall"){
