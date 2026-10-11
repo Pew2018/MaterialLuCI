@@ -61,7 +61,12 @@ if a.candidate:
  app=files[assets+"app.js"].decode();wait=files[assets+"wait.js"].decode();css=files[assets+"cascade.css"].decode()
  assert 'ml-nav-parent-label' in app and 'aria-expanded' in app
  assert '"关于"' not in app and '"About"' not in app
- assert 'ml-view-progress' in wait and 'MDCLinearProgress' in wait
+ assert 'ml-view-progress' in wait
+ if assets+"components.js" in files:
+  adapter=files[assets+"components.js"].decode()
+  assert 'MaterialComponents.progress' in wait and 'MDCLinearProgress' in adapter and 'md-linear-progress' in adapter
+  checks["dual_style_progress_adapter_packaged"]=True
+ else:assert 'MDCLinearProgress' in wait
  assert 'ml-chart-surface' in css and 'body[data-page$="-load"]' not in css
  assert '<svg' in files[assets+"icons/pause.svg"].decode()
  for rule in ["height:auto;min-height:0;flex:none;align-self:center","flex-grow:0","body #modal_overlay>.modal.alert-message","height:56px;padding-top:0","border-left-color:transparent"]:
