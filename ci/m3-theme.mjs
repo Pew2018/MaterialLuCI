@@ -41,6 +41,11 @@ export async function verifyM3Theme(browser,engine,base){
   }
   await page.locator("#ml-hex").fill("#9575CD");await page.locator("#ml-hex").dispatchEvent("input");
   assert.equal(await page.evaluate(()=>getComputedStyle(document.documentElement).getPropertyValue("--md-sys-color-primary").trim()),await page.evaluate(()=>MaterialM3Palette.generate("#9575CD",MaterialAppearance.prefs.mode==="dark").system.primary));
+  assert(await page.evaluate(()=>{
+   const palette=MaterialM3Palette.generate(MaterialAppearance.prefs.seed,MaterialAppearance.prefs.mode==="dark"),style=getComputedStyle(document.documentElement);
+   return style.getPropertyValue("--raised-surface").trim()===palette.system.surfaceContainerHigh&&style.getPropertyValue("--sidebar-surface").trim()===palette.system.surface;
+  }),"legacy surfaces did not receive M3 roles");
+  assert(await page.locator("#fixture-name").evaluate(input=>{const probe=document.createElement("span");probe.style.color="var(--ink)";document.body.append(probe);const actual=getComputedStyle(input),expected=getComputedStyle(probe).color;probe.remove();return actual.color===expected&&actual.webkitTextFillColor===expected;}),"native text ink lost M3 color");
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"M3 document overflow");
   for(const copy of await page.locator("#ml-appearance [data-group=general]>.ml-setting-row:has(>.ml-mode-options)>.ml-row-copy").all()){
    const r=await copy.boundingBox();assert(r.width>150,"choice description squeezed");
