@@ -53,6 +53,7 @@ export async function verifyMaintenance(browser,name,base){
    });
    assert.deepEqual(contracts,{table:"TABLE",heading:"H4",chain:"INPUT"},"firewall polling and jump contracts");
   }else{
+   console.log("flash mtd actual DOM",await page.locator('[data-name="mtdselect"]').evaluate(el=>({dom:el.outerHTML,styles:[...el.querySelectorAll("select,.cbi-dropdown,.open,.mdc-select__selected-text,.mdc-select__anchor")].map(n=>({tag:n.tagName,cls:n.className,height:n.getBoundingClientRect().height,y:n.getBoundingClientRect().y,display:getComputedStyle(n).display,border:getComputedStyle(n).border,align:getComputedStyle(n).alignItems,lineHeight:getComputedStyle(n).lineHeight}))})));
    const buttons=page.locator('.ml-section-container .cbi-value-field button.cbi-button');
    const first=buttons.first();await first.click();
    assert.deepEqual(await page.evaluate(()=>maintenanceCalls),["Generate archive"]);
