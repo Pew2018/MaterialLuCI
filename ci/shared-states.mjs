@@ -72,6 +72,27 @@ export async function verifySharedStates(page,name,mode,size){
   assert.equal(await select.evaluate(el=>getComputedStyle(el).webkitTextFillColor),native.expected.disabled);
   await select.evaluate(el=>el.disabled=false);
  }
+ await page.evaluate(()=>{
+  if(document.getElementById("inherited-disabled-fields"))return;
+  const fieldset=document.createElement("fieldset");fieldset.id="inherited-disabled-fields";
+  const input=document.createElement("input");input.id="fieldset-text";input.value="Inherited disabled state";
+  const select=document.createElement("select");select.id="fieldset-select";select.add(new Option("已标记 Selected","t"));select.add(new Option("未标记 Other","u"));
+  fieldset.append(input,select);document.getElementById("native-select-states").append(fieldset);
+  window.inheritedStateChanges=0;for(const field of [input,select])for(const event of ["input","change"])field.addEventListener(event,()=>inheritedStateChanges++);
+  MaterialLuCI.enhance(fieldset);
+ });
+ await page.locator("#inherited-disabled-fields").evaluate(el=>el.disabled=true);
+ await page.waitForFunction(()=>document.querySelector("#fieldset-text").closest(".ml-text-field").classList.contains("mdc-text-field--disabled")&&document.querySelector("#fieldset-select")._mlMdcSelect.disabled);
+ assert.equal(await page.locator("#fieldset-text").evaluate(el=>getComputedStyle(el).color),native.expected.disabled);
+ assert.equal(await page.locator("#fieldset-select + .ml-mdc-select .mdc-select__selected-text").evaluate(el=>getComputedStyle(el).color),native.expected.disabled);
+ assert.equal(await page.locator("#fieldset-select").inputValue(),"t");
+ assert.equal(await page.evaluate(()=>inheritedStateChanges),0,"presentation state changes must not emit value events");
+ await page.locator("#inherited-disabled-fields").evaluate(el=>el.disabled=false);
+ await page.waitForFunction(()=>!document.querySelector("#fieldset-text").closest(".ml-text-field").classList.contains("mdc-text-field--disabled")&&!document.querySelector("#fieldset-select")._mlMdcSelect.disabled);
+ const div=page.locator("#audit-div-button");
+ await div.evaluate(el=>el.setAttribute("aria-disabled","true"));
+ assert.equal(await div.evaluate(el=>getComputedStyle(el).color),native.expected.disabled,"aria-disabled div button foreground");
+ await div.evaluate(el=>el.removeAttribute("aria-disabled"));
  const roles=await page.evaluate(()=>{
   const color=token=>{const p=document.createElement("span");p.style.color="var("+token+")";document.body.append(p);const c=getComputedStyle(p).color;p.remove();return c;};
   return {primary:color("--on-accent"),disabled:color("--disabled"),pressed:color("--pressed")};

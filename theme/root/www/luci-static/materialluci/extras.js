@@ -74,14 +74,14 @@
     anchor.setAttribute("aria-label",label);list.setAttribute("aria-label",label);
     const description=select.getAttribute("aria-describedby");if(description)anchor.setAttribute("aria-describedby",description);else anchor.removeAttribute("aria-describedby");
     if(instance){
-     instance.disabled=select.disabled;instance.required=select.required;instance.useDefaultValidation=false;
+     instance.disabled=select.matches(":disabled");instance.required=select.required;instance.useDefaultValidation=false;
      if(instance.selectedIndex!==select.selectedIndex)instance.setSelectedIndex(select.selectedIndex,true);
      instance.valid=select.validity.valid&&!select.classList.contains("cbi-input-invalid")&&select.getAttribute("aria-invalid")!=="true";
      anchor.setAttribute("aria-invalid",String(!instance.valid));anchor.setAttribute("aria-required",String(select.required));
     }
    }finally{syncing=false;}
   }
-  const entry={root,anchor,get menu(){return menu;},destroy(){
+  const entry={root,anchor,sync:queue,get menu(){return menu;},destroy(){
    observer.disconnect();popup._mlEscapeCleanup?.();clearItems(list);instance?.destroy();popup.remove();root.remove();select.classList.remove("ml-mdc-native-select");select._mlMdcSelect=null;
    select.removeEventListener("input",queue);select.removeEventListener("change",queue);select.removeEventListener("focus",focus);select.removeEventListener("invalid",invalid);
    select.form?.removeEventListener("reset",reset);restore.forEach(fn=>fn());
@@ -93,14 +93,14 @@
   escapeFocus(popup,anchor);
   instance.useDefaultValidation=false;root._mlMdcSelect=instance;select._mlMdcSelect=instance;selects.set(select,entry);
   root.addEventListener("MDCSelect:change",()=>{
-   if(syncing||select.disabled)return;
+   if(syncing||select.matches(":disabled"))return;
    const option=select.options[instance.selectedIndex];
    if(!option||option.disabled){queue();return;}
    if(select.selectedIndex===instance.selectedIndex)return;
    select.selectedIndex=instance.selectedIndex;
    select.dispatchEvent(new Event("input",{bubbles:true}));select.dispatchEvent(new Event("change",{bubbles:true}));queue();
   });
-  function focus(){if(!select.disabled)anchor.focus({preventScroll:true});}
+  function focus(){if(!select.matches(":disabled"))anchor.focus({preventScroll:true});}
   function invalid(event){event.preventDefault();queue();focus();}
   function reset(){setTimeout(queue,0);}
   select.addEventListener("input",queue);select.addEventListener("change",queue);select.addEventListener("focus",focus);select.addEventListener("invalid",invalid);select.form?.addEventListener("reset",reset);
@@ -174,6 +174,7 @@
  }
  let pending=false;
  const observer=new MutationObserver(records=>{
+  for(const r of records)if(r.type==="attributes"&&r.attributeName==="disabled"&&r.target.tagName==="FIELDSET")for(const [select,entry] of selects)if(r.target.contains(select))entry.sync();
   if(records.some(r=>r.type==="attributes"&&(r.attributeName==="inert"||r.attributeName==="aria-hidden"||r.target===document.body)))for(const el of tips.keys())if(el.closest('[inert],[aria-hidden="true"]'))el._mlMdcTooltip.hide();
   for(const [el,entry] of selects)if(!el.isConnected||!entry.root.isConnected)entry.destroy();
   for(const [el,entry] of actions)if(!el.isConnected)entry.destroy();
@@ -181,7 +182,7 @@
   const relevant=records.some(r=>r.type==="childList"&&[...r.addedNodes].some(n=>n.nodeType===1&&!n.matches(".mdc-tooltip,.ml-mdc-menu,.mdc-snackbar"))||r.type==="attributes"&&r.target.matches(".ml-icon-button,.ml-poll-action,#ml-drawer-close"));
   if(relevant&&!pending){pending=true;queueMicrotask(()=>{pending=false;enhance(document);});}
  });
- observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["aria-label","title","inert","aria-hidden","class"]});
+ observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["aria-label","title","inert","aria-hidden","class","disabled"]});
  function closeMenus(){for(const e of selects.values())e.menu.open=false;for(const el of actions.keys())el._mlMdcMenu.open=false;for(const el of tips.keys())el._mlMdcTooltip.hide();}
  // User scrolling closes popups. Browser focus/scroll anchoring and LuCI's
  // programmatic scrolls must not turn a single toggle into close + reopen.

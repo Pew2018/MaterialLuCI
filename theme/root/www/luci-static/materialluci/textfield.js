@@ -49,7 +49,7 @@
    const sync=()=>{
     if(syncing)return;syncing=true;
     try{
-     if(root.classList.contains("mdc-text-field--disabled")!==!!input.disabled)instance.disabled=!!input.disabled;
+     if(root.classList.contains("mdc-text-field--disabled")!==input.matches(":disabled"))instance.disabled=input.matches(":disabled");
      instance.valid=input.getAttribute("aria-invalid")!=="true"&&!input.classList.contains("cbi-input-invalid")&&!input.closest(".cbi-value-error");
      if(input===document.activeElement&&!root.classList.contains("mdc-text-field--focused"))instance.foundation.activateFocus();
     }finally{syncing=false;}
@@ -65,7 +65,7 @@
    observer.observe(input,{attributes:true,attributeFilter:["disabled","readonly","class","aria-invalid"]});
    input.addEventListener("input",sync);input.addEventListener("change",sync);input.addEventListener("blur",sync);
    const reset=()=>setTimeout(sync,0);document.addEventListener("reset",reset,true);
-   fields.set(input,{root,destroy(){
+   fields.set(input,{root,sync,destroy(){
     observer.disconnect();instance.destroy();root._mlMdcTextField=null;
     input.removeEventListener("input",sync);input.removeEventListener("change",sync);input.removeEventListener("blur",sync);
     document.removeEventListener("reset",reset,true);if(descriptorInstalled)delete input.disabled;
@@ -77,6 +77,7 @@
    sync();
   }
  }
+ new MutationObserver(records=>{for(const r of records)if(r.type==="attributes"&&r.target.tagName==="FIELDSET")for(const [input,entry] of fields)if(r.target.contains(input))entry.sync();}).observe(document.body,{attributes:true,subtree:true,attributeFilter:["disabled"]});
  new MutationObserver(()=>{for(const [input,entry] of fields)if(!input.isConnected||!entry.root.contains(input))entry.destroy();}).observe(document.body,{childList:true,subtree:true});
  window.addEventListener("pagehide",event=>{if(!event.persisted)for(const entry of [...fields.values()])entry.destroy();});
  window.MaterialTextFields={enhance};

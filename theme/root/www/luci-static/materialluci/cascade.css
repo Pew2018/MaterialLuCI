@@ -761,7 +761,7 @@ body :is(button,.btn,.cbi-button,a.btn,a.cbi-button):disabled,
 body input:is([type="button"],[type="submit"],[type="reset"]):disabled{
  border-color:transparent;box-shadow:none
 }
-body .ml-native-button.mdc-button{
+body .ml-native-button,body .ml-native-button.mdc-button{
  --button-bg:var(--action-tonal);--button-hover-bg:var(--tonal-pressed);--button-pressed-bg:var(--tonal-pressed);--button-ink:var(--on-action-tonal);
  display:inline-flex;align-items:center;justify-content:center;position:relative;max-width:100%;min-height:48px;padding:0;border:0;border-radius:2px;background:var(--button-bg);color:var(--button-ink);box-shadow:none;vertical-align:middle
 }
@@ -893,4 +893,10 @@ body .ml-legacy-flash-section>.ml-legacy-card-end{margin:0;padding:0 18px 16px;b
  body .ml-legacy-flash-section>.ml-legacy-card-start{padding:16px 16px 8px}
  body .ml-legacy-flash-section>.ml-legacy-card-body{padding:0 16px 12px}
  body .ml-legacy-flash-section>.ml-legacy-card-end{padding:0 16px 16px}
+}
+
+/* Links/div buttons do not match :disabled; respect their native LuCI marker. */
+body .ml-mdc-feedback.mdc-button:is([aria-disabled=true],[disabled]){
+ --button-bg:var(--pressed);--button-hover-bg:var(--pressed);--button-pressed-bg:var(--pressed);--button-ink:var(--disabled);
+ background:var(--button-bg);color:var(--button-ink);border-color:transparent;box-shadow:none
 }
