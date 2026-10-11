@@ -65,7 +65,7 @@ export async function verifyUpstreamPages(browser,name,base){
   await listInput.fill("192.0.2.3");await listInput.press("Enter");
   assert.deepEqual(await page.evaluate(()=>previewList.formvalue("theme")),["192.0.2.1","192.0.2.2","192.0.2.3"]);
   const nativeDropdown=page.locator("#native-vlan-select");
-  await nativeDropdown.focus();await page.keyboard.press("ArrowDown");await page.keyboard.press("Enter");
+  await nativeDropdown.focus();await page.keyboard.press("ArrowDown");await page.keyboard.press("ArrowDown");await page.keyboard.press("Enter");
   assert.equal(await page.evaluate(()=>nativeVlanWidget.getValue()),"u","rich dropdown native keyboard selection preserved");
   await page.evaluate(()=>nativeVlanWidget.setValue("t"));
   const reset=page.getByRole("button",{name:"执行重置",exact:true});
@@ -220,6 +220,7 @@ export async function verifyUpstreamPages(browser,name,base){
     }
    }
    await listInput.fill("");
+   await listInput.evaluate(el=>el.placeholder="/example.org/10.1.2.3");
    assert.equal(await listInput.evaluate(el=>el.parentElement.classList.contains("mdc-text-field")),false,"LuCI dynamic list keeps its native add-item frame");
    await listInput.scrollIntoViewIfNeeded();
    await page.screenshot({path:"dist/previews/"+name+"-"+size+"-problem-dns-"+mode+".png"});
