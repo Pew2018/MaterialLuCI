@@ -23,3 +23,11 @@ Screenshots are review evidence, not real firmware verification. Playwright WebK
 - M3 progress preserves the official track shape and shadow-tree animation. Loading views suppress the legacy spinner only while the dedicated loader exists.
 - Modal progress follows MDC opening transforms through requestAnimationFrame; ResizeObserver alone cannot track transform geometry. The track remains outside the business modal children so apply countdown content replacement does not recreate its animation.
 - Browser tests exercise real LuCI View.__init__ and changes.displayStatus, live shadow animations, countdown stability, painted track geometry, native switch events, checkbox/radio grouping, inherited disablement and form payloads in Chromium/WebKit.
+
+## System layout and Expressive controls (0.3.0-11)
+- Inactive native LuCI tab panes use display:none in M3E, preventing height-zero panes from retaining surface padding or focusable controls.
+- Ordinary desktop focus/viewport changes do not programmatically reposition the document. Mobile keyboard and modal reveal remain supported.
+- SSH/dynamic-list add rows have a full-width editor and a 48px, wrapping action instead of a tiny intrinsic-width editor.
+- Busy modal, task and view loaders use a project-owned SVG wavy progress adapter, based on Google's M3 Expressive wavy indicator guidance (https://github.com/material-components/material-components-android/blob/master/docs/components/ProgressIndicator.md). Material Web 2.5.0 supplies only ordinary M3 linear progress; this adapter is not an official Google web component. Motion respects reduced-motion and cleanup disconnects geometry observers.
+- Native LuCI actions/tabs now use Google's md-ripple; the original DOM target, submitter/reset behavior and callbacks remain authoritative. Filled fields/selects, action shapes, menus, cards and dialogs receive M3 semantic surfaces and geometry through theme CSS. Text fields/select menus continue to use MDC interaction logic; they are not new official Material Web fields.
+- Actual pinned upstream system and SSH renderers now run in Chromium/WebKit at mobile/desktop widths, covering all four reported system tabs, inactive-pane geometry, stable scroll/document height, textarea editing, SSH invalid-key callbacks and reduced-motion loaders.

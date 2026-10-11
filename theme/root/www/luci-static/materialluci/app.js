@@ -408,6 +408,8 @@
   const el=document.activeElement;
   if(!el?.matches('input:not([type=hidden]):not([type=checkbox]):not([type=radio]),textarea,select'))return;
   if(vv&&Math.abs(vv.scale-1)>.05)return;
+  // Ordinary desktop resize/tab changes must never reposition a form.
+  if(!el.closest(".modal,.ml-dialog-body")&&(!narrow.matches||!vv||innerHeight-vv.height<100))return;
   const rect=el.getBoundingClientRect(),top=(vv?.offsetTop||0)+12,bottom=(vv?.offsetTop||0)+(vv?.height||innerHeight)-16;
   const container=el.closest(".modal,.ml-dialog-body"),limits=container?.getBoundingClientRect();
   const title=container?.querySelector(":scope>h4,:scope>h3"),actions=container?.querySelector(":scope>.right");

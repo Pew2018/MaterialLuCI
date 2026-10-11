@@ -35,7 +35,20 @@
   if(el.closest(".mdc-switch,.ml-mdc-selection"))return;
   if(el.matches("button")&&el.closest(".ml-native-button"))return;
   if(!entries.has(el)&&window.__mlControlAudit&&el.isConnected){const s=getComputedStyle(el),r=el.getBoundingClientRect();el._mlBeforeMDC={width:r.width,height:r.height,fontFamily:s.fontFamily,fontSize:s.fontSize,fontWeight:s.fontWeight,color:s.color,radius:s.borderRadius,firstChild:el.firstChild};}
-  mark(el);if(entries.has(el))return;
+  if(entries.has(el))return;
+  if(MaterialComponents.isM3()&&customElements.get("md-ripple")){
+   const layer=document.createElement("md-ripple");layer.dataset.mlComponent="ripple";
+   el.classList.add("ml-m3-feedback");el.dataset.rippleOwner="m3";
+   // Avoid .open sibling contracts on compound LuCI apply buttons.
+   if(el.matches(".cbi-dropdown"))el.insertBefore(layer,el.lastElementChild);else el.append(layer);
+   layer.attach(el.matches(".ml-native-button")?el.querySelector("input,button"):el);
+   const sync=()=>{layer.disabled=disabled(el)||reduced.matches;};
+   const attrs=new MutationObserver(sync);attrs.observe(document.body,{attributes:true,subtree:true,attributeFilter:["disabled","aria-disabled"]});
+   reduced.addEventListener("change",sync);sync();
+   entries.set(el,{destroy(){attrs.disconnect();reduced.removeEventListener("change",sync);layer.detach();layer.remove();el.classList.remove("ml-m3-feedback");entries.delete(el);}});
+   return;
+  }
+  mark(el);
   el.dataset.ripple="control";el.dataset.rippleOwner="mdc";
   const instance=new ConfirmedRipple(el);el._mlMdcRipple=instance;
   // Bounded ink keeps existing rectangular hit areas and sidebar feedback.
@@ -63,7 +76,7 @@
  }
  let scheduled=false;const roots=new Set();
  new MutationObserver(records=>{
-  for(const record of records){const target=record.target.closest?.(selector);if(target)roots.add(target);for(const n of record.addedNodes)if(n.nodeType===1&&!n.matches(".mdc-button__ripple,.mdc-icon-button__ripple"))roots.add(n);}
+  for(const record of records){const target=record.target.closest?.(selector);if(target)roots.add(target);for(const n of record.addedNodes)if(n.nodeType===1&&!n.matches(".mdc-button__ripple,.mdc-icon-button__ripple,md-ripple"))roots.add(n);}
   for(const [el,entry] of entries)if(!el.isConnected)entry.destroy();
   if(roots.size&&!scheduled){scheduled=true;requestAnimationFrame(()=>{scheduled=false;for(const n of roots)if(n.isConnected)enhance(n);roots.clear();});}
  }).observe(document.body,{childList:true,subtree:true});

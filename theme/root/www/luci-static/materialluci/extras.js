@@ -183,7 +183,7 @@
   if(relevant&&!pending){pending=true;queueMicrotask(()=>{pending=false;enhance(document);});}
  });
  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["aria-label","title","inert","aria-hidden","class","disabled"]});
- function closeMenus(){for(const e of selects.values())e.menu.open=false;for(const el of actions.keys())el._mlMdcMenu.open=false;for(const el of tips.keys())el._mlMdcTooltip.hide();}
+ function closeMenus(){for(const e of selects.values())if(e.menu.open)e.menu.open=false;for(const el of actions.keys())if(el._mlMdcMenu.open)el._mlMdcMenu.open=false;for(const el of tips.keys())el._mlMdcTooltip.hide();}
  // User scrolling closes popups. Browser focus/scroll anchoring and LuCI's
  // programmatic scrolls must not turn a single toggle into close + reopen.
  window.addEventListener("resize",closeMenus);

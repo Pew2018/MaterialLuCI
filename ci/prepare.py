@@ -175,3 +175,18 @@ for variant,keep in (("keep",True),("erase",False)):
  renderer.write_text(code)
  html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime.replace(json.dumps(env),json.dumps(upgrade_env))+"</head>")
  (output/("upgrade-legacy-"+variant+".html")).write_text(html)
+
+# Real system tabs and SSH key controls, served from the final IPK shell.
+for name in ("system","sshkeys"):
+ source=(system/("view/system/"+name+".js")).read_text().replace("'require view';","'require baseclass as view';",1)
+ (view_dir/("materialluci-native-"+name+".js")).write_text(source)
+shutil.copy(ROOT/"ci/system-view.js",view_dir/"materialluci-system-preview.js")
+for name in ("system","sshkeys"):
+ system_env=dict(env)
+ system_env["requestpath"]=["admin","system",name]
+ system_env["dispatchpath"]=["admin","system",name]
+ fixture='<div id="view"></div><script>window.systemFixtureKind='+json.dumps(name)+';document.addEventListener("DOMContentLoaded",function(){L.require("ui").then(function(ui){ui.instantiateView("materialluci-system-preview");});});</script>'
+ code=bootstrap+'\ninclude("header")\nwrite('+luaquote(fixture)+')\ninclude("footer")'
+ renderer.write_text(code)
+ html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime.replace(json.dumps(env),json.dumps(system_env))+"</head>")
+ (output/(name+".html")).write_text(html)

@@ -50,3 +50,37 @@ body .ml-design-options button[aria-pressed=true]{background:var(--action-tonal)
 :root[data-design=m3e] .ml-radio.ml-m3-selection::after{display:none}
 #view.ml-view-loading>.spinning{background-image:none!important;padding-left:0}
 #view.ml-view-loading>.spinning::before,#view.ml-view-loading>.spinning::after{display:none}
+
+/* Expressive geometry on original LuCI controls. Fields/menus still use MDC
+   interaction adapters; these are theme styles, not official M3 web fields. */
+:root[data-design=m3e] body .ml-m3-feedback{position:relative;isolation:isolate}
+:root[data-design=m3e] body .ml-m3-feedback>md-ripple{position:absolute;inset:0;border-radius:inherit;pointer-events:none;--md-ripple-hover-color:currentColor;--md-ripple-pressed-color:currentColor}
+:root[data-design=m3e] body :is(button.cbi-button,a.cbi-button,div.btn,.ml-native-button,.cbi-page-actions button){border-radius:24px;min-height:48px;padding:12px 24px;font-weight:500;letter-spacing:.1px}
+:root[data-design=m3e] body .ml-native-button{padding:0}
+:root[data-design=m3e] body .ml-native-button>input{border-radius:inherit}
+:root[data-design=m3e] body .ml-text-field.mdc-text-field--filled{height:56px;min-height:56px;padding:0 16px;border-radius:4px 4px 0 0;background:var(--md-sys-color-surface-container-highest)}
+:root[data-design=m3e] body .ml-text-field.mdc-text-field--textarea{height:auto;align-items:flex-start}
+:root[data-design=m3e] body .ml-text-field>textarea{flex:none;display:block;min-height:144px}
+:root[data-design=m3e] body .ml-mdc-select.mdc-select .mdc-select__anchor{height:56px;padding:8px 16px;border-radius:4px 4px 0 0;background:var(--md-sys-color-surface-container-highest)}
+:root[data-design=m3e] body .cbi-dropdown:not(.btn):not(.cbi-button){border-radius:8px 8px 0 0;background:var(--md-sys-color-surface-container-highest)}
+:root[data-design=m3e] body .ml-mdc-menu{border-radius:12px;background:var(--md-sys-color-surface-container)}
+:root[data-design=m3e][data-cards=true] body .ml-card-surface{border-radius:16px}
+:root[data-design=m3e] body #modal_overlay>.modal{border-radius:28px;background:var(--md-sys-color-surface-container-high)}
+:root[data-design=m3e] body :is(.tabs,.cbi-tabmenu)>li>a{position:relative;border-bottom:0;min-height:48px;font-weight:500}
+:root[data-design=m3e] body :is(.tabs>li.active,.cbi-tabmenu>li.cbi-tab)>a::after{content:"";position:absolute;bottom:0;left:16px;right:16px;height:3px;border-radius:3px 3px 0 0;background:var(--md-sys-color-primary)}
+/* Height-zero panes retain padding/card space and expose focusable fields.
+   Only the selected native LuCI pane participates in document layout. */
+:root[data-design=m3e] body [data-tab-title]:not([data-tab-active=true]){display:none!important}
+:root[data-design=m3e] body [data-tab-title][data-tab-active=true]{height:auto;min-height:0;overflow:visible}
+:root[data-design=m3e] body .cbi-dynlist{width:100%;max-width:100%;border-radius:12px}
+:root[data-design=m3e] body .cbi-dynlist>.add-item{width:100%;flex-wrap:wrap;align-items:center;gap:12px}
+:root[data-design=m3e] body .cbi-dynlist>.add-item>input{flex:1 1 220px;width:auto;min-width:0;min-height:48px;padding:12px 16px;background:var(--md-sys-color-surface-container-highest);border-radius:4px 4px 0 0}
+:root[data-design=m3e] body .cbi-dynlist>.add-item>button{flex:0 0 auto;width:auto;min-width:112px;height:auto;min-height:48px;padding:12px 20px;border-radius:24px;overflow:visible;white-space:normal}
+:root[data-design=m3e] .ml-progress-host,:root[data-design=m3e] #maincontent .ml-view-progress{height:16px;min-height:16px;overflow:visible}
+:root[data-design=m3e] [data-ml-progress-engine=m3e]{display:block;width:100%;height:16px;min-height:16px;overflow:hidden;background:transparent}
+:root[data-design=m3e] .ml-wavy-progress{display:block;width:100%;height:16px;overflow:hidden}
+.ml-wavy-progress path{fill:none;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.ml-wave-track{stroke:var(--md-sys-color-primary-container)}
+.ml-wave-active{stroke:var(--md-sys-color-primary);stroke-dasharray:32 68;animation:ml-wave-travel 2200ms linear infinite}
+@keyframes ml-wave-travel{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){.ml-wave-active{animation:none;stroke-dashoffset:0}}

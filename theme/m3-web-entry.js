@@ -8,3 +8,5 @@ export const version="2.5.0";
 import "@material/web/checkbox/checkbox.js";
 import "@material/web/radio/radio.js";
 import "@material/web/button/text-button.js";
+
+import "@material/web/ripple/ripple.js";

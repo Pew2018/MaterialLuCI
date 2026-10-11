@@ -95,19 +95,19 @@ export async function verifyM3Theme(browser,engine,base){
   await page.evaluate(()=>scrollTo(0,0));
   await page.screenshot({path:"dist/previews/"+engine+"-m3-settings-"+width+"-"+mode+".png",fullPage:true});
   await page.evaluate(()=>{window.m3Task=MaterialWait.start("Mock processing");});
-  assert.equal(await page.locator(".ml-task-progress md-linear-progress").count(),1);
+  assert.equal(await page.locator(".ml-task-progress .ml-wavy-progress").count(),1);
   assert.equal(await page.locator(".ml-task-progress .mdc-linear-progress__bar").count(),0);
   await page.evaluate(()=>m3Task.stop());assert.equal(await page.locator(".ml-task-progress").count(),0);
   await page.evaluate(async()=>{window.m3UI=await L.require("ui");m3UI.changes.displayStatus("notice spinning",E("p","正在等待配置被应用… 87s"));});
-  await page.waitForSelector("#ml-mdc-wait-progress md-linear-progress");
+  await page.waitForSelector("#ml-mdc-wait-progress .ml-wavy-progress");
   await page.waitForSelector("#modal_overlay.mdc-dialog--open:not(.mdc-dialog--opening)");
   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   const a=await page.locator("#ml-mdc-wait-progress").boundingBox(),b=await page.locator("#modal_overlay>.modal").boundingBox();
   assert(a.x>=b.x&&a.x+a.width<=b.x+b.width+1&&a.y>=b.y&&a.y+a.height<=b.y+b.height+1);
-  const track=page.locator("#ml-mdc-wait-progress md-linear-progress");
-  const painted=await track.boundingBox();assert(painted.width>100&&Math.abs(painted.width-a.width)<1&&Math.abs(painted.height-4)<1,"M3 painted track geometry");
-  await page.waitForFunction(()=>document.querySelector("#ml-mdc-wait-progress md-linear-progress")?.shadowRoot?.querySelector(".primary-bar")?.getAnimations().some(a=>a.playState==="running"&&a.currentTime>0));
-  await page.evaluate(()=>{window.m3Track=document.querySelector("#ml-mdc-wait-progress md-linear-progress");window.m3Animation=m3Track.shadowRoot.querySelector(".primary-bar").getAnimations()[0];window.m3Time=m3Animation.currentTime;});
+  const track=page.locator("#ml-mdc-wait-progress .ml-wavy-progress");
+  const painted=await track.boundingBox();assert(painted.width>100&&Math.abs(painted.width-a.width)<1&&Math.abs(painted.height-16)<1,"M3 painted track geometry");
+  await page.waitForFunction(()=>document.querySelector("#ml-mdc-wait-progress .ml-wavy-progress")?.querySelector(".ml-wave-active")?.getAnimations().some(a=>a.playState==="running"&&a.currentTime>0));
+  await page.evaluate(()=>{window.m3Track=document.querySelector("#ml-mdc-wait-progress .ml-wavy-progress");window.m3Animation=m3Track.querySelector(".ml-wave-active").getAnimations()[0];window.m3Time=m3Animation.currentTime;});
   await page.evaluate(()=>m3UI.changes.displayStatus("notice spinning",E("p","正在等待配置被应用… 86s")));
   await page.waitForFunction(()=>m3Animation.currentTime>m3Time);
   assert.equal(await track.evaluate(el=>el===window.m3Track),true,"countdown replaced M3 progress");
@@ -119,10 +119,10 @@ export async function verifyM3Theme(browser,engine,base){
    window.m3View=await L.require("view");window.m3Pending=new Promise(resolve=>window.m3Resolve=resolve);
    window.m3ViewPromise=m3View.prototype.__init__.call({load:()=>m3Pending,render:()=>E("p","视图已载入"),addFooter:()=>null});
   });
-  await page.waitForSelector(".ml-view-progress md-linear-progress");
+  await page.waitForSelector(".ml-view-progress .ml-wavy-progress");
   assert.equal(await page.locator(".ml-view-progress .mdc-linear-progress__bar").count(),0);
   assert.equal(await page.locator("#view").getAttribute("class"),"ml-view-loading");
-  await page.waitForFunction(()=>document.querySelector(".ml-view-progress md-linear-progress")?.shadowRoot?.querySelector(".primary-bar")?.getAnimations().some(a=>a.playState==="running"&&a.currentTime>0));
+  await page.waitForFunction(()=>document.querySelector(".ml-view-progress .ml-wavy-progress")?.querySelector(".ml-wave-active")?.getAnimations().some(a=>a.playState==="running"&&a.currentTime>0));
   await page.screenshot({path:"dist/previews/"+engine+"-m3-view-loading-"+width+"-"+mode+".png"});
   await page.evaluate(()=>m3Resolve());await page.waitForSelector(".ml-view-progress",{state:"detached"});await page.evaluate(()=>document.getElementById("view").remove());
 

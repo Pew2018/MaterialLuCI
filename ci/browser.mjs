@@ -12,6 +12,7 @@ import {verifyUpstreamPages} from "./upstream-pages.mjs";
 import {verifyBranding} from "./branding.mjs";
 import {verifySidebar} from "./sidebar.mjs";
 import {verifyM3Theme} from "./m3-theme.mjs";
+import {verifySystemLayout} from "./system-layout.mjs";
 const server=spawn("python3",["ci/server.py"],{stdio:"inherit"}),base="http://127.0.0.1:8765";
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 fs.mkdirSync("dist/previews",{recursive:true});
@@ -20,7 +21,7 @@ try{
  for(let i=0;i<50;i++){try{if((await fetch(base)).ok)break;}catch{}await pause(200);}
  for(const [name,engine] of [["chromium",chromium],["webkit",webkit]]){
   const browser=await engine.launch(),page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[],requests=[];
-  await verifyM3Theme(browser,name,base);
+  await verifyM3Theme(browser,name,base);await verifySystemLayout(browser,name,base);
   page.on("pageerror",e=>errors.push(e.stack||e.message));page.on("request",r=>requests.push(r.url()));
   await page.goto(base);await page.waitForFunction(()=>window.fixtureCheckbox&&window.fixtureSelect&&document.body.dataset.mlMenus==="ready");
   await page.waitForSelector("#real-widget .ml-switch-hit .mdc-switch");

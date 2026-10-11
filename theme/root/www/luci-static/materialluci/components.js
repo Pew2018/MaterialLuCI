@@ -78,12 +78,25 @@
   }
  }
  function progress(node){
-  if(supported("md-linear-progress")){
+  if(m3()){
+   // Project-owned M3 Expressive adapter: Material Web 2.5 has no wavy API.
+   // Native host retains the accessible indeterminate progress semantics.
    node.classList.remove("mdc-linear-progress","mdc-linear-progress--indeterminate","mdc-linear-progress--closed");
-   node.dataset.mlProgressEngine="m3";
-   node.dataset.mlComponent="progress";
-   const el=document.createElement("md-linear-progress");el.indeterminate=true;el.setAttribute("aria-hidden","true");node.replaceChildren(el);
-   return {determinate:false,buffer:1,open(){},destroy(){el.remove();}};
+   node.dataset.mlProgressEngine="m3e";node.dataset.mlComponent="progress";
+   const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");
+   svg.classList.add("ml-wavy-progress");svg.setAttribute("aria-hidden","true");
+   const path=cls=>{const p=document.createElementNS(ns,"path");p.setAttribute("class",cls);p.setAttribute("pathLength","100");svg.append(p);return p;};
+   const track=path("ml-wave-track"),active=path("ml-wave-active");
+   node.replaceChildren(svg);
+   let width=0;
+   const paint=()=>{const next=Math.round(node.getBoundingClientRect().width);if(next===width||next<1)return;width=next;
+    svg.setAttribute("viewBox","0 0 "+width+" 16");
+    // Constant 32px wavelength across every viewport; four-pixel round stroke.
+    let d="M 0 8";for(let x=0;x<width;x+=32)d+=" Q "+(x+8)+" 0 "+(x+16)+" 8 Q "+(x+24)+" 16 "+(x+32)+" 8";
+    track.setAttribute("d",d);active.setAttribute("d",d);
+   };
+   const resize=new ResizeObserver(paint);resize.observe(node);paint();
+   return {determinate:false,buffer:1,open(){},destroy(){resize.disconnect();svg.remove();}};
   }
   if(window.MaterialMDC?.MDCLinearProgress){node.dataset.mlProgressEngine="mdc";return new MaterialMDC.MDCLinearProgress(node);}
   node.dataset.mlProgressFallback="true";node.textContent="";return {open(){},destroy(){}};
