@@ -15,6 +15,10 @@ try{
   // Focused, legible details are available in logs for visual review as well
   // as the unchanged PNG artifacts; no router data enters these fixtures.
   for(const filename of [
+   engine+"-mobile-problem-dns-light.png",
+   engine+"-mobile-problem-dropdown-light.png",
+   engine+"-reboot-legacy-390-light.png",
+   engine+"-flash-390-light.png",
    engine+"-mobile-problem-dns-dark.png",
    engine+"-mobile-problem-dropdown-dark.png",
    engine+"-reboot-legacy-390-dark.png",
