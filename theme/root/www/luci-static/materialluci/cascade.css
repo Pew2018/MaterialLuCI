@@ -909,3 +909,36 @@ body #maincontent[data-ml-page=flashops] input.cbi-button-reset[name=reset]{
 }
 body .cbi-page-actions>form.inline{display:flex;align-items:center;flex-wrap:wrap;gap:12px;max-width:100%;margin:0}
 @media(max-width:599px){body .cbi-page-actions>form.inline{width:100%}}
+
+/* Browser-local title and device-name settings; keep the shell geometry fixed. */
+body .ml-toolbar-inner #ml-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ml-sidebar-heading[data-name-hidden=true] .ml-sidebar-name{display:none}
+.ml-brand-row{align-items:flex-start}
+.ml-brand-controls{display:flex;flex:0 1 48%;align-items:center;justify-content:flex-end;gap:8px;min-width:0}
+.ml-brand-controls>.ml-brand-input{flex:1 1 auto;min-width:0;width:100%;max-width:100%}
+body .ml-brand-input{min-height:44px;border:0;border-bottom:1px solid var(--muted);border-radius:0;padding:8px 4px;background:transparent;color:var(--ink);font:inherit;line-height:1.4}
+body .ml-brand-input:focus{border-bottom:2px solid var(--control-accent);outline:none}
+body .ml-brand-input:disabled{color:var(--disabled);border-bottom-color:var(--divider)}
+.ml-brand-color-control{align-items:flex-start}
+.ml-brand-color-fields{display:flex;flex:1 1 auto;align-items:center;gap:8px;min-width:0}
+.ml-brand-color-fields[hidden]{display:none}
+.ml-brand-color-fields input[type=text]{flex:1 1 auto;min-width:0}
+.ml-brand-color-fields input[type=color]{width:48px;height:44px;flex:none;padding:4px;border:1px solid var(--divider);background:var(--surface);color:var(--ink)}
+.ml-brand-warning{font-size:12px;line-height:1.45;color:var(--danger);padding:4px 0}
+.ml-brand-warning[hidden]{display:none}
+#ml-appearance .ml-group[data-group=identity]{min-width:0}
+@media(min-width:1024px){
+ #ml-appearance{grid-template-areas:"general ranges" "oneplus material" "custom custom" "identity identity"}
+ #ml-appearance [data-group=identity]{grid-area:identity}
+ #ml-appearance .ml-group[data-group=identity]{border-top:1px solid var(--divider)}
+}
+@media(max-width:767px){
+ .ml-sidebar-heading[data-name-hidden=true]{display:flex}
+ #ml-appearance .ml-brand-row{display:block}
+ #ml-appearance .ml-brand-row>.ml-row-copy{display:block;margin-bottom:8px}
+ #ml-appearance .ml-brand-row>.ml-brand-controls{width:100%;max-width:none}
+ #ml-appearance .ml-brand-controls{flex:1 1 100%;max-width:none;justify-content:flex-start}
+ #ml-appearance .ml-brand-controls>.ml-brand-input{max-width:none}
+ #ml-appearance .ml-brand-color-fields{width:100%}
+}
+@media(min-width:768px) and (max-width:1023px){#ml-appearance .ml-brand-controls{flex-basis:52%}}

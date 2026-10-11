@@ -46,6 +46,7 @@
  <script defer src="<%=media%>/extras.js?v=@CACHE@"></script>
  <script defer src="<%=media%>/material-web.js?v=@CACHE@"></script>
  <script defer src="<%=media%>/components.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/branding.js?v=@CACHE@"></script>
  <script defer src="<%=media%>/app.js?v=@CACHE@"></script>
  <script defer src="<%=media%>/wait.js?v=@CACHE@"></script>
 </head>
@@ -53,13 +54,13 @@
  <header class="ml-toolbar"><div class="ml-toolbar-inner">
   <button id="ml-back" class="ml-icon-button" type="button" aria-label="<%:Back%>" hidden><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
   <button id="ml-menu-button" class="ml-icon-button" type="button" aria-label="<%:Menu%>" aria-controls="ml-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg></button>
-  <span class="ml-title">MaterialLuCI</span>
+  <span id="ml-title" class="ml-title" aria-label="MaterialLuCI">MaterialLuCI</span>
   <div id="indicators"></div>
  </div></header>
  <a class="ml-skip" href="#maincontent"><%:Skip to content%></a>
  <div class="ml-layout">
  <aside id="ml-sidebar" class="ml-sidebar" aria-label="<%:Navigation%>">
-  <div class="ml-sidebar-heading"><span><%=pcdata(boardinfo.hostname or "MaterialLuCI")%></span><button id="ml-drawer-close" type="button" class="text-action" aria-label="<%:Close%>">×</button></div>
+  <div id="ml-sidebar-heading" class="ml-sidebar-heading"><span id="ml-sidebar-name" data-default-name="<%=pcdata(boardinfo.hostname or "MaterialLuCI")%>"><%=pcdata(boardinfo.hostname or "MaterialLuCI")%></span><button id="ml-drawer-close" type="button" class="text-action" aria-label="<%:Close%>">×</button></div>
   <nav id="ml-menu-tree"><p class="hint"><%:Loading…%></p></nav>
  </aside>
  <div id="ml-drawer-scrim" class="ml-drawer-scrim" hidden></div>

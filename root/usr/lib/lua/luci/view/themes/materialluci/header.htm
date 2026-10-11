@@ -1,0 +1,73 @@
+<%#
+ Copyright 2008 Steven Barth <steven@midlink.org>
+ Copyright 2008-2016 Jo-Philipp Wich <jow@openwrt.org>
+ Copyright 2012 David Menting <david@nut-bolt.nl>
+ Copyright 2020 Lienol <lawlienol@gmail.com>
+ Copyright 2026 Patrick (Pew2018)
+ Licensed under the Apache License 2.0.
+ Derived from the user's installed bootstrap_mod header.
+-%>
+<%
+ local sys=require "luci.sys"
+ local util=require "luci.util"
+ local http=require "luci.http"
+ local disp=require "luci.dispatcher"
+ local boardinfo=util.ubus("system","board") or {}
+ local node=disp.context.dispatched
+ http.prepare_content("text/html")
+-%>
+<!DOCTYPE html>
+<html lang="<%=pcdata(luci.i18n.context.lang)%>" data-loading="true">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="theme-color" content="#FAFAFA">
+ <meta name="apple-mobile-web-app-status-bar-style" content="default">
+ <meta name="materialluci-build" content="@COMMIT@">
+ <meta name="materialluci-cache" content="@CACHE@">
+ <title><%=striptags((boardinfo.hostname or "?") .. ((node and node.title) and " - "..translate(node.title) or ""))%> - MaterialLuCI</title>
+ <script src="<%=media%>/palette.js?v=@CACHE@"></script>
+ <script src="<%=media%>/palette-m3.js?v=@CACHE@"></script>
+ <script src="<%=media%>/startup.js?v=@CACHE@"></script>
+ <link rel="stylesheet" href="<%=media%>/mdc-linear-progress.css?v=@CACHE@">
+ <link rel="stylesheet" href="<%=media%>/cascade.css?v=@CACHE@">
+ <link rel="stylesheet" href="<%=media%>/design-m3.css?v=@CACHE@">
+ <% if node and node.css then %><link rel="stylesheet" href="<%=resource%>/<%=node.css%>"><% end %>
+ <% if css then %><style><%=css%></style><% end %>
+ <script src="<%=url('admin/translations',luci.i18n.context.lang)%>"></script>
+ <script src="<%=resource%>/cbi.js"></script>
+ <script defer src="<%=media%>/mdc-linear-progress.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/mdc-switch.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/mdc-textfield.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/textfield.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/mdc-controls.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/controls.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/feedback.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/extras.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/material-web.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/components.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/app.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/wait.js?v=@CACHE@"></script>
+</head>
+<body class="lang_<%=pcdata(luci.i18n.context.lang)%>" data-page="<%=pcdata(table.concat(disp.context.requestpath,'-'))%>">
+ <header class="ml-toolbar"><div class="ml-toolbar-inner">
+  <button id="ml-back" class="ml-icon-button" type="button" aria-label="<%:Back%>" hidden><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+  <button id="ml-menu-button" class="ml-icon-button" type="button" aria-label="<%:Menu%>" aria-controls="ml-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg></button>
+  <span class="ml-title">MaterialLuCI</span>
+  <div id="indicators"></div>
+ </div></header>
+ <a class="ml-skip" href="#maincontent"><%:Skip to content%></a>
+ <div class="ml-layout">
+ <aside id="ml-sidebar" class="ml-sidebar" aria-label="<%:Navigation%>">
+  <div class="ml-sidebar-heading"><span><%=pcdata(boardinfo.hostname or "MaterialLuCI")%></span><button id="ml-drawer-close" type="button" class="text-action" aria-label="<%:Close%>">×</button></div>
+  <nav id="ml-menu-tree"><p class="hint"><%:Loading…%></p></nav>
+ </aside>
+ <div id="ml-drawer-scrim" class="ml-drawer-scrim" hidden></div>
+ <div id="page-content"><main id="maincontent" class="container" tabindex="-1">
+  <div id="ml-startup-error" role="alert" hidden><%:The interface could not be initialized. Please reload this page.%> <button type="button" onclick="location.reload()"><%:Reload%></button></div>
+  <noscript><div class="alert-message warning"><%:You must enable JavaScript in your browser or LuCI will not work properly.%></div></noscript>
+  <%- if sys.process.info("uid")==0 and sys.user.getuser("root") and not sys.user.getpasswd("root") then -%>
+   <div class="alert-message warning"><h4><%:No password set!%></h4><p><%:Please configure a root password to protect the web interface.%></p>
+   <% if disp.lookup("admin/system/admin") then %><a class="text-action" href="<%=url('admin/system/admin')%>"><%:Go to password configuration...%></a><% end %></div>
+  <%- end -%>
+  <div id="tabmenu" hidden></div>

@@ -9,6 +9,7 @@ import {verifySixUI} from "./six-ui.mjs";
 import {verifyMaintenance} from "./maintenance.mjs";
 import {verifyLegacyFlash} from "./legacy-flash.mjs";
 import {verifyUpstreamPages} from "./upstream-pages.mjs";
+import {verifyBranding} from "./branding.mjs";
 import {verifyM3Theme} from "./m3-theme.mjs";
 const server=spawn("python3",["ci/server.py"],{stdio:"inherit"}),base="http://127.0.0.1:8765";
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
@@ -275,7 +276,7 @@ try{
   await keyboard.waitForFunction(()=>getComputedStyle(document.documentElement).getPropertyValue("--ml-keyboard-space")==="0px");
   assert.equal(await keyboard.locator("#keyboard-last-field").inputValue(),"last draft");
   await keyboard.close();await verifyMDCControls(browser,name,base);
-  await verifyMDCExtras(browser,name,base);await verifyToolbar(browser,name,base);await verifySixUI(browser,name,base);await verifyUpstreamPages(browser,name,base);await verifyMaintenance(browser,name,base);await verifyLegacyFlash(browser,name,base);await browser.close();
+  await verifyMDCExtras(browser,name,base);await verifyToolbar(browser,name,base);await verifySixUI(browser,name,base);await verifyUpstreamPages(browser,name,base);await verifyMaintenance(browser,name,base);await verifyLegacyFlash(browser,name,base);await verifyBranding(browser,name,base);await browser.close();
   console.log(name+": menu hierarchy, native widgets, field submission, tables, dark states, density, drawers, modals, keyboard viewport and login passed");
  }
 }finally{server.kill();
