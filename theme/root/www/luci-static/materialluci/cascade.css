@@ -825,7 +825,7 @@ body .cbi-dropdown:not(.btn):not(.cbi-button){align-items:center;min-height:48px
 body .cbi-dropdown:not(.btn):not(.cbi-button)>ul{align-items:center;min-height:48px}
 body .cbi-dropdown:not(.btn):not(.cbi-button)>ul>li[display]{align-self:center;align-items:center;min-height:48px;box-sizing:border-box;padding:8px;line-height:20px}
 body .cbi-dropdown:not(.btn):not(.cbi-button)>.open{align-self:stretch;justify-content:center;min-width:32px;padding:0 4px;border:0;background:transparent;color:var(--muted);line-height:20px}
-body .cbi-dropdown[open]>ul.dropdown{top:100%;min-height:0}
+body .cbi-dropdown[open]>ul.dropdown{min-height:0}
 body .cbi-dropdown[open]>ul.dropdown>li{min-height:40px;padding:8px;line-height:20px}
 /* Override MDC's enabled placeholder state, including no-label fields. */
 body .ml-text-field.mdc-text-field--filled:not(.mdc-text-field--disabled) .mdc-text-field__input::placeholder,
