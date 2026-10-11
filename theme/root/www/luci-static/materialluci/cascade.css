@@ -97,7 +97,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--control-accent);width:
 .ml-switch-hit{width:48px;height:48px;flex:none;display:inline-grid;place-items:center;vertical-align:middle;border:0;padding:0;position:relative}
 input.ml-switch-source{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;opacity:0!important;pointer-events:none!important;clip:rect(0 0 0 0)!important}
 
-body :is(.btn,.cbi-button,button,input[type=button],input[type=submit],input[type=reset]){
+body :is(.btn,.cbi-button,button),body input[type=button],body input[type=submit],body input[type=reset]{
  --button-bg:var(--action-tonal);--button-hover-bg:var(--tonal-pressed);--button-pressed-bg:var(--tonal-pressed);--button-ink:var(--on-action-tonal);
  border-radius:2px;margin:0;padding:8px 14px;min-height:36px;width:auto;height:auto;background:var(--button-bg);color:var(--button-ink);border:1px solid transparent;box-shadow:none;font-weight:500;font-size:14px;line-height:1.3;text-shadow:none;white-space:normal;vertical-align:middle}
 body :is(.cbi-button-apply,.cbi-input-apply,.action-primary),body .btn.primary,body .cbi-button-positive.important,body .cbi-button-action.important{
