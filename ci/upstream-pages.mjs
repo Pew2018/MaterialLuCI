@@ -110,6 +110,7 @@ export async function verifyUpstreamPages(browser,name,base){
    const select=document.createElement("select");select.id="audit-select";select.name=select.id;select.add(new Option("Selected value","selected"));form.append(select);
    const file=document.createElement("input");file.type="file";file.id="audit-file";form.append(file);
    const button=document.createElement("button");button.type="button";button.id="audit-button";button.className="cbi-button cbi-button-action important";button.style.width="176px";const label=document.createElement("span");label.textContent="一个需要换行的 English action label";button.append(label);form.append(button);
+   const bare=document.createElement("input");bare.type="button";bare.id="audit-bare-button";bare.name="native-action";bare.value="原生操作";form.append(bare);
    const submit=document.createElement("input");submit.type="submit";submit.id="audit-submit";submit.className="cbi-button cbi-button-apply";submit.value="提交";form.append(submit);
    const reset=document.createElement("input");reset.type="reset";reset.id="audit-reset";reset.className="cbi-button";reset.value="重置";
    const actions=document.createElement("div");actions.className="cbi-page-actions";actions.append(submit,reset);form.append(actions);
@@ -169,7 +170,7 @@ export async function verifyUpstreamPages(browser,name,base){
    assert.equal(await field.evaluate(el=>getComputedStyle(el).webkitTextFillColor),disabled);
    await field.evaluate(el=>el.disabled=false);
    const expectedInk=await page.evaluate(()=>{const p=document.createElement("span");p.style.color="var(--ink)";document.body.append(p);const color=getComputedStyle(p).color;p.remove();return color;});
-   const auditText=page.locator("#ml-control-audit input:not([type=submit]):not([type=reset]):not([type=file])");
+   const auditText=page.locator("#ml-control-audit input:not([type=submit]):not([type=reset]):not([type=file]):not([type=button])");
    assert.equal(await auditText.count(),8);
    for(let i=0;i<8;i++){
     const control=auditText.nth(i);
@@ -202,6 +203,8 @@ export async function verifyUpstreamPages(browser,name,base){
    }
    const nativePrimary=await page.locator("#audit-submit").locator("..").evaluate(el=>({background:getComputedStyle(el).backgroundColor,expected:(()=>{const p=document.createElement("span");p.style.backgroundColor="var(--action-fill)";document.body.append(p);const v=getComputedStyle(p).backgroundColor;p.remove();return v;})()}));
    assert.equal(nativePrimary.background,nativePrimary.expected,"wrapped input submit keeps its primary surface");
+   const bareStyle=await page.locator("#audit-bare-button").evaluate(el=>{const s=getComputedStyle(el);return {border:s.borderTopColor,height:el.getBoundingClientRect().height,align:s.textAlign,wrapper:!!el.closest(".ml-native-button"),name:el.name,value:el.value};});
+   assert.equal(bareStyle.border,"rgba(0, 0, 0, 0)");assert(bareStyle.height>=36);assert.equal(bareStyle.align,"center");assert.equal(bareStyle.wrapper,false);assert.equal(bareStyle.name,"native-action");assert.equal(bareStyle.value,"原生操作");
    const fileStyle=await page.locator("#audit-file").evaluate(el=>({border:getComputedStyle(el).borderBottomWidth,width:el.getBoundingClientRect().width}));
    assert.equal(fileStyle.border,"0px");assert(fileStyle.width>0);
    await page.evaluate(()=>{window.auditActions=0;window.auditSubmits=0;});
