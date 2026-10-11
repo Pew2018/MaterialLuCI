@@ -64,6 +64,10 @@ export async function verifyUpstreamPages(browser,name,base){
   assert.deepEqual(await page.evaluate(()=>previewList.formvalue("theme")),["192.0.2.1","192.0.2.2"]);
   await listInput.fill("192.0.2.3");await listInput.press("Enter");
   assert.deepEqual(await page.evaluate(()=>previewList.formvalue("theme")),["192.0.2.1","192.0.2.2","192.0.2.3"]);
+  const nativeDropdown=page.locator("#native-vlan-select");
+  await nativeDropdown.focus();await page.keyboard.press("ArrowDown");await page.keyboard.press("Enter");
+  assert.equal(await page.evaluate(()=>nativeVlanWidget.getValue()),"u","rich dropdown native keyboard selection preserved");
+  await page.evaluate(()=>nativeVlanWidget.setValue("t"));
   const reset=page.getByRole("button",{name:"执行重置",exact:true});
   await reset.scrollIntoViewIfNeeded();
   assert((await reset.boundingBox()).height>=48);
@@ -96,7 +100,7 @@ export async function verifyUpstreamPages(browser,name,base){
    const area=document.createElement("textarea");area.id="audit-textarea";area.name=area.id;area.value="Existing notes";area.placeholder="Textarea placeholder";form.append(area);controls.push(area);
    const select=document.createElement("select");select.id="audit-select";select.name=select.id;select.add(new Option("Selected value","selected"));form.append(select);
    const file=document.createElement("input");file.type="file";file.id="audit-file";form.append(file);
-   const button=document.createElement("button");button.type="button";button.id="audit-button";button.className="cbi-button";button.style.width="176px";const label=document.createElement("span");label.textContent="一个需要换行的 English action label";button.append(label);form.append(button);
+   const button=document.createElement("button");button.type="button";button.id="audit-button";button.className="cbi-button cbi-button-action important";button.style.width="176px";const label=document.createElement("span");label.textContent="一个需要换行的 English action label";button.append(label);form.append(button);
    const submit=document.createElement("input");submit.type="submit";submit.id="audit-submit";submit.className="cbi-button cbi-button-apply";submit.value="提交";form.append(submit);
    const reset=document.createElement("input");reset.type="reset";reset.id="audit-reset";reset.className="cbi-button";reset.value="重置";
    const actions=document.createElement("div");actions.className="cbi-page-actions";actions.append(submit,reset);form.append(actions);
