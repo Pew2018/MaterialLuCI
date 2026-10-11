@@ -22,6 +22,7 @@ export async function verifyUpstreamPages(browser,name,base){
   try{await page.waitForSelector("#upstream-wireless .assoclist");}catch(e){console.error(await page.locator("#maincontent").innerText());throw e;}
   await page.waitForSelector("#ml-appearance-entry[open]");
   await page.waitForSelector(".ml-view-progress",{state:"detached"});
+  await page.evaluate(()=>{MaterialAppearance.set("seed","#009688");MaterialAppearance.set("toolbar",true);});
   assert.equal(await page.locator("#ml-appearance h2").allTextContents().then(x=>x.includes("关于")||x.includes("About")),false);
   assert.equal(await page.locator("#ml-appearance-entry").evaluate(el=>el.open),true);
   await page.locator("#ml-appearance-entry").scrollIntoViewIfNeeded();
