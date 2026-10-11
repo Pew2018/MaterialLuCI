@@ -12,7 +12,7 @@
  function parse(value){const m=String(value||"").match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)$/i);if(m)return [+m[1],+m[2],+m[3],m[4]===undefined?1:+m[4]];const h=String(value||"").match(/^#([\da-f]{6})$/i);return h?[parseInt(h[1].slice(0,2),16),parseInt(h[1].slice(2,4),16),parseInt(h[1].slice(4,6),16),1]:null;}
  const lum=rgb=>{const a=rgb.map(v=>{const c=v/255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4;});return .2126*a[0]+.7152*a[1]+.0722*a[2];};
  const ratio=(a,b)=>{const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);};
- function bg(){const el=document.querySelector(".ml-toolbar");if(!el)return null;const c=parse(getComputedStyle(el).backgroundColor);return c&&c[3]>=.99?c:null;}
+ function bg(){const el=document.querySelector(".ml-toolbar");if(!el)return null;const inner=el.querySelector(".ml-toolbar-inner"),paint=inner&&parse(getComputedStyle(inner).backgroundColor);const c=paint&&paint[3]>=.99?paint:parse(getComputedStyle(el).backgroundColor);return c&&c[3]>=.99?c:null;}
  function contrastAgainstToolbar(color){const b=bg(),f=parse(color);if(!b||!f)return null;const composed=f.map((v,i)=>i<3?v*f[3]+b[i]*(1-f[3]):1);return ratio(composed,b);}
  function autoColor(el){el.style.removeProperty("color");const foreground=parse(getComputedStyle(el).color),background=bg();if(foreground&&background&&contrastAgainstToolbar(getComputedStyle(el).color)<4.5){el.style.setProperty("color",ratio([0,0,0],background)>=ratio([255,255,255],background)?"#000000":"#FFFFFF");}}
  function apply(){
@@ -23,11 +23,11 @@
   if(heading)heading.dataset.nameHidden=String(!prefs.sidebarNameVisible);
  }
  function set(key,value){
-  if(key==="toolbarTitle"){if(typeof value!=="string")return false;prefs.toolbarTitle=normalizeText(value);write(keys.title,prefs.toolbarTitle,true);}
+  if(key==="toolbarTitle"){if(typeof value!=="string")return false;prefs.toolbarTitle=normalizeText(value);write(keys.title,prefs.toolbarTitle,!prefs.toolbarTitle);}
   else if(key==="toolbarTitleColor"){if(value!=="auto"&&value!=="custom")return false;prefs.toolbarTitleColor=value;write(keys.mode,value);}
   else if(key==="toolbarTitleColorValue"){if(!validHex(value))return false;prefs.toolbarTitleColorValue=value.toUpperCase();write(keys.value,prefs.toolbarTitleColorValue);}
   else if(key==="sidebarNameVisible"){if(typeof value!=="boolean")return false;prefs.sidebarNameVisible=value;write(keys.visible,String(value),value);}
-  else if(key==="sidebarName"){if(typeof value!=="string")return false;prefs.sidebarName=normalizeText(value);write(keys.name,prefs.sidebarName,true);}
+  else if(key==="sidebarName"){if(typeof value!=="string")return false;prefs.sidebarName=normalizeText(value);write(keys.name,prefs.sidebarName,!prefs.sidebarName);}
   else return false;
   apply();window.dispatchEvent(new Event("materialluci:branding"));return true;
  }
