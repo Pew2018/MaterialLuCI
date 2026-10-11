@@ -77,6 +77,14 @@ export async function verifyMaintenance(browser,name,base){
    await page.setViewportSize({width,height:900});
    await page.evaluate(mode=>MaterialAppearance.set("mode",mode),mode);
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"maintenance overflow");
+   if(kind==="flash"){
+    const geometry=await page.locator('[data-name="mtdselect"] .mdc-select__anchor').evaluate(el=>{
+     const r=el.getBoundingClientRect(),t=el.querySelector(".mdc-select__selected-text").getBoundingClientRect(),icon=el.querySelector(".mdc-select__dropdown-icon"),a=icon.getBoundingClientRect(),s=getComputedStyle(icon);
+     return {textCenter:Math.abs(t.y+t.height/2-r.y-r.height/2),arrowCenter:Math.abs(a.y+a.height/2-r.y-r.height/2),border:s.borderTopWidth,background:s.backgroundColor,chart:icon.classList.contains("ml-chart-surface")};
+    });
+    assert(geometry.textCenter<2&&geometry.arrowCenter<2,"real mtd selector alignment: "+JSON.stringify(geometry));
+    assert.equal(geometry.border,"0px");assert.equal(geometry.background,"rgba(0, 0, 0, 0)");assert.equal(geometry.chart,false);
+   }
    await page.screenshot({path:"dist/previews/"+name+"-"+kind+"-"+width+"-"+mode+".png",fullPage:true});
   }
   await page.evaluate(()=>MaterialAppearance.set("cards",false));
