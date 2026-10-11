@@ -24,7 +24,7 @@ try{
   // Existing Classic regression suites explicitly choose Classic; the package
   // default is independently tested in the new acceptance suite.
   const originalNewPage=browser.newPage.bind(browser);
-  browser.newPage=async options=>{const p=await originalNewPage(options);await p.addInitScript(()=>localStorage.setItem("materialluci-design","classic"));return p;};
+  browser.newPage=async options=>{const p=await originalNewPage(options);await p.addInitScript(()=>{if(!localStorage.getItem("materialluci-design"))localStorage.setItem("materialluci-design","classic");});return p;};
   const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[],requests=[];
   await verifyM3Theme(browser,name,base);await verifySystemLayout(browser,name,base);
   page.on("pageerror",e=>errors.push(e.stack||e.message));page.on("request",r=>requests.push(r.url()));
