@@ -45,3 +45,7 @@ Performance JSON includes baseline/candidate full-document scan count/time, obse
 Existing full regression suite remains. No tests are deleted. Classic suites explicitly select their intended design. New package-default behavior is independently tested. Existing configuration progress test invokes LuCI changes.displayStatus (not theme sync) and View.__init__, but does not prove a real ubus apply/reconnect lifecycle.
 
 Pending: physical macOS/iOS Safari, exact firmware fork DOM, actual save/apply/reconnect and readonly SSH ACL on device. No cache corruption is asserted without loaded-resource hash evidence.
+
+## Visual-review correction
+
+Actions 38153062456 passed, but manual review of its valid-key mobile screenshot found base64 text overflowing the SSH items. This exposed an acceptance gap: only the add row had been measured. Shared CSS now wraps only native SSH [data-key] item text without moving its nodes or changing its pseudo-element delete hit target. Acceptance additionally checks document and item overflow after valid Enter/click/drop, exercises the native nodespec readonly branch, screenshots each system pane and status syslog, and repeats tab switches. Final package must come from the rerun containing this correction.

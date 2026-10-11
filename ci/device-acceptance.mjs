@@ -60,7 +60,9 @@ async function verify(browser,engine,width,mode,design){
   assert.equal(after.textarea,before.textarea,"growing textarea");
   assert(after.mutations-before.mutations<3000,"mutation storm");
   reports.push({version,engine,width,mode,design:design||"default-m3e",tab:name,before,after});
+  await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:out+"/"+version+"-"+engine+"-"+width+"-"+mode+"-"+(design||"default")+"-"+name+".png",fullPage:true});
  }
+ for(let cycle=0;cycle<2;cycle++)for(const tab of ["general","logging","timesync","zram"])await page.locator('.cbi-tabmenu li[data-tab="'+tab+'"] a').click();
  await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:out+"/"+version+"-"+engine+"-"+width+"-"+mode+"-"+(design||"default")+"-system.png",fullPage:true});
  await page.goto(base+"/sshkeys.html");await page.waitForSelector(".add-item>button");
  const input=page.locator(".add-item>input"),button=page.locator(".add-item>button");
@@ -83,11 +85,18 @@ async function verify(browser,engine,width,mode,design){
  const dropped=key.replace("acceptance","drop-test").replace(/AQEBAQ/,"AgICAg");
  await page.locator(".cbi-dynlist").evaluate((el,key)=>{const dt=new DataTransfer();dt.items.add(new File([key],"acceptance.pub",{type:"text/plain"}));el.dispatchEvent(new DragEvent("drop",{bubbles:true,cancelable:true,dataTransfer:dt}));},dropped);
  await page.waitForFunction(()=>systemFixtureCalls.length===2);
+ assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"SSH key contents overflow document");
+ assert(await page.locator(".item[data-key]").evaluateAll(items=>items.every(el=>el.scrollWidth<=el.clientWidth+1)),"SSH key item text overflows");
  await page.screenshot({path:out+"/"+version+"-"+engine+"-"+width+"-"+mode+"-"+(design||"default")+"-ssh.png",fullPage:true});
+ await page.goto(base+"/sshkeys-readonly.html");await page.waitForSelector(".add-item>button");
+ assert(await page.locator(".add-item>input").isDisabled());assert(await page.locator(".add-item>button").isDisabled());
+ await page.locator(".cbi-dynlist").evaluate((el,key)=>{const dt=new DataTransfer();dt.items.add(new File([key],"readonly.pub"));el.dispatchEvent(new DragEvent("drop",{bubbles:true,cancelable:true,dataTransfer:dt}));},key);
+ await page.waitForTimeout(200);assert.deepEqual(await page.evaluate(()=>systemFixtureCalls),[],"readonly SSH accepted drop");
  await page.goto(base+"/syslog.html");await page.waitForSelector("#syslog");
  assert(await page.locator("#syslog").getAttribute("readonly"));
  await page.waitForTimeout(1500);const h=await page.locator("#syslog").evaluate(el=>el.getBoundingClientRect().height);
  await page.mouse.wheel(0,400);await page.waitForTimeout(1500);assert.equal(await page.locator("#syslog").evaluate(el=>el.getBoundingClientRect().height),h);
+ await page.screenshot({path:out+"/"+version+"-"+engine+"-"+width+"-"+mode+"-"+(design||"default")+"-status-syslog.png",fullPage:true});
  assert.deepEqual(errors,[]);await page.close();
 }
 try{

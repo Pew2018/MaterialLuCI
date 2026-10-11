@@ -190,6 +190,10 @@ for name in ("system","sshkeys"):
  renderer.write_text(code)
  html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime.replace(json.dumps(env),json.dumps(system_env))+"</head>")
  (output/(name+".html")).write_text(html)
+ if name=="sshkeys":
+  readonly_env=dict(system_env)
+  readonly_env["nodespec"]={**system_env["nodespec"],"readonly":True}
+  (output/"sshkeys-readonly.html").write_text(html.replace(json.dumps(system_env),json.dumps(readonly_env)))
 
 # Status log uses its actual renderer, separate from the System logging pane.
 source=(status/"view/status/syslog.js").read_text().replace("'require view';","'require baseclass as view';",1)
