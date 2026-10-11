@@ -205,6 +205,8 @@ export async function verifyUpstreamPages(browser,name,base){
    assert.equal(nativePrimary.background,nativePrimary.expected,"wrapped input submit keeps its primary surface");
    const bareStyle=await page.locator("#audit-bare-button").evaluate(el=>{const s=getComputedStyle(el);return {border:s.borderTopColor,height:el.getBoundingClientRect().height,align:s.textAlign,wrapper:!!el.closest(".ml-native-button"),name:el.name,value:el.value};});
    assert.equal(bareStyle.border,"rgba(0, 0, 0, 0)");assert(bareStyle.height>=36);assert.equal(bareStyle.align,"center");assert.equal(bareStyle.wrapper,false);assert.equal(bareStyle.name,"native-action");assert.equal(bareStyle.value,"原生操作");
+   await page.locator("#audit-bare-button").focus();await page.keyboard.press("Tab");await page.keyboard.press("Shift+Tab");
+   assert.equal(await page.locator("#audit-bare-button").evaluate(el=>getComputedStyle(el).outlineWidth),"2px","native action keeps a visible keyboard focus outline");
    const fileStyle=await page.locator("#audit-file").evaluate(el=>({border:getComputedStyle(el).borderBottomWidth,width:el.getBoundingClientRect().width}));
    assert.equal(fileStyle.border,"0px");assert(fileStyle.width>0);
    await page.evaluate(()=>{window.auditActions=0;window.auditSubmits=0;});
