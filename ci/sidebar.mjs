@@ -13,6 +13,8 @@ export async function verifySidebar(browser,engine,base){
     await page.locator("#ml-menu-tree button.ml-nav-parent").evaluateAll((nodes,expanded)=>{
      for(const node of nodes){node.setAttribute("aria-expanded",String(expanded));document.getElementById(node.getAttribute("aria-controls")).hidden=!expanded;}
     },expanded);
+    // Rotation temporarily widens the chevron's painted bounding box.
+    await page.waitForFunction(()=>Array.from(document.querySelectorAll(".ml-nav-chevron")).every(el=>el.getAnimations().every(animation=>animation.playState!=="running")));
     const positions=await page.locator("#ml-menu-tree button.ml-nav-parent").evaluateAll(nodes=>nodes.map(button=>{
      const label=button.querySelector(".ml-nav-parent-label"),arrow=button.querySelector(".ml-nav-chevron"),range=document.createRange();
      range.selectNodeContents(label);
