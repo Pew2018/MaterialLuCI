@@ -195,6 +195,43 @@
   }
   general.append(row(t("显示模式","Display mode"),t("仅改变当前浏览器的界面外观。","Changes appearance in this browser only."),mode));
   general.append(prefSwitch("cards",t("分组卡片","Grouped cards"),t("为设置分组添加小圆角表面。","Use small cornered surfaces for groups.")));
+  const identity=group(t("标题与设备名称","Title and device name"));identity.dataset.group="identity";
+  identity.append(node("small",{class:"ml-design-notice",text:t("以下偏好仅保存在当前浏览器。","These preferences are stored in this browser only.")}));
+  function brandTextField(id,label,value,placeholder){const input=node("input",{id,type:"text",maxlength:"128",autocomplete:"off",spellcheck:"false",class:"ml-brand-input","aria-label":label});input.value=value;input.placeholder=placeholder||"";return input;}
+  function bindBrandText(input,key){let composing=false;const commit=clamp=>{const value=window.MaterialBranding.normalizeText(input.value);if(clamp&&value!==input.value){const start=input.selectionStart??value.length;input.value=value;try{input.setSelectionRange(Math.min(start,value.length),Math.min(start,value.length));}catch(_){}}window.MaterialBranding.set(key,value);};input.addEventListener("compositionstart",()=>composing=true);input.addEventListener("compositionend",()=>{composing=false;queueMicrotask(()=>commit(true));});input.addEventListener("input",event=>{if(!composing&&!event.isComposing)commit(false);});input.addEventListener("blur",()=>commit(true));input.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();commit(true);input.blur();}});}
+  const titleInput=brandTextField("ml-brand-toolbar-title",t("顶栏标题","Toolbar title"),window.MaterialBranding.prefs.toolbarTitle);
+  bindBrandText(titleInput,"toolbarTitle");
+  const resetTitle=textButton(t("恢复默认","Restore default"),()=>{window.MaterialBranding.set("toolbarTitle","");titleInput.value="";});
+  identity.append(row(t("顶栏标题","Toolbar title"),t("留空时显示 MaterialLuCI。","Blank uses MaterialLuCI."),node("div",{class:"ml-brand-controls"},[titleInput,resetTitle])));
+
+  const colorMode=node("select",{id:"ml-brand-title-color-mode",class:"ml-brand-input","aria-label":t("顶栏标题颜色模式","Toolbar title color mode")},[node("option",{value:"auto",text:t("自动","Automatic")}),node("option",{value:"custom",text:t("自定义","Custom")})]);
+  colorMode.value=window.MaterialBranding.prefs.toolbarTitleColor;
+  identity.append(row(t("顶栏标题颜色","Toolbar title color"),t("自动颜色随主题与顶栏背景更新。","Automatic color follows the theme and toolbar background."),node("div",{class:"ml-brand-controls"},[colorMode])));
+  const colorText=node("input",{id:"ml-brand-title-color-text",type:"text",maxlength:"7",autocomplete:"off",spellcheck:"false",class:"ml-brand-input","aria-label":"HEX #RRGGBB","aria-describedby":"ml-brand-title-color-error"});
+  const colorPicker=node("input",{id:"ml-brand-title-color-picker",type:"color","aria-label":t("选择顶栏标题颜色","Choose toolbar title color")});
+  const colorError=node("div",{id:"ml-brand-title-color-error",class:"ml-field-error",role:"alert","aria-live":"polite"});
+  const colorWarning=node("div",{id:"ml-brand-title-color-warning",class:"ml-brand-warning",role:"status","aria-live":"polite"});
+  const colorFields=node("div",{id:"ml-brand-title-color-fields",class:"ml-brand-color-fields"},[colorText,colorPicker]);
+  function updateColorFeedback(){const custom=colorMode.value==="custom";colorFields.hidden=!custom;colorWarning.hidden=true;if(!custom)return;const contrast=window.MaterialBranding.contrastAgainstToolbar(window.MaterialBranding.prefs.toolbarTitleColorValue);if(contrast!==null&&contrast<4.5){colorWarning.hidden=false;colorWarning.textContent=t("与当前顶栏背景的对比度低于 4.5:1。仍按你的选择应用。","Contrast against the current toolbar is below 4.5:1. Your choice remains applied.");}}
+  function applyBrandColor(value,source){if(!/^#[0-9a-f]{6}$/i.test(value)){colorError.textContent=t("请输入 #RRGGBB 格式的 6 位 HEX 颜色。","Enter a six-digit HEX color in #RRGGBB format.");colorText.setAttribute("aria-invalid","true");return;}const normalized=value.toUpperCase();colorError.textContent="";colorText.setAttribute("aria-invalid","false");if(source!=="text")colorText.value=normalized;if(source!=="picker")colorPicker.value=normalized;window.MaterialBranding.set("toolbarTitleColorValue",normalized);updateColorFeedback();}
+  colorText.value=window.MaterialBranding.prefs.toolbarTitleColorValue;colorPicker.value=colorText.value;
+  colorText.addEventListener("input",()=>applyBrandColor(colorText.value,"text"));colorText.addEventListener("blur",()=>{if(/^#[0-9a-f]{6}$/i.test(colorText.value))colorText.value=colorText.value.toUpperCase();});
+  colorPicker.addEventListener("input",()=>applyBrandColor(colorPicker.value,"picker"));colorPicker.addEventListener("change",()=>applyBrandColor(colorPicker.value,"picker"));
+  colorMode.addEventListener("change",()=>{window.MaterialBranding.set("toolbarTitleColor",colorMode.value);colorError.textContent="";colorText.setAttribute("aria-invalid","false");updateColorFeedback();});
+  colorText.addEventListener("keydown",event=>{if(event.key==="Enter")event.preventDefault();});
+  const autoColor=textButton(t("恢复自动","Restore automatic"),()=>{window.MaterialBranding.set("toolbarTitleColor","auto");colorMode.value="auto";colorError.textContent="";colorText.setAttribute("aria-invalid","false");updateColorFeedback();});
+  identity.append(row(t("自定义颜色","Custom color"),t("本地颜色选择器；仅改变标题文字。","Local color picker; changes only the title text."),node("div",{class:"ml-brand-controls ml-brand-color-control"},[colorFields,autoColor])));
+  identity.append(colorError,colorWarning);updateColorFeedback();window.addEventListener("materialluci:appearance",updateColorFeedback);
+
+  const visibility=node("input",{id:"ml-brand-sidebar-visible",type:"checkbox",class:"ml-switch","data-ml-owner":"appearance","aria-label":t("显示侧边栏设备名称","Show sidebar device name")});
+  visibility.checked=window.MaterialBranding.prefs.sidebarNameVisible;
+  const visibilityControl=node("span",{class:"ml-switch-hit"},[visibility,switchControl(visibility,t("显示侧边栏设备名称","Show sidebar device name"))]);
+  const nameInput=brandTextField("ml-brand-sidebar-name",t("侧边栏显示名称","Sidebar display name"),window.MaterialBranding.prefs.sidebarName,document.getElementById("ml-sidebar-name")?.dataset.defaultName||"");
+  nameInput.disabled=!visibility.checked;bindBrandText(nameInput,"sidebarName");
+  visibility.addEventListener("change",()=>{window.MaterialBranding.set("sidebarNameVisible",visibility.checked);nameInput.disabled=!visibility.checked;});
+  identity.append(row(t("显示侧边栏设备名称","Show sidebar device name"),t("关闭仅隐藏名称；手机抽屉关闭按钮仍保留。","Hides only the name; the mobile drawer close button remains."),visibilityControl));
+  const restoreName=textButton(t("恢复设备名称","Restore device name"),()=>{window.MaterialBranding.set("sidebarName","");nameInput.value="";});
+  identity.append(row(t("侧边栏显示名称","Sidebar display name"),t("留空时使用当前真实 hostname。","Blank uses the current router hostname."),node("div",{class:"ml-brand-controls"},[nameInput,restoreName])));
   const palettes=[["OnePlus Classic",[["OnePlus Blue","#42A5F5"],["Golden","#CC6F4E"],["Lemon Yellow","#E6A545"],["Grass Green","#7DC22F"],["Charm Purple","#9575CD"],["Sky Blue","#26C6DA"],["Vigour Red","#F06292"],["Fashion Pink","#BA68C8"]]],["Material Colors",[["Blue","#2196F3"],["Teal","#009688"],["Green","#4CAF50"],["Red","#F44336"],["Orange","#FF9800"],["Purple","#9C27B0"],["Cyan","#00BCD4"],["Indigo","#3F51B5"],["Pink","#E91E63"],["Blue Grey","#607D8B"],["Deep Orange","#FF5722"],["Light Green","#8BC34A"]]]];
   function updateSwatches(){host.querySelectorAll(".ml-swatch-item").forEach(b=>{const active=b.dataset.seed===appearance.prefs.seed;b.setAttribute("aria-pressed",String(active));const s=b.querySelector(".ml-swatch");s.textContent=active?"✓":"";s.style.color=MaterialPalette.generate(b.dataset.seed,false).swatchForeground;});}
   for(const [title,colors] of palettes){const g=group(title);g.dataset.group=title==="OnePlus Classic"?"oneplus":"material";const grid=node("div",{class:"ml-swatches"});for(const [label,color] of colors){const b=textButton(label,()=>{appearance.set("seed",color);hex.value=color;error.textContent="";hex.setAttribute("aria-invalid","false");updateSwatches();},"ml-swatch-item");b.dataset.seed=color;const sw=node("span",{class:"ml-swatch","aria-hidden":"true"});sw.style.background=color;b.prepend(sw);grid.append(b);}g.append(grid);}

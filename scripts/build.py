@@ -23,7 +23,7 @@ resource_dir=stage/"www/luci-static/resources"
 assets=stage/"www/luci-static/materialluci"
 css=(assets/"base.css").read_text()+(assets/"cascade.css").read_text().replace('@import url("base.css");',"")
 (assets/"cascade.css").write_text(css);(assets/"base.css").unlink()
-for name in ("palette","startup","feedback","controls","textfield","app","wait"):
+for name in ("palette","startup","branding","feedback","controls","textfield","app","wait"):
  subprocess.run([str(ROOT/"node_modules/.bin/esbuild"),str(assets/(name+".js")),"--minify","--target=es2020","--outfile="+str(assets/(name+".min.js"))],check=True)
  (assets/(name+".js")).unlink();(assets/(name+".min.js")).rename(assets/(name+".js"))
 # Only the official linear-progress package and required helpers are bundled.
