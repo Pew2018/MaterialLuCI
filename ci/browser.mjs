@@ -18,6 +18,7 @@ try{
  for(let i=0;i<50;i++){try{if((await fetch(base)).ok)break;}catch{}await pause(200);}
  for(const [name,engine] of [["chromium",chromium],["webkit",webkit]]){
   const browser=await engine.launch(),page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[],requests=[];
+  await verifyM3Theme(browser,name,base);
   page.on("pageerror",e=>errors.push(e.stack||e.message));page.on("request",r=>requests.push(r.url()));
   await page.goto(base);await page.waitForFunction(()=>window.fixtureCheckbox&&window.fixtureSelect&&document.body.dataset.mlMenus==="ready");
   await page.waitForSelector("#real-widget .ml-switch-hit .mdc-switch");
@@ -274,7 +275,7 @@ try{
   await keyboard.waitForFunction(()=>getComputedStyle(document.documentElement).getPropertyValue("--ml-keyboard-space")==="0px");
   assert.equal(await keyboard.locator("#keyboard-last-field").inputValue(),"last draft");
   await keyboard.close();await verifyMDCControls(browser,name,base);
-  await verifyMDCExtras(browser,name,base);await verifyToolbar(browser,name,base);await verifySixUI(browser,name,base);await verifyUpstreamPages(browser,name,base);await verifyMaintenance(browser,name,base);await verifyLegacyFlash(browser,name,base);await verifyM3Theme(browser,name,base);await browser.close();
+  await verifyMDCExtras(browser,name,base);await verifyToolbar(browser,name,base);await verifySixUI(browser,name,base);await verifyUpstreamPages(browser,name,base);await verifyMaintenance(browser,name,base);await verifyLegacyFlash(browser,name,base);await browser.close();
   console.log(name+": menu hierarchy, native widgets, field submission, tables, dark states, density, drawers, modals, keyboard viewport and login passed");
  }
 }finally{server.kill();

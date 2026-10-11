@@ -11,7 +11,7 @@ export async function verifyM3Theme(browser,engine,base){
   await page.locator('[data-design-option=m3e]').click();
   assert.equal(await page.locator("html").getAttribute("data-design"),"classic");
   assert.equal(await page.locator("#fixture-name").inputValue(),"unsaved draft");
-  assert.equal(await page.evaluate(()=>fixtureSubmissions),0);
+  assert.equal(await page.evaluate(()=>window.fixtureSubmissions||0),0);
   await page.reload();await page.waitForFunction(()=>document.body.dataset.mlMenus==="ready"&&document.querySelector("#ml-appearance md-switch"));
   assert.equal(await page.locator("html").getAttribute("data-design"),"m3e");
   await page.evaluate(()=>scrollTo(0,0));
