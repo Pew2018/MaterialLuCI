@@ -17,6 +17,49 @@ function audit(){
  addEventListener("scroll",()=>counts.scrollEvents++,{passive:true});
  let last=0;function frame(t){if(last)counts.frames.push(t-last);last=t;if(counts.frames.length<5000)requestAnimationFrame(frame);}requestAnimationFrame(frame);
 }
+async function verifyRipple(browser,engine){
+ const page=await browser.newPage({viewport:{width:390,height:900},hasTouch:true});
+ await page.goto(base);await page.waitForFunction(()=>document.body.dataset.mlMenus==="ready");
+ await page.waitForTimeout(500);
+ const initial=await page.evaluate(()=>MaterialFeedback.counts());
+ await page.evaluate(()=>{
+  const nativeAnimate=Element.prototype.animate;window.rippleProbe={starts:0,events:[],latencies:[],stamp:null};
+  Element.prototype.animate=function(...args){if(this.getRootNode().host?.parentElement?.id==="ripple-probe"){rippleProbe.starts++;if(rippleProbe.stamp!==null){rippleProbe.latencies.push(performance.now()-rippleProbe.stamp);rippleProbe.stamp=null;}}return nativeAnimate.apply(this,args);};
+  const button=document.createElement("button");button.id="ripple-probe";button.type="button";button.className="cbi-button";button.textContent="Native ripple probe";
+  button.addEventListener("pointerdown",()=>rippleProbe.stamp=performance.now(),true);
+  button.addEventListener("click",event=>rippleProbe.events.push(event.target===button));
+  document.getElementById("maincontent").prepend(button);
+ });
+ const button=page.locator("#ripple-probe");await page.waitForSelector("#ripple-probe>md-ripple");
+ assert.equal(await button.locator(":scope>md-ripple").count(),1);
+ await button.click();assert.deepEqual(await page.evaluate(()=>rippleProbe.events),[true]);assert.equal(await page.evaluate(()=>rippleProbe.starts),1);
+ await button.focus();await button.press("Enter");await button.press("Space");
+ assert.deepEqual(await page.evaluate(()=>rippleProbe.events),[true,true,true]);assert.equal(await page.evaluate(()=>rippleProbe.starts),3);
+ await page.waitForTimeout(250);
+ await button.evaluate(el=>{rippleProbe.stamp=null;const args={bubbles:true,pointerType:"touch",pointerId:42,isPrimary:true,buttons:1};el.dispatchEvent(new PointerEvent("pointerdown",args));el.dispatchEvent(new PointerEvent("pointermove",{...args,clientY:200}));el.dispatchEvent(new PointerEvent("pointercancel",args));});
+ await page.waitForTimeout(200);assert.equal(await page.evaluate(()=>rippleProbe.starts),3,"cancelled touch started a ripple");assert.equal(await page.evaluate(()=>rippleProbe.events.length),3);
+ let actualScroll=null;
+ if(engine==="chromium"){
+  await page.evaluate(()=>scrollTo(0,0));const box=await button.boundingBox(),x=box.x+box.width/2,y=box.y+box.height/2;
+  const session=await page.context().newCDPSession(page),before=await page.evaluate(()=>scrollY);
+  await session.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{x,y}]});
+  for(const dy of [25,50,75]){await session.send("Input.dispatchTouchEvent",{type:"touchMove",touchPoints:[{x,y:y-dy}]});await page.waitForTimeout(20);}
+  await session.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});await session.detach();await page.waitForTimeout(250);
+  actualScroll={before,after:await page.evaluate(()=>scrollY)};assert(actualScroll.after>actualScroll.before,"native touch gesture did not scroll");
+  assert.equal(await page.evaluate(()=>rippleProbe.starts),3,"scroll started a ripple");assert.equal(await page.evaluate(()=>rippleProbe.events.length),3,"scroll invoked native action");
+ }
+ await button.scrollIntoViewIfNeeded();const rect=await button.boundingBox();await page.touchscreen.tap(rect.x+rect.width/2,rect.y+rect.height/2);
+ await page.waitForTimeout(250);assert.equal(await page.evaluate(()=>rippleProbe.starts),4);assert.deepEqual(await page.evaluate(()=>rippleProbe.events),[true,true,true,true]);
+ await button.evaluate(el=>el.disabled=true);await page.waitForFunction(()=>document.querySelector("#ripple-probe>md-ripple").disabled);
+ await button.evaluate(el=>{el.click();el.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,pointerType:"mouse",pointerId:1,isPrimary:true,buttons:1}));});
+ await page.waitForTimeout(200);assert.equal(await page.evaluate(()=>rippleProbe.starts),4);assert.equal(await page.evaluate(()=>rippleProbe.events.length),4);
+ const metrics=await page.evaluate(()=>rippleProbe);await button.evaluate(el=>el.remove());
+ await page.waitForFunction(initial=>MaterialFeedback.counts().instances===initial.instances&&MaterialFeedback.counts().disabledWatchers===initial.disabledWatchers,initial);
+ const report={engine,initial,after:await page.evaluate(()=>MaterialFeedback.counts()),actualScroll,metrics,webkitTouchScroll:engine==="webkit"?"synthetic pointer cancellation only; physical scroll pending":"CDP native touch gesture"};
+ fs.writeFileSync(out+"/"+version+"-"+engine+"-ripple.json",JSON.stringify(report,null,2));await page.close();
+ console.log(engine+": native mouse/touch/keyboard callbacks once, cancellation, disabled state, ripple instance cleanup passed");
+}
+
 async function measure(browser,baseline){
  const page=await browser.newPage({viewport:{width:1280,height:900}});
  await page.addInitScript(audit);await page.addInitScript(()=>localStorage.setItem("materialluci-design","m3e"));
@@ -104,6 +147,7 @@ try{
  for(const [engine,type] of [["chromium",chromium],["webkit",webkit]]){
   const browser=await type.launch();
   if(engine==="chromium"){await measure(browser,true);await measure(browser,false);}
+  await verifyRipple(browser,engine);
   await Promise.all([390,1280].flatMap(width=>["light","dark"].map(mode=>verify(browser,engine,width,mode,null))));
   await verify(browser,engine,1280,"dark","classic");
   await browser.close();
