@@ -45,7 +45,7 @@ return view.extend({
    window.previewRendered=true;
    return E('div',{},[
     settings,
-    E('section',{class:'cbi-section',id:'native-dropdown-audit'},[E('h3','VLAN / mtdblock native Dropdown'),new ui.Dropdown('t',{'t':'已标记','u':'未标记','o':'关'},{id:'native-vlan-select',name:'vlan',optional:false}).render(),new ui.Dropdown('0',{'0':'spi0.0','1':'firmware'},{id:'native-mtd-select',name:'mtd',optional:false}).render()]),
+    E('section',{class:'cbi-section',id:'native-dropdown-audit'},[E('h3','VLAN / mtdblock native Dropdown'),(window.nativeVlanWidget=new ui.Dropdown('t',{'t':'已标记','u':'未标记','o':'关'},{id:'native-vlan-select',name:'vlan',optional:false})).render(),new ui.Dropdown('0',{'0':'spi0.0','1':'firmware'},{id:'native-mtd-select',name:'mtd',optional:false}).render()]),
     E('section',{class:'cbi-section',id:'upstream-network'},[E('h3','Network'),networkStatus.render(['12','100',[wan],[]])]),
     E('section',{class:'cbi-section',id:'upstream-wireless'},[E('h3','Wireless'),wifiStatus.render([[radio],[net],hints,true,false])])
    ]);
