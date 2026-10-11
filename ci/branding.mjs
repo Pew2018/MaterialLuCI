@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 const contrast=page=>page.locator("#ml-title").evaluate(el=>{
  const rgb=v=>{const m=v.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);return m?[+m[1],+m[2],+m[3]]:null;};
  const lum=a=>a.reduce((s,v,i)=>{const c=v/255;return s+(c<=.04045?c/12.92:((c+.055)/1.055)**2.4)*[.2126,.7152,.0722][i];},0);
- const f=rgb(getComputedStyle(el).color),b=rgb(getComputedStyle(document.querySelector(".ml-toolbar")).backgroundColor);
+ const inner=getComputedStyle(document.querySelector(".ml-toolbar-inner")).backgroundColor;
+ const f=rgb(getComputedStyle(el).color),b=rgb(inner==="rgba(0, 0, 0, 0)"?getComputedStyle(document.querySelector(".ml-toolbar")).backgroundColor:inner);
  if(!f||!b)return null;const x=lum(f),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);
 });
 export async function verifyBranding(browser,engine,base){
@@ -25,7 +26,9 @@ export async function verifyBranding(browser,engine,base){
  await title.fill("😀".repeat(70));await title.blur();const capped=await page.locator("#ml-title").textContent();assert.equal(Array.from(capped).length,64);assert.equal(await page.locator("#ml-title").getAttribute("aria-label"),capped);
  await title.fill("<img src=x onerror=window.brandXss=1>");assert.equal(await page.locator("#ml-title").textContent(),"<img src=x onerror=window.brandXss=1>");assert.equal(await page.locator("#ml-title img").count(),0);assert.equal(await page.evaluate(()=>window.brandXss||0),0);
  await title.fill("   ");assert.equal(await page.locator("#ml-title").textContent(),"MaterialLuCI");
+ assert.equal(await page.locator("#fixture-name").inputValue(),"Unapplied draft","appearance preferences preserve an unsaved page draft");
  await title.fill("中文 composition 测试");await page.reload();await page.waitForSelector("#ml-brand-toolbar-title");assert.equal(await page.locator("#ml-title").textContent(),"中文 composition 测试");
+ await page.locator("#fixture-name").fill("Unapplied draft");
  await page.locator("#ml-brand-toolbar-title").evaluate(el=>{el.focus();el.value="";el.dispatchEvent(new CompositionEvent("compositionstart",{bubbles:true}));el.value="拼音输入中";el.dispatchEvent(new InputEvent("input",{bubbles:true,inputType:"insertCompositionText",data:"拼音输入中",isComposing:true}));});
  assert.equal(await page.locator("#ml-brand-toolbar-title").inputValue(),"拼音输入中");assert.equal(await page.locator("#ml-title").textContent(),"中文 composition 测试");
  await page.locator("#ml-brand-toolbar-title").evaluate(el=>el.dispatchEvent(new CompositionEvent("compositionend",{bubbles:true,data:"拼音输入中"})));await page.waitForFunction(()=>document.querySelector("#ml-title").textContent==="拼音输入中");
@@ -42,7 +45,7 @@ export async function verifyBranding(browser,engine,base){
  if(engine==="chromium")await page.screenshot({path:"dist/previews/branding-desktop-light-settings.png",fullPage:true});
  await page.setViewportSize({width:390,height:844});await page.locator("#ml-brand-toolbar-title").fill("这是一个很长的中文顶栏标题，用来确认单行省略不会挤压菜单和状态指示器 🚀");
  await page.evaluate(()=>{MaterialAppearance.set("mode","dark");MaterialAppearance.set("toolbar",true);});await page.locator("#ml-brand-title-color-mode").selectOption("custom");await page.locator("#ml-brand-title-color-text").fill("#FFD166");await page.evaluate(()=>scrollTo(0,0));
- assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),56);
+ assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),64);
  if(engine==="chromium")await page.screenshot({path:"dist/previews/branding-mobile-dark-custom-title.png"});
  await page.locator("#ml-brand-sidebar-name").fill("旅行设备");await page.locator("#ml-brand-title-color-text").fill("#12");
  if(engine==="chromium")await page.screenshot({path:"dist/previews/branding-dark-custom-name-invalid-color.png",fullPage:true});
@@ -54,7 +57,7 @@ export async function verifyBranding(browser,engine,base){
   if(engine==="chromium")await page.screenshot({path:"dist/previews/branding-m3e-branch-m3e-style.png",fullPage:true});
  }
  const canCorrupt=await page.evaluate(()=>{try{localStorage.setItem("materialluci-toolbar-title","<bad");localStorage.setItem("materialluci-toolbar-title-color","custom");localStorage.setItem("materialluci-toolbar-title-color-value","bad");localStorage.setItem("materialluci-sidebar-name-visible","invalid");localStorage.setItem("materialluci-sidebar-name","\ud800");return true;}catch(_){return false;}});
- if(canCorrupt){await page.reload();await page.waitForSelector("#ml-brand-toolbar-title");assert.equal(await page.locator("#ml-title").textContent(),"MaterialLuCI");assert.equal(await page.locator("#ml-brand-title-color-mode").inputValue(),"auto");assert.equal(await page.locator("#ml-sidebar-heading").getAttribute("data-name-hidden"),"false");}
+ if(canCorrupt){await page.reload();await page.waitForSelector("#ml-brand-toolbar-title");assert.equal(await page.locator("#ml-title").textContent(),"<bad","stored titles remain literal text");assert.equal(await page.locator("#ml-title").locator("*").count(),0);assert.equal(await page.locator("#ml-brand-title-color-mode").inputValue(),"auto");assert.equal(await page.locator("#ml-sidebar-heading").getAttribute("data-name-hidden"),"false");}
  const storageUnavailable=await page.evaluate(()=>{try{Object.defineProperty(window,"localStorage",{configurable:true,get(){throw Error("blocked");}});return MaterialBranding.set("toolbarTitle","Memory only");}catch(_){return false;}});assert.equal(storageUnavailable,true,"localStorage failures are tolerated");
  assert.equal(errors.length,0,"browser errors: "+errors.join("\n"));await page.close();
 }
