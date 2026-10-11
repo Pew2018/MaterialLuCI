@@ -4,7 +4,7 @@
  const {MDCRipple,MDCRippleFoundation}=MaterialMDCControls;
  const entries=new Map(),pending=new WeakMap(),reduced=matchMedia("(prefers-reduced-motion: reduce)");
  const selector="button:not(.mdc-switch),div.btn,a.btn,a.cbi-button,a.text-action,.ml-poll-action,.ml-native-button,.ml-sidebar a,.tabs a,.cbi-tabmenu a";
- function disabled(el){return !!(el.disabled||el.hasAttribute("disabled")||el.querySelector("input:disabled")||el.closest('[aria-disabled="true"]'));}
+ function disabled(el){return !!(el.matches(":disabled")||el.disabled||el.hasAttribute("disabled")||el.querySelector("input:disabled")||el.closest('[aria-disabled="true"]'));}
  function scrolls(el){const list=[];for(let n=el.parentElement;n;n=n.parentElement)if(n.scrollHeight>n.clientHeight||n.scrollWidth>n.clientWidth)list.push([n,n.scrollTop,n.scrollLeft]);return list;}
  // MDC's supported foundation adapter supplies confirmed-tap activation.
  // It suppresses the default pointerdown/compatibility-mouse listeners, so

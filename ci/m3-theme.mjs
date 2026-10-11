@@ -27,6 +27,18 @@ export async function verifyM3Theme(browser,engine,base){
   assert.deepEqual(await page.evaluate(()=>businessEvents),{click:1,change:1});
   await page.evaluate(()=>fixtureCheckbox.setValue("1"));
   assert.equal(await page.locator("#real-widget md-switch").evaluate(el=>el.selected),true);
+  await page.evaluate(()=>{
+   const fieldset=document.createElement("fieldset");fieldset.id="m3-action-fixture";
+   const action=document.createElement("button");action.type="button";action.className="cbi-button";action.textContent="Native action";action.id="m3-native-action";
+   window.nativeActionEvents=[];action.addEventListener("click",event=>nativeActionEvents.push(event.target===action));fieldset.append(action);document.querySelector("#fixture-form").append(fieldset);
+  });
+  await page.waitForSelector("#m3-native-action md-ripple");await page.locator("#m3-native-action").click();
+  assert.deepEqual(await page.evaluate(()=>nativeActionEvents),[true],"M3 ripple replaced native action target or callback");
+  await page.evaluate(()=>document.querySelector("#m3-action-fixture").disabled=true);
+  await page.waitForFunction(()=>document.querySelector("#m3-native-action md-ripple").disabled);
+  assert.equal(await page.locator("#m3-native-action").evaluate(el=>el.disabled),false,"inherited disabled state became permanent");
+  await page.evaluate(()=>document.querySelector("#m3-action-fixture").disabled=false);
+  await page.waitForFunction(()=>!document.querySelector("#m3-native-action md-ripple").disabled);
   await page.waitForSelector("#ml-appearance md-text-button");
   assert(await page.locator("#ml-appearance md-text-button").evaluateAll(nodes=>nodes.every(el=>el.type==="button"&&!el.name)));
   await page.evaluate(()=>{

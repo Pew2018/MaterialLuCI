@@ -6,7 +6,7 @@ export async function verifySystemLayout(browser,engine,base){
   await page.addInitScript(mode=>{localStorage.setItem('materialluci-design','m3e');localStorage.setItem('materialluci-mode',mode);},mode);
   await page.goto(base+'/system.html');
   await page.waitForSelector('#view [data-tab-title][data-tab-active=true]');
-  await page.waitForSelector('#view md-switch');
+  await page.waitForSelector('#view md-switch',{state:'attached'});
   for(const name of ['general','logging','timesync','zram','general']){
    await page.locator('.cbi-tabmenu li[data-tab="'+name+'"] a').click();
    const pane=page.locator('#view [data-tab-title][data-tab="'+name+'"]');
@@ -16,6 +16,7 @@ export async function verifySystemLayout(browser,engine,base){
    if(await field.count()){await field.focus();await page.waitForTimeout(350);}
    await page.evaluate(()=>scrollTo(0,Math.min(180,document.documentElement.scrollHeight-innerHeight)));
    const before=await page.evaluate(()=>({y:scrollY,h:document.documentElement.scrollHeight}));
+   await page.evaluate(()=>{window.dispatchEvent(new Event('resize'));window.visualViewport?.dispatchEvent(new Event('resize'));});
    await page.waitForTimeout(1200);
    const after=await page.evaluate(()=>({y:scrollY,h:document.documentElement.scrollHeight}));
    assert(Math.abs(after.y-before.y)<=1,name+': unsolicited scrolling '+JSON.stringify({before,after}));
@@ -27,7 +28,7 @@ export async function verifySystemLayout(browser,engine,base){
   const h=await textarea.evaluate(el=>el.getBoundingClientRect().height);await page.waitForTimeout(1000);
   assert.equal(await textarea.evaluate(el=>el.getBoundingClientRect().height),h,'textarea flex sizing loop');
   await page.evaluate(()=>document.activeElement.blur());await page.screenshot({path:'dist/previews/'+engine+'-m3-system-'+width+'-'+mode+'.png',fullPage:true});
-  await page.goto(base+'/sshkeys.html');await page.waitForSelector('#view .cbi-dynlist>.add-item>md-ripple',{state:'attached',timeout:1000}).catch(()=>{});
+  await page.goto(base+'/sshkeys.html');
   await page.waitForSelector('#view .add-item button md-ripple');
   const input=page.locator('#view .add-item>input'),button=page.locator('#view .add-item>button');
   const a=await input.boundingBox(),b=await button.boundingBox();
