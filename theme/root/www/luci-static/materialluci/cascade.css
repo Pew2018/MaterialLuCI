@@ -970,3 +970,7 @@ body .cbi-dynlist{width:100%;min-width:0;max-width:100%}
 body .cbi-dynlist>.add-item{width:100%;flex-wrap:wrap;gap:12px}
 body .cbi-dynlist>.add-item>input{flex:1 1 220px;width:auto;min-width:0;box-sizing:border-box}
 body .cbi-dynlist>.add-item>button{flex:0 0 auto;height:auto;min-height:48px;min-width:112px;white-space:normal;overflow:visible}
+
+/* SSH key items contain unbroken base64; keep their native delete hit target. */
+body .cbi-dynlist>.item[data-key]{min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere}
+body .cbi-dynlist>.item[data-key] :is(strong,small,code){white-space:normal;overflow-wrap:anywhere;word-break:break-word}
