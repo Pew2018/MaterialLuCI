@@ -19,6 +19,7 @@ export async function verifyM3Theme(browser,engine,base){
   for(const key of Object.keys(shell))for(let i=0;i<3;i++)assert(Math.abs(shell[key][i]-m3Shell[key][i])<=1,key+" moved");
   assert.equal(await page.locator("#ml-appearance md-switch").count(),4);
   assert.equal(await page.locator("#ml-appearance .mdc-switch").count(),0);
+  await page.waitForSelector("#real-widget .mdc-switch");
   assert.equal(await page.locator("#real-widget .mdc-switch").count(),1,"LuCI adapter changed");
   await page.evaluate(()=>{const input=document.querySelector('#ml-appearance input[data-ml-owner=appearance]');window.m3Source=input;window.m3Events={click:0,change:0};input.addEventListener("click",()=>m3Events.click++);input.addEventListener("change",()=>m3Events.change++);window.m3Checked=input.checked;});
   const toggle=page.locator("#ml-appearance md-switch").first();
@@ -41,7 +42,11 @@ export async function verifyM3Theme(browser,engine,base){
   await page.locator("#ml-hex").fill("#9575CD");await page.locator("#ml-hex").dispatchEvent("input");
   assert.equal(await page.evaluate(()=>getComputedStyle(document.documentElement).getPropertyValue("--md-sys-color-primary").trim()),await page.evaluate(()=>MaterialM3Palette.generate("#9575CD",MaterialAppearance.prefs.mode==="dark").system.primary));
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"M3 document overflow");
-  await page.locator("#ml-appearance").scrollIntoViewIfNeeded();
+  for(const copy of await page.locator("#ml-appearance [data-group=general]>.ml-setting-row:has(>.ml-mode-options)>.ml-row-copy").all()){
+   const r=await copy.boundingBox();assert(r.width>150,"choice description squeezed");
+   const n=await copy.locator("strong").boundingBox();assert(n.height<45,"choice heading vertical");
+  }
+  await page.evaluate(()=>scrollTo(0,0));
   await page.screenshot({path:"dist/previews/"+engine+"-m3-settings-"+width+"-"+mode+".png",fullPage:true});
   await page.evaluate(()=>{window.m3Task=MaterialWait.start("Mock processing");});
   assert.equal(await page.locator(".ml-task-progress md-linear-progress").count(),1);
@@ -49,6 +54,9 @@ export async function verifyM3Theme(browser,engine,base){
   await page.evaluate(()=>m3Task.stop());assert.equal(await page.locator(".ml-task-progress").count(),0);
   await page.evaluate(async()=>{window.m3UI=await L.require("ui");m3UI.showModal("Mock loading",[E("p",{class:"spinning"},"Read-only fixture")]);});
   await page.waitForSelector("#ml-mdc-wait-progress md-linear-progress");
+  await page.waitForSelector("#modal_overlay.mdc-dialog--open:not(.mdc-dialog--opening)");
+  await page.evaluate(()=>MaterialWait.sync());
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   const a=await page.locator("#ml-mdc-wait-progress").boundingBox(),b=await page.locator("#modal_overlay>.modal").boundingBox();
   assert(a.x>=b.x&&a.x+a.width<=b.x+b.width+1&&a.y>=b.y&&a.y+a.height<=b.y+b.height+1);
   await page.screenshot({path:"dist/previews/"+engine+"-m3-progress-"+width+"-"+mode+".png"});

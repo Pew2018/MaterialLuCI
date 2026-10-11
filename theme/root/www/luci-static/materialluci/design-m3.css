@@ -23,3 +23,6 @@
 :root[data-design=m3e] [data-ml-component=progress] md-linear-progress{display:block;width:100%;height:4px}
 .ml-design-notice{display:block;color:var(--muted);font-size:12px;line-height:1.5;margin:0 0 12px}
 [data-ml-progress-fallback=true]{background:var(--control-accent);opacity:.55}
+
+/* The shared style selector also needs a visible Classic selection state. */
+body .ml-design-options button[aria-pressed=true]{background:var(--action-tonal);color:var(--on-action-tonal);border-color:var(--control-accent);--button-ink:var(--on-action-tonal)}
