@@ -912,7 +912,9 @@ body .cbi-page-actions>form.inline{display:flex;align-items:center;flex-wrap:wra
 
 /* Browser-local title and device-name settings; keep the shell geometry fixed. */
 body .ml-toolbar-inner #ml-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ml-sidebar-heading[data-name-hidden=true] .ml-sidebar-name{display:none}
+#ml-sidebar-heading[data-name-hidden=true] #ml-sidebar-name{display:none}
+#ml-sidebar-heading[data-name-hidden=true]{display:none}
+@media(max-width:1023px){#ml-sidebar-heading[data-name-hidden=true]{display:flex;justify-content:flex-end;min-height:44px;padding:0 20px}}
 .ml-brand-row{align-items:flex-start}
 .ml-brand-controls{display:flex;flex:0 1 48%;align-items:center;justify-content:flex-end;gap:8px;min-width:0}
 .ml-brand-controls>.ml-brand-input{flex:1 1 auto;min-width:0;width:100%;max-width:100%}
@@ -933,7 +935,6 @@ body .ml-brand-input:disabled{color:var(--disabled);border-bottom-color:var(--di
  #ml-appearance .ml-group[data-group=identity]{border-top:1px solid var(--divider)}
 }
 @media(max-width:767px){
- .ml-sidebar-heading[data-name-hidden=true]{display:flex}
  #ml-appearance .ml-brand-row{display:block}
  #ml-appearance .ml-brand-row>.ml-row-copy{display:block;margin-bottom:8px}
  #ml-appearance .ml-brand-row>.ml-brand-controls{width:100%;max-width:none}
