@@ -1,0 +1,14 @@
+<%# Copyright 2026 Patrick (Pew2018). Apache-2.0. -%>
+<% local ver=require "luci.version" %>
+ </main>
+ <footer class="ml-footer">MaterialLuCI @VERSION@ · <%=pcdata(ver.distversion or "")%></footer>
+ </div>
+ </div>
+ <script>
+ document.addEventListener("DOMContentLoaded",function(){
+  if(document.querySelector('input[name="luci_password"]'))return;
+  if(window.L)L.require("@MENU_CLASS@").catch(function(error){if(window.MaterialLuCI)MaterialLuCI.menuFailed(error);});
+ });
+ </script>
+</body>
+</html>
