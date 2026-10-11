@@ -21,6 +21,10 @@ export async function verifyM3Theme(browser,engine,base){
   assert.equal(await page.locator("#ml-appearance .mdc-switch").count(),0);
   await page.waitForSelector("#real-widget .mdc-switch");
   assert.equal(await page.locator("#real-widget .mdc-switch").count(),1,"LuCI adapter changed");
+  await page.evaluate(()=>{window.m3FormEvents={submit:0,reset:0};const form=document.querySelector("#fixture-form");form.addEventListener("submit",()=>m3FormEvents.submit++);form.addEventListener("reset",()=>m3FormEvents.reset++);});
+  assert(await page.locator("#ml-appearance md-outlined-button").evaluateAll(buttons=>buttons.every(button=>button.type==="button"&&button.getAttribute("type")==="button")),"appearance button became a submitter");
+  await page.locator("#ml-appearance .ml-mode-options:not(.ml-design-options) md-outlined-button").filter({hasText:mode==="dark"?"深色":"浅色"}).click();
+  assert.deepEqual(await page.evaluate(()=>m3FormEvents),{submit:0,reset:0});
   await page.evaluate(()=>{const input=document.querySelector('#ml-appearance input[data-ml-owner=appearance]');window.m3Source=input;window.m3Events={click:0,change:0};input.addEventListener("click",()=>m3Events.click++);input.addEventListener("change",()=>m3Events.change++);window.m3Checked=input.checked;});
   const toggle=page.locator("#ml-appearance md-switch").first();
   await toggle.click();await page.waitForFunction(()=>m3Source.checked!==m3Checked);
@@ -67,6 +71,8 @@ export async function verifyM3Theme(browser,engine,base){
   await page.screenshot({path:"dist/previews/"+engine+"-m3-progress-"+width+"-"+mode+".png"});
   await page.evaluate(()=>m3UI.hideModal());await page.waitForSelector("#ml-mdc-wait-progress",{state:"detached"});
   await page.locator('[data-design-option=classic]').click();assert.equal(await page.locator("html").getAttribute("data-design"),"m3e");
+  assert.deepEqual(await page.evaluate(()=>m3FormEvents),{submit:0,reset:0});
+  assert.equal(await page.evaluate(()=>window.fixtureSubmissions||0),0);
   await page.reload();await page.waitForFunction(()=>document.querySelector("#ml-appearance .mdc-switch"));
   assert.equal(await page.locator("html").getAttribute("data-design"),"classic");assert.equal(await page.locator("#ml-appearance md-switch").count(),0);
   assert.equal(errors.length,0,errors.join("\n"));assert(requests.every(url=>url.startsWith(base)),"external resource request");

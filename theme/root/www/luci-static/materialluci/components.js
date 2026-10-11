@@ -5,7 +5,9 @@
  const supported=name=>m3()&&!!window.customElements?.get(name);
  function button(label,listener,className){
   const el=document.createElement(supported("md-outlined-button")?"md-outlined-button":"button");
-  if(el.tagName==="BUTTON")el.type="button";
+  // Material Web form-associated buttons default to submit, like HTML buttons.
+  // Appearance actions must never submit or reset a containing LuCI form.
+  el.type="button";el.setAttribute("type","button");
   el.className=className;el.textContent=label;el.addEventListener("click",listener);
   if(el.tagName!=="BUTTON")el.dataset.mlComponent="button";
   return el;
