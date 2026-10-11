@@ -17,7 +17,7 @@ export async function verifyM3Theme(browser,engine,base){
   await page.evaluate(()=>scrollTo(0,0));
   const m3Shell=await page.evaluate(()=>Object.fromEntries([".ml-toolbar",".ml-layout","#ml-sidebar","#maincontent"].map(sel=>{const r=document.querySelector(sel).getBoundingClientRect();return [sel,[r.x,r.y,r.width]];})));
   for(const key of Object.keys(shell))for(let i=0;i<3;i++)assert(Math.abs(shell[key][i]-m3Shell[key][i])<=1,key+" moved");
-  assert.equal(await page.locator("#ml-appearance md-switch").count(),4);
+  assert.equal(await page.locator("#ml-appearance md-switch").count(),5);
   assert.equal(await page.locator("#ml-appearance .mdc-switch").count(),0);
   await page.waitForSelector("#real-widget .mdc-switch");
   assert.equal(await page.locator("#real-widget .mdc-switch").count(),1,"LuCI adapter changed");
