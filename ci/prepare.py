@@ -131,7 +131,6 @@ for name in ("reboot","flash","firewall"):
  maintenance_env["requestpath"]=["admin","system",name]
  maintenance_env["dispatchpath"]=["admin","system",name]
  fixture='<div id="view"></div><script>window.maintenanceKind='+json.dumps(name)+';document.addEventListener("DOMContentLoaded",function(){L.require("ui").then(function(ui){ui.instantiateView("materialluci-maintenance");});});</script>'
- code=bootstrap+'\ndisp_unused=nil\n' # route is compiled through the actual header globals below
  code=bootstrap.replace('requestpath={"admin","status","overview"}', 'requestpath={"admin","system","'+name+'"}')+'\ninclude("header")\nwrite('+luaquote(fixture)+')\ninclude("footer")'
  renderer.write_text(code)
  html=subprocess.check_output(["lua5.1",str(renderer)]).decode().replace("</head>",runtime.replace(json.dumps(env),json.dumps(maintenance_env))+"</head>")
