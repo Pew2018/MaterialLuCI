@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import {chromium} from "playwright";
-const names=fs.readdirSync("dist/previews").filter(n=>n.endsWith(".png")&&/upstream-settings|upstream-loading|ipv4-dark-cards-true|wireless-light-cards-true|upstream-realtime-dark|upstream-sidebar|upstream-switch|(?:mdc-textfields|reset-button)-(?:light|dark)|(?:reboot|flash|firewall)-(?:390|1280)-(?:light|dark)/.test(n));
+const names=fs.readdirSync("dist/previews").filter(n=>n.endsWith(".png")&&/m3-settings|m3-progress|upstream-settings|upstream-loading|ipv4-dark-cards-true|wireless-light-cards-true|upstream-realtime-dark|upstream-sidebar|upstream-switch|(?:mdc-textfields|reset-button)-(?:light|dark)|(?:reboot|flash|firewall)-(?:390|1280)-(?:light|dark)/.test(n));
 const browser=await chromium.launch();
 try{
  for(const engine of ["chromium","webkit"]){
@@ -15,6 +15,9 @@ try{
   // Focused, legible details are available in logs for visual review as well
   // as the unchanged PNG artifacts; no router data enters these fixtures.
   for(const filename of [
+   engine+"-m3-settings-390-dark.png",
+   engine+"-m3-settings-1280-light.png",
+   engine+"-m3-progress-390-dark.png",
    engine+"-mobile-problem-dns-light.png",
    engine+"-mobile-problem-dropdown-light.png",
    engine+"-reboot-legacy-390-light.png",

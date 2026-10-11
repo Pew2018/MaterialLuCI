@@ -1,0 +1,25 @@
+/* Shared shell geometry stays in cascade.css. Only M3-owned controls here. */
+:root[data-design=m3e]{
+ --md-sys-typescale-label-large-font:Roboto,"Noto Sans",system-ui,sans-serif;
+ --md-sys-typescale-label-large-size:14px;
+ --md-sys-typescale-label-large-line-height:20px;
+ --md-switch-track-width:48px;
+ --md-linear-progress-track-height:4px;
+ --md-linear-progress-track-shape:0px;
+}
+:root[data-design=m3e] body md-outlined-button.ml-mode-option{
+ display:inline-flex;flex:1;min-width:0;min-height:48px;padding:0;margin:0;
+ border:0;background:transparent;box-shadow:none;font:inherit;color:var(--ink);
+ --md-outlined-button-container-height:48px;
+ --md-outlined-button-container-shape:8px;
+ --md-outlined-button-label-text-color:var(--md-sys-color-on-surface);
+ --md-outlined-button-outline-color:var(--md-sys-color-outline);
+}
+:root[data-design=m3e] md-outlined-button.ml-mode-option[aria-pressed=true]{
+ --md-outlined-button-outline-color:var(--md-sys-color-primary);
+ --md-outlined-button-label-text-color:var(--md-sys-color-primary);
+}
+:root[data-design=m3e] .ml-switch-hit md-switch{flex:none;max-width:48px}
+:root[data-design=m3e] [data-ml-component=progress] md-linear-progress{display:block;width:100%;height:4px}
+.ml-design-notice{display:block;color:var(--muted);font-size:12px;line-height:1.5;margin:0 0 12px}
+[data-ml-progress-fallback=true]{background:var(--control-accent);opacity:.55}

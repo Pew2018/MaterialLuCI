@@ -27,9 +27,11 @@
  <meta name="materialluci-cache" content="@CACHE@">
  <title><%=striptags((boardinfo.hostname or "?") .. ((node and node.title) and " - "..translate(node.title) or ""))%> - MaterialLuCI</title>
  <script src="<%=media%>/palette.js?v=@CACHE@"></script>
+ <script src="<%=media%>/palette-m3.js?v=@CACHE@"></script>
  <script src="<%=media%>/startup.js?v=@CACHE@"></script>
  <link rel="stylesheet" href="<%=media%>/mdc-linear-progress.css?v=@CACHE@">
  <link rel="stylesheet" href="<%=media%>/cascade.css?v=@CACHE@">
+ <link rel="stylesheet" href="<%=media%>/design-m3.css?v=@CACHE@">
  <% if node and node.css then %><link rel="stylesheet" href="<%=resource%>/<%=node.css%>"><% end %>
  <% if css then %><style><%=css%></style><% end %>
  <script src="<%=url('admin/translations',luci.i18n.context.lang)%>"></script>
@@ -42,6 +44,8 @@
  <script defer src="<%=media%>/controls.js?v=@CACHE@"></script>
  <script defer src="<%=media%>/feedback.js?v=@CACHE@"></script>
  <script defer src="<%=media%>/extras.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/material-web.js?v=@CACHE@"></script>
+ <script defer src="<%=media%>/components.js?v=@CACHE@"></script>
  <script defer src="<%=media%>/app.js?v=@CACHE@"></script>
  <script defer src="<%=media%>/wait.js?v=@CACHE@"></script>
 </head>

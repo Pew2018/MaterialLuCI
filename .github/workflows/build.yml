@@ -1,4 +1,4 @@
-name: Build AX3000T Classic Native
+name: Build AX3000T dual styles
 on:
   push:
     branches: [main, "feature/**", "fix/**"]
@@ -59,6 +59,7 @@ jobs:
         run: |
           export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
           python3 scripts/build.py
+          node ci/m3-colors.mjs
           python3 ci/ipk-audit.py dist/*.ipk --sha "$GITHUB_SHA" --run "$GITHUB_RUN_ID" --out build/package-audit.json --extract build/unpacked --candidate
       - name: Obtain pinned upstream LuCI for browser compatibility tests
         uses: actions/checkout@v4
@@ -109,7 +110,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: MaterialLuCI-0.3.0-8-IPK-${{ github.sha }}-AX3000T
+          name: MaterialLuCI-0.3.0-9-IPK-${{ github.sha }}-AX3000T
           path: dist/*.ipk
           if-no-files-found: error
           retention-days: 30

@@ -17,6 +17,7 @@
  const textButton=(text,fn,cls="text-action")=>{const b=node("button",{type:"button",class:cls},[node("span",{text})]);b.addEventListener("click",fn);return b;};
  const switches=new Map();
  function switchControl(input,label){
+  if(input.dataset.mlOwner==="appearance"){const entry=MaterialComponents.switchControl(input,label);if(entry){const cleanup=entry.destroy;entry.destroy=()=>{cleanup();switches.delete(input);};switches.set(input,entry);return entry.control;}}
   const control=node("button",{type:"button",class:"mdc-switch "+(input.checked?"mdc-switch--selected":"mdc-switch--unselected"),role:"switch","aria-label":label,"aria-checked":String(!!input.checked)},[
    node("span",{class:"mdc-switch__track"}),
    node("span",{class:"mdc-switch__handle-track"},[node("span",{class:"mdc-switch__handle"},[
@@ -90,7 +91,7 @@
 
  const narrow=matchMedia("(max-width: 1023px)");
  let dialog=null,sequence=0,drawerFocus=null,drawerInert=[];
- const focusables=el=>[...el.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled):not([type=hidden]),select:not(:disabled),textarea:not(:disabled),summary,[tabindex="0"]')].filter(n=>n.getClientRects().length&&!n.closest("[inert]"));
+ const focusables=el=>[...el.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled):not([type=hidden]),select:not(:disabled),textarea:not(:disabled),summary,md-switch:not([disabled]),md-outlined-button:not([disabled]),[tabindex="0"]')].filter(n=>n.getClientRects().length&&!n.closest("[inert]"));
  function trap(e,panel){if(e.key!=="Tab")return;const fs=focusables(panel);if(!fs.length)return;const first=fs[0],last=fs[fs.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
  function setDrawer(open,restore=true){
   open=!!open&&narrow.matches&&!document.body.classList.contains("ml-login");
@@ -179,7 +180,7 @@
  }
  function row(title,description,control){return node("div",{class:"ml-setting-row"},[node("span",{class:"ml-row-copy"},[node("strong",{text:title}),node("small",{text:description})]),control]);}
  function prefSwitch(key,title,description){
-  const input=node("input",{type:"checkbox",class:"ml-switch","aria-label":title});input.checked=appearance.prefs[key];input.addEventListener("change",()=>appearance.set(key,input.checked));
+  const input=node("input",{type:"checkbox",class:"ml-switch","data-ml-owner":"appearance","aria-label":title});input.checked=appearance.prefs[key];input.addEventListener("change",()=>appearance.set(key,input.checked));
   return row(title,description,node("span",{class:"ml-switch-hit"},[input,switchControl(input,title)]));
  }
  function openAppearance(container){
@@ -187,11 +188,16 @@
   const host=node("section",{id:"ml-appearance"});container.append(host);
   const group=title=>{const g=node("section",{class:"ml-group"},[node("h2",{text:title})]);host.append(g);return g;};
   const general=group(t("界面","Appearance"));general.dataset.group="general";
+  const design=node("div",{class:"ml-mode-options ml-design-options",role:"group","aria-label":t("界面风格","Interface style")});
+  const pending=node("small",{class:"ml-design-notice",role:"status"});
+  const syncDesign=()=>{design.querySelectorAll("[data-design-option]").forEach(el=>el.setAttribute("aria-pressed",String(el.dataset.designOption===appearance.prefs.design)));pending.textContent=appearance.prefs.design!==appearance.activeDesign?t("已保存。下次打开页面时生效；当前未保存的设置会保留。","Saved. Applies on the next page load; unsaved settings remain on this page."):t("风格选择仅保存于当前浏览器。","Style selection is saved in this browser only.");};
+  for(const [key,label] of [["classic","Classic"],["m3e",t("M3E（实验）","M3E (experimental)")]]){const option=MaterialComponents.button(label,()=>{appearance.set("design",key);syncDesign();},"ml-mode-option");option.dataset.designOption=key;design.append(option);}
+  general.append(row(t("界面风格","Interface style"),t("共享原有导航与页面布局。","Shared navigation and page layout."),design),pending);syncDesign();
   const modeLabels={system:t("跟随系统","System"),light:t("浅色","Light"),dark:t("深色","Dark")};
   const mode=node("div",{class:"ml-mode-options",role:"radiogroup","aria-label":t("显示模式","Display mode")});
   for(const [key,label] of Object.entries(modeLabels)){
-   const option=textButton(label,()=>{appearance.set("mode",key);mode.querySelectorAll("[role=radio]").forEach(item=>item.setAttribute("aria-checked",String(item===option)));},"ml-mode-option");
-   option.setAttribute("role","radio");option.setAttribute("aria-checked",String(key===appearance.prefs.mode));mode.append(option);
+   const option=MaterialComponents.button(label,()=>{appearance.set("mode",key);mode.querySelectorAll(".ml-mode-option").forEach(item=>{item.setAttribute("aria-checked",String(item===option));item.setAttribute("aria-pressed",String(item===option));});},"ml-mode-option");
+   if(option.tagName==="BUTTON")option.setAttribute("role","radio");else mode.setAttribute("role","group");option.setAttribute("aria-checked",String(key===appearance.prefs.mode));option.setAttribute("aria-pressed",String(key===appearance.prefs.mode));mode.append(option);
   }
   general.append(row(t("显示模式","Display mode"),t("仅改变当前浏览器的界面外观。","Changes appearance in this browser only."),mode));
   general.append(prefSwitch("cards",t("分组卡片","Grouped cards"),t("为设置分组添加小圆角表面。","Use small cornered surfaces for groups.")));
@@ -327,12 +333,12 @@
    }
   }
   // Keep original selects and LuCI dropdowns authoritative, including keyboard behavior.
-  appearanceEntry(root);window.MaterialTextFields?.enhance(root);MaterialControls.enhance(root);MaterialFeedback.bind(root);window.MaterialExtras?.enhance(root);
+  appearanceEntry(root);MaterialComponents.enhance(root);
  }
  window.addEventListener("popstate",()=>{if(dialog&&(!history.state||history.state.materialluci!=="dialog"||history.state.id!==dialog.id))finishDialog();setDrawer(false);});
  if(document.querySelector('input[name="luci_password"]'))document.body.classList.add("ml-login");
  enhance(main);
- const decoration=n=>n.matches(".mdc-button__ripple,.mdc-icon-button__ripple,.mdc-checkbox__background,.mdc-checkbox__ripple,.mdc-checkbox__focus-ring,.mdc-radio__background,.mdc-radio__ripple,.mdc-radio__focus-ring");
+ const decoration=n=>n.closest("[data-ml-component]")||n.matches(".mdc-button__ripple,.mdc-icon-button__ripple,.mdc-checkbox__background,.mdc-checkbox__ripple,.mdc-checkbox__focus-ring,.mdc-radio__background,.mdc-radio__ripple,.mdc-radio__focus-ring");
  let scheduled=false;const pending=new Set();
  function flush(){scheduled=false;for(const n of pending)if(n.isConnected)enhance(n);pending.clear();}
  const observer=new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&!decoration(n))pending.add(n);if(pending.size&&!scheduled){scheduled=true;requestAnimationFrame(flush);}});
