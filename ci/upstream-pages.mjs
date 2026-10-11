@@ -230,6 +230,7 @@ export async function verifyUpstreamPages(browser,name,base){
    await listInput.fill("");
    await listInput.evaluate(el=>el.placeholder="/example.org/10.1.2.3");
    assert.equal(await listInput.evaluate(el=>el.parentElement.classList.contains("mdc-text-field")),false,"LuCI dynamic list keeps its native add-item frame");
+   assert((await listInput.boundingBox()).width>220,"DNS entry must expose a usable text area");
    await listInput.scrollIntoViewIfNeeded();
    await page.screenshot({path:"dist/previews/"+name+"-"+size+"-problem-dns-"+mode+".png"});
    const dropdowns=page.locator("#native-dropdown-audit .cbi-dropdown");
