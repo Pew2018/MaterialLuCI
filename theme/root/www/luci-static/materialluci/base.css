@@ -818,7 +818,7 @@ select {
     border: 1px solid #ccc;
     border-radius: 5px;
     box-sizing: border-box;
-    color: #111;
+    color: var(--ink);
     font: inherit;
     line-height: 18px;
 }
@@ -1043,7 +1043,7 @@ button:focus {
 .cbi-input-apply {
     color: #fff;
     background: #0069d6;
-    border: 1px solid #0069d6;
+    border: 1px solid transparent;
 }
 
 .cbi-button-apply:active,
