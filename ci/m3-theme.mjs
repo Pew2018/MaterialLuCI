@@ -64,5 +64,8 @@ export async function verifyM3Theme(browser,engine,base){
  await fallback.route("**/material-web.js?*",route=>route.abort());await fallback.goto(base);
  await fallback.waitForSelector("#ml-appearance .mdc-switch");
  assert.equal(await fallback.locator("#ml-appearance md-switch").count(),0);await fallback.close();
+ const paletteFallback=await browser.newPage();await paletteFallback.addInitScript(()=>localStorage.setItem("materialluci-design","m3e"));
+ await paletteFallback.route("**/palette-m3.js?*",route=>route.abort());await paletteFallback.goto(base);
+ await paletteFallback.waitForSelector("#ml-appearance .mdc-switch");assert.equal(await paletteFallback.locator("html").getAttribute("data-design"),"classic");await paletteFallback.close();
  console.log(engine+": M3 light/dark mobile/desktop, native event authority, keyboard, fieldset recovery, progress cleanup, shell geometry and Classic return passed");
 }

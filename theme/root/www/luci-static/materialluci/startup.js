@@ -8,7 +8,7 @@
  if(!/^#[0-9a-f]{6}$/i.test(prefs.seed)) prefs.seed="#42A5F5";
  prefs.seed=prefs.seed.toUpperCase();
  if(!["classic","m3e"].includes(prefs.design))prefs.design="classic";
- const activeDesign=prefs.design;root.dataset.design=activeDesign;
+ const activeDesign=prefs.design==="m3e"&&!window.MaterialM3Palette?"classic":prefs.design;root.dataset.design=activeDesign;
  function apply(){
   const dark=prefs.mode==="dark"||(prefs.mode==="system"&&query.matches),m3=activeDesign==="m3e"&&window.MaterialM3Palette?.generate(prefs.seed,dark),p=m3?m3.legacy:MaterialPalette.generate(prefs.seed,dark);
   if(m3){for(const [key,color] of Object.entries(m3.system))root.style.setProperty("--md-sys-color-"+key.replace(/[A-Z]/g,c=>"-"+c.toLowerCase()),color);for(const [key,color] of Object.entries(m3.surfaces))root.style.setProperty("--"+key,color);}
