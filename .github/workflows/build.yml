@@ -70,6 +70,14 @@ jobs:
             applications/luci-app-opkg/htdocs/luci-static/resources
             modules/luci-mod-status/htdocs/luci-static/resources
             modules/luci-mod-system/htdocs/luci-static/resources
+      - name: Obtain pinned ImmortalWrt mtdblock flash renderer
+        uses: actions/checkout@v4
+        with:
+          repository: immortalwrt/luci
+          ref: 5829eabba50ec0afa17d2ee486bc90dc15180c34
+          path: immortal-fixture
+          sparse-checkout: |
+            modules/luci-mod-system/htdocs/luci-static/resources/view/system/flash.js
       - name: Compile Lua templates and prepare compatibility preview
         run: python3 ci/prepare.py
       - name: Test desktop and mobile layouts in Chromium and WebKit
