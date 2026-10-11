@@ -8,7 +8,7 @@
  const normalizeText=value=>{if(typeof value!=="string")return "";const text=segmenter?[...segmenter.segment(value)].slice(0,limit).map(item=>item.segment).join(""):[...value].slice(0,limit).join("");return text.trim()?text:"";};
  const validHex=value=>typeof value==="string"&&/^#[0-9a-f]{6}$/i.test(value);
  const rawValue=read(keys.value,"#FFFFFF");
- const prefs={toolbarTitle:normalizeText(read(keys.title,"")),toolbarTitleColor:read(keys.mode,"auto")==="custom"?"custom":"auto",toolbarTitleColorValue:validHex(rawValue)?rawValue.toUpperCase():"#FFFFFF",sidebarNameVisible:read(keys.visible,"true")!=="false",sidebarName:normalizeText(read(keys.name,""))};
+ const prefs={toolbarTitle:normalizeText(read(keys.title,"")),toolbarTitleColor:read(keys.mode,"auto")==="custom"&&validHex(rawValue)?"custom":"auto",toolbarTitleColorValue:validHex(rawValue)?rawValue.toUpperCase():"#FFFFFF",sidebarNameVisible:read(keys.visible,"true")!=="false",sidebarName:normalizeText(read(keys.name,""))};
  function parse(value){const m=String(value||"").match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)$/i);if(m)return [+m[1],+m[2],+m[3],m[4]===undefined?1:+m[4]];const h=String(value||"").match(/^#([\da-f]{6})$/i);return h?[parseInt(h[1].slice(0,2),16),parseInt(h[1].slice(2,4),16),parseInt(h[1].slice(4,6),16),1]:null;}
  const lum=rgb=>{const a=rgb.map(v=>{const c=v/255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4;});return .2126*a[0]+.7152*a[1]+.0722*a[2];};
  const ratio=(a,b)=>{const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);};
