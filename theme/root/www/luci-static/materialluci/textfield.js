@@ -7,7 +7,7 @@
  function enhance(scope){
   const inputs=[...(scope.matches?.("input,textarea")?[scope]:[]),...scope.querySelectorAll("input,textarea")];
   for(const input of inputs){
-   if(!eligible(input)||fields.has(input)||input.closest(".mdc-text-field"))continue;
+   if(!eligible(input)||fields.has(input)||input.closest(".mdc-text-field,.cbi-dynlist,.cbi-dropdown"))continue;
    const parent=input.parentElement;
    // Textarea.getValue() uses frame.firstElementChild; password reveal uses
    // button.previousElementSibling. Reuse these frames, append decorations.
