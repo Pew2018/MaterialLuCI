@@ -64,8 +64,11 @@ if a.candidate:
  assert 'ml-view-progress' in wait
  if assets+"components.js" in files:
   adapter=files[assets+"components.js"].decode()
-  assert 'MaterialComponents.progress' in wait and 'MDCLinearProgress' in adapter and 'md-linear-progress' in adapter
+  assert 'MaterialComponents.progress' in wait and 'MDCLinearProgress' in adapter and 'ml-wavy-progress' in adapter
+  assert "ml-wave-travel" in files[assets+"design-m3.css"].decode()
+  assert "md-ripple" in files[assets+"material-web.js"].decode()
   checks["dual_style_progress_adapter_packaged"]=True
+  checks["expressive_wave_and_official_ripple_packaged"]=True
  else:assert 'MDCLinearProgress' in wait
  assert 'ml-chart-surface' in css and 'body[data-page$="-load"]' not in css
  assert '<svg' in files[assets+"icons/pause.svg"].decode()

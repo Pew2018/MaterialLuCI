@@ -84,3 +84,8 @@ body .ml-design-options button[aria-pressed=true]{background:var(--action-tonal)
 .ml-wave-active{stroke:var(--md-sys-color-primary);stroke-dasharray:32 68;animation:ml-wave-travel 2200ms linear infinite}
 @keyframes ml-wave-travel{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
 @media(prefers-reduced-motion:reduce){.ml-wave-active{animation:none;stroke-dashoffset:0}}
+
+:root[data-design=m3e] body .cbi-progressbar{height:8px;border-radius:4px;background:var(--md-sys-color-primary-container)}
+:root[data-design=m3e] body .cbi-progressbar>div{border-radius:4px;background:var(--md-sys-color-primary)}
+:root[data-design=m3e] body input[type=range]{accent-color:var(--md-sys-color-primary);min-height:48px}
+:root[data-design=m3e] body input[type=file]::file-selector-button{min-height:48px;padding:12px 20px;border:0;border-radius:24px;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);font:inherit;cursor:pointer}

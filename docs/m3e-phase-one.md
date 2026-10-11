@@ -6,9 +6,9 @@ Classic remains the default. Browser-local design preference (classic/m3e) takes
 - Shared shell and all LuCI business DOM, forms, tables, routes and operations stay in existing modules.
 - startup.js separates activeDesign from the pending preference. Existing data-theme still controls light/dark.
 - palette.js retains the Classic algorithm. palette-m3.js bundles official Material Color Utilities 0.4.0 SchemeTonalSpot at contrast 0, and publishes semantic M3 roles plus a legacy variable bridge.
-- components.js owns presentation factories and delegates LuCI fields to existing MDC adapters. Only browser appearance checkboxes and appearance mode/style buttons mount official Material Web components. The native checkbox remains authoritative and receives click/change exactly once.
-- wait.js retains task/modal/view lifecycle, mounting either MDC or official M3 linear progress in the existing outside-view/outside-business-modal host.
-- design-m3.css controls only the M3 layer. Shared shell dimensions are untouched. Swatches, HEX input, LuCI rich dropdowns, file controls and all business buttons remain native/MDC.
+- components.js owns presentation factories and delegates LuCI fields to existing MDC adapters. Eligible native boolean/selection fields and appearance actions mount official Material Web components. The native checkbox remains authoritative and receives click/change exactly once.
+- wait.js retains task/modal/view lifecycle, mounting either MDC or project-owned Expressive wavy progress in the existing outside-view/outside-business-modal host.
+- design-m3.css controls only the M3 layer. Shared shell dimensions are untouched. Swatches, HEX input, rich dropdowns, file controls and business buttons retain native DOM. M3E surfaces and official md-ripple provide presentation.
 - Official Material Web 2.5.0 is M3, not a complete M3 Expressive implementation. This branch establishes an experimental expressive-ready foundation.
 - Dependencies are pinned directly; transitive dependencies are currently resolved by npm install (no repository lockfile yet). Offline IPK includes bundles and dependency licenses. Both component bundles are downloaded locally at startup; only the active design mounts controls. Conditional loading is deferred.
 
