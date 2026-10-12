@@ -15,7 +15,9 @@ function audit(){
  Document.prototype.querySelectorAll=function(...args){const t=performance.now();try{return query.apply(this,args);}finally{counts.scans++;counts.scanMs+=performance.now()-t;}};
  const elementQuery=Element.prototype.querySelectorAll;
  Element.prototype.querySelectorAll=function(...args){const t=performance.now();try{return elementQuery.apply(this,args);}finally{counts.elementScans++;counts.elementScanMs+=performance.now()-t;}};
- new original(records=>{counts.rootStyleMutations+=records.length;}).observe(document.documentElement,{attributes:true,attributeFilter:["style"]});
+ const rootObserver=new original(records=>{counts.rootStyleMutations+=records.length;});
+ const observeRoot=()=>rootObserver.observe(document.documentElement,{attributes:true,attributeFilter:["style"]});
+ if(document.documentElement)observeRoot();else document.addEventListener("DOMContentLoaded",observeRoot,{once:true});
  if(PerformanceObserver.supportedEntryTypes.includes("longtask"))new PerformanceObserver(list=>counts.longTasks.push(...list.getEntries().map(e=>e.duration))).observe({type:"longtask",buffered:true});
  addEventListener("scroll",()=>counts.scrollEvents++,{passive:true});
  let last=0;function frame(t){if(last)counts.frames.push(t-last);last=t;if(counts.frames.length<5000)requestAnimationFrame(frame);}requestAnimationFrame(frame);
@@ -95,6 +97,8 @@ async function verifyRefresh(browser,engine){
    clearInterval(refreshPoll);const f=acceptance.frames.slice().sort((a,b)=>a-b);
    return {enhancement:{...MaterialLuCI.metrics},rootStyleMutations:acceptance.rootStyleMutations,longTasks:acceptance.longTasks,p95FrameMs:f[Math.floor(f.length*.95)],maxFrameMs:Math.max(...f)};
   });
+  assert(Number.isFinite(result.p95FrameMs)&&result.p95FrameMs>0,"frame probe must record actual frames");
+  assert(result.p95FrameMs<50,"repeated stalled frames during refresh scrolling: "+JSON.stringify(result));
   assert.equal(result.enhancement.fullScans,0,"polling SVG icons must not re-enhance the entire layout");
   assert.equal(result.enhancement.surfacePasses,0,"polling must not repeat global card scans");
   assert.equal(result.rootStyleMutations,0,"refresh scrolling writes root viewport geometry");
