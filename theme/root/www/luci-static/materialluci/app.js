@@ -277,65 +277,6 @@
   if(desktop.addEventListener)desktop.addEventListener("change",syncDisclosure);else desktop.addListener(syncDisclosure);
   syncDisclosure();if(details.open)openAppearance(details);
  }
- const surfaceSelectors=".cbi-value,.cbi-section,.cbi-section-node,fieldset,section,.cbi-map,[data-tab-title],[data-table],.network-status-table,.ml-chart-surface,.ml-table-scroll,#view";
- const surfaceRoots=new Set();let surfaceTimer=0;
- function queueSurfaces(scope=main){
-  const owner=scope===main?main:scope.closest?.(".cbi-map,#view")||main;
-  surfaceRoots.add(owner);
-  if(!surfaceTimer)surfaceTimer=setTimeout(()=>{surfaceTimer=0;const roots=[...surfaceRoots];surfaceRoots.clear();for(const root of roots)if(root.isConnected&&!roots.some(p=>p!==root&&p.contains(root)))updateSurfaces(root);},0);
- }
- function updateSurfaces(scope=main){
-  const all=selector=>[...(scope.matches?.(selector)?[scope]:[]),...scope.querySelectorAll(selector)];
-  enhancementMetrics.surfacePasses++;
-  // SectionValue embeds complete sections inside field containers (flash,
-  // backup and vendor pages). Mark those wrappers without moving native nodes.
-  for(const value of all(".cbi-value")){
-   const section=[...value.querySelectorAll(".cbi-section,fieldset")].find(el=>el.closest(".cbi-value")===value);
-   if(value.classList.contains("ml-section-container")!==!!section)value.classList.toggle("ml-section-container",!!section);
-  }
-
-  const isPlot=svg=>!!svg.querySelector("polyline,polygon")&&!!svg.querySelector("line,text")&&!svg.closest(".mdc-select,.mdc-button,.mdc-icon-button,.ml-icon-button,.ml-mdc-selection,.ml-toolbar,.ml-sidebar");
-  for(const svg of all("#view svg"))if(isPlot(svg))svg.parentElement?.classList.add("ml-chart-surface");
-  // Recognize the actual legacy flashops direct-child groups. Add only
-  // presentation classes; forms, their children and business events stay put.
-  for(const section of all(".cbi-section")){
-   const heads=[...section.children].filter(el=>el.tagName==="H3");
-   const legacy=!main.querySelector("#view")&&["flashops","flash"].includes(main.dataset.mlPage)&&heads.length>1;
-   if(section.classList.contains("ml-legacy-flash-section")!==legacy)section.classList.toggle("ml-legacy-flash-section",legacy);
-   if(!legacy)continue;
-   const children=[...section.children];
-   children.forEach(el=>el.classList.remove("ml-legacy-card-start","ml-legacy-card-body","ml-legacy-card-end"));
-   for(let i=0;i<heads.length;i++){
-    const start=children.indexOf(heads[i]),end=i+1<heads.length?children.indexOf(heads[i+1]):children.length;
-    const group=children.slice(start,end);heads[i].classList.add("ml-legacy-card-start");
-    group.slice(1).forEach((el,j)=>el.classList.add(j===group.length-2?"ml-legacy-card-end":"ml-legacy-card-body"));
-   }
-  }
-  const candidates=[...all(".cbi-section,.cbi-section-node,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table,#view [data-table],.ml-chart-surface,#view > .ml-table-scroll,.cbi-map > .ml-table-scroll")]
-   .filter(section=>{
-    if(section.closest(".ml-legacy-flash-section"))return false;
-    const option=section.closest(".cbi-value");
-    return !section.closest("#ml-appearance,.modal,table,.table")&&
-     (!option||option.classList.contains("ml-section-container"))&&
-     !section.matches(".cbi-section-node:empty")&&section.id!=="view"&&
-     // A container of SectionValues has no surface: each complete subsection does.
-     !section.querySelector(".ml-section-container .cbi-section,.ml-section-container fieldset");
-   });
-  const candidateSet=new Set(candidates);
-  const surfaces=new Set(candidates.filter(section=>{for(let p=section.parentElement;p&&p!==scope.parentElement;p=p.parentElement)if(candidateSet.has(p))return false;return true;}));
-  // Flat views (reboot, SSH keys, firewall status, vendor views) have no CBI
-  // section. Their existing content host owns the surface; never wrap children.
-  const view=scope.id==="view"?scope:scope.querySelector("#view");
-  if(view&&view.children.length&&!view.querySelector(":scope > .spinning,.cbi-map,.cbi-section,fieldset,.ml-card-surface")&&!candidates.some(section=>view.contains(section)))surfaces.add(view);
-  // Legacy Lua reboot templates render h2/p/hr/input directly without #view.
-  // Keep their nodes and handlers in place; style the existing main surface.
-  if(scope===main&&!view&&main.dataset.mlPage==="reboot"&&main.children.length&&[...main.children].some(el=>el.matches("h2,p,hr,form,input,button")))surfaces.add(main);
-  for(const map of all(".cbi-map"))if(map.querySelector(".cbi-value")&&!map.querySelector(".ml-section-container")&&!candidates.some(section=>map.contains(section)))surfaces.add(map);
-  all(".ml-card-surface").forEach(el=>{if(!surfaces.has(el))el.classList.remove("ml-card-surface");});
-  if(scope===main&&main.classList.contains("ml-card-surface")&&!surfaces.has(main))main.classList.remove("ml-card-surface");
-  for(const section of surfaces)if(!section.classList.contains("ml-card-surface"))section.classList.add("ml-card-surface");
-
- }
  function enhanceSwitch(input){
    if(input.classList.contains("ml-switch")||input.closest(".cbi-dropdown,[role=group]"))return;
    const field=input.closest(".cbi-value-field");
@@ -347,17 +288,9 @@
    if(input.disabled)input.setAttribute("aria-disabled","true");
 
  }
- const enhancementMetrics={fullScans:0,fastPaths:0,surfacePasses:0};
+ const enhancementMetrics={fullScans:0,fastPaths:0,get surfacePasses(){return MaterialSurfaces.count();}};
  const layoutSelectors="div.btn,.cbi-checkbox>input[type=checkbox],input.cbi-input-checkbox,.cbi-value-field input[type=checkbox],.cbi-page-actions>input,table,.table,.cbi-section,.cbi-section-node,fieldset,section,.cbi-map,[data-tab],[data-table],.network-status-table,.ml-chart-surface,.ml-table-scroll,#view,.ifacebox-head[style]";
  function enhance(root){
-  let newPlot=false;
-  for(const svg of root.matches?.("svg")?[root]:root.querySelectorAll("svg")){
-   if(svg.querySelector("polyline,polygon")&&svg.querySelector("line,text")&&!svg.closest("[data-ml-component],.ml-icon-button,.ml-sidebar")){
-    const plot=svg.parentElement;
-    if(plot&&!plot.classList.contains("ml-chart-surface")){plot.classList.add("ml-chart-surface");newPlot=true;}
-   }
-  }
-  if(newPlot)queueSurfaces(root);
   const viewHost=root.closest?.("#view");
   const needsFirstSurface=viewHost&&viewHost.children.length&&!viewHost.classList.contains("ml-card-surface")&&!viewHost.querySelector(".cbi-map,.cbi-section,fieldset,.ml-card-surface");
   if(root!==main&&!needsFirstSurface&&!root.matches?.(layoutSelectors)&&!root.querySelector?.(layoutSelectors)){
@@ -378,22 +311,6 @@
   for(const input of all('.cbi-page-actions>input[type="submit"],.cbi-page-actions>input[type="button"],.cbi-page-actions>input[type="reset"]')){
    if(input.closest(".ml-native-button"))continue;const wrapper=node("span",{class:"ml-native-button"});input.parentNode.insertBefore(wrapper,input);wrapper.append(input);
   }
-  // Includes live status div-tables as well as legacy Lua CBI tables.
-  const tables=new Set(all("table,.table"));const ancestor=root.closest?.("table,.table");if(ancestor)tables.add(ancestor);
-  for(const table of tables){
-   // Firewall polling and jump links require heading.nextElementSibling and
-   // chain.lastElementChild to remain the original table. Scroll its host.
-   if(table.parentElement.matches("[data-chain]")){table.parentElement.classList.add("ml-chain-scroll");continue;}
-   if(table.closest(".ml-table-scroll")||table.parentElement.closest("table,.table"))continue;
-   const first=table.querySelector("tr,.tr"),cells=first?[...first.children].filter(c=>c.matches("td,th,.td,.th")).length:0;
-   if(cells<3&&!table.classList.contains("cbi-section-table"))continue;
-   const wrapper=node("div",{class:"ml-table-scroll",tabindex:0,role:"region","aria-label":t("表格，可横向滚动","Table, horizontally scrollable")});
-   if(cells>=5)table.classList.add("ml-wide-table");
-   table.parentNode.insertBefore(wrapper,table);wrapper.append(table);
-  }
-  // Polling rows and SVG updates do not change section ownership.
-  // Coalesce structural changes into one surface pass for the entire batch.
-  if(root===main||needsFirstSurface||root.matches?.(surfaceSelectors)||root.querySelector?.(surfaceSelectors))queueSurfaces(root);
   // Preserve zone/status background semantics, with readable foreground in either mode.
   for(const head of all('.ifacebox-head[style*="background"]')){
    const rgb=getComputedStyle(head).backgroundColor.match(/[0-9.]+/g)?.map(Number);
@@ -408,8 +325,9 @@
  }
  window.addEventListener("popstate",()=>{if(dialog&&(!history.state||history.state.materialluci!=="dialog"||history.state.id!==dialog.id))finishDialog();setDrawer(false);});
  if(document.querySelector('input[name="luci_password"]'))document.body.classList.add("ml-login");
+ MaterialSurfaces.prepare(main);
  enhance(main);
- MaterialRuntime.register({range:true,priority:-20,initial:false,enhance(root){if(root.closest?.("#maincontent,#modal_overlay,.ml-backdrop"))enhance(root);},cleanup(root){MaterialRuntime.cleanup(root,switches,"input");if(root.matches?.(".cbi-map,.cbi-section,#view")||root.querySelector?.(".cbi-map,.cbi-section"))queueSurfaces();}});
+ MaterialRuntime.register({range:true,priority:-20,initial:false,enhance(root){if(root.closest?.("#maincontent,#modal_overlay,.ml-backdrop"))enhance(root);},cleanup(root){MaterialRuntime.cleanup(root,switches,"input");}});
  MaterialRuntime.register({priority:-10,selector:'.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox,.cbi-value-field input[type="checkbox"]',enhance:enhanceSwitch});
  MaterialRuntime.start(document.body);
  const vv=window.visualViewport,root=document.documentElement;let viewportFrame=0;
@@ -473,8 +391,8 @@
  document.addEventListener("focusin",()=>{queueViewport();clearTimeout(focusTimer);focusTimer=setTimeout(revealFocused,280);});
  document.addEventListener("focusout",queueViewport);
  if(vv)vv.addEventListener("resize",()=>{clearTimeout(focusTimer);focusTimer=setTimeout(revealFocused,180);},{passive:true});
- window.addEventListener("pagehide",event=>{clearTimeout(surfaceTimer);surfaceTimer=0;cancelAnimationFrame(viewportFrame);viewportFrame=0;clearTimeout(focusTimer);if(!event.persisted)viewportObserver.disconnect();});
- window.addEventListener("pageshow",event=>{if(event.persisted){if(surfaceRoots.size)queueSurfaces();queueViewport();}});
+ window.addEventListener("pagehide",event=>{cancelAnimationFrame(viewportFrame);viewportFrame=0;clearTimeout(focusTimer);if(!event.persisted)viewportObserver.disconnect();});
+ window.addEventListener("pageshow",event=>{if(event.persisted){MaterialRuntime.preparePending();queueViewport();}});
  window.MaterialLuCI={metrics:enhancementMetrics,setMenus:renderMenus,menuFailed(err){const host=document.getElementById("ml-menu-tree");host.replaceChildren(node("p",{class:"hint",text:t("菜单加载失败，请刷新页面。","Menu could not load. Reload the page.")}));console.error(err);},choose,enhance};
  document.documentElement.dataset.loading="false";
 })();

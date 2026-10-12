@@ -71,7 +71,7 @@
   const busy=scope?.querySelector(":scope > .spinning:not(button):not(.btn):not(.cbi-button)");
   const failure=records.some(r=>[...r.addedNodes].some(n=>n.nodeType===1&&(n.matches(".alert-message.danger")||n.querySelector(".alert-message.danger"))));
   if(failure&&viewTask){failedScope=scope;stopView();}
-  if(!busy){if(failedScope===scope)failedScope=null;stopView();return;}
+  if(!busy){if(viewTask&&scope?.isConnected)window.MaterialSurfaces?.ensure(scope);if(failedScope===scope)failedScope=null;stopView();return;}
   if(failedScope===scope)return;
   if(viewTask&&(viewScope!==scope||!scope.isConnected))stopView();
   if(!viewTask){

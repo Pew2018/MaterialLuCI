@@ -20,7 +20,7 @@ for member in data:
 assets="www/luci-static/materialluci/"
 header=files["usr/lib/lua/luci/view/themes/materialluci/header.htm"].decode()
 required=["cascade.css","palette.js","startup.js","app.js","feedback.js","wait.js",
- "runtime.js","mdc-linear-progress.js","mdc-linear-progress.css","mdc-switch.js","icons/pause.svg","icons/play.svg"]
+ "runtime.js","surfaces.js","mdc-linear-progress.js","mdc-linear-progress.css","mdc-switch.js","icons/pause.svg","icons/play.svg"]
 assert all(assets+n in files for n in required)
 if "palette-m3.js?v=" in header:
  assert all(assets+n in files for n in ("palette-m3.js","material-web.js","components.js","design-m3.css"))
@@ -66,6 +66,9 @@ if a.candidate:
  assert 'ml-nav-parent-label' in app and 'aria-expanded' in app
  assert '"关于"' not in app and '"About"' not in app
  assert 'ml-view-progress' in wait
+ assert 'surfaces.js?v=' in header and 'MaterialSurfaces' in files[assets+"surfaces.js"].decode()
+ assert 'MaterialSurfaces.prepare' in app and 'MaterialSurfaces' in wait
+ checks["critical_layout_preparation_packaged"]=True
  if assets+"components.js" in files:
   adapter=files[assets+"components.js"].decode()
   assert 'MaterialComponents.progress' in wait and 'MDCLinearProgress' in adapter and 'ml-wavy-progress' in adapter

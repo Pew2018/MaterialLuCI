@@ -39,7 +39,7 @@
   if(el.matches("button")&&el.firstElementChild?.tagName==="SPAN"&&!el.firstElementChild.matches(".mdc-button__ripple,.mdc-icon-button__ripple,.ml-radio"))el.firstElementChild.classList.add("mdc-button__label");
  }
  function bind(el){
-  if(el.closest(".mdc-switch,.ml-mdc-selection,.ml-m3-selection"))return;
+  if(el.closest("[data-ml-component],.mdc-switch,.ml-mdc-selection,.ml-m3-selection,.ml-mdc-select,.ml-mdc-menu"))return;
   if(el.matches("button")&&el.closest(".ml-native-button"))return;
   if(!entries.has(el)&&window.__mlControlAudit&&el.isConnected){const s=getComputedStyle(el),r=el.getBoundingClientRect();el._mlBeforeMDC={width:r.width,height:r.height,fontFamily:s.fontFamily,fontSize:s.fontSize,fontWeight:s.fontWeight,color:s.color,radius:s.borderRadius,firstChild:el.firstChild};}
   if(entries.has(el))return;
@@ -49,10 +49,10 @@
    // Avoid .open sibling contracts on compound LuCI apply buttons.
    if(el.matches(".cbi-dropdown"))el.insertBefore(layer,el.lastElementChild);else el.append(layer);
    layer.attach(el.matches(".ml-native-button")?el.querySelector("input,button"):el);
-   const sync=()=>{layer.disabled=disabled(el)||reduced.matches;};
+   const sync=()=>{const next=disabled(el)||reduced.matches;if(layer.disabled!==next)layer.disabled=next;};
    disabledWatchers.set(el,sync);const attrs={disconnect(){disabledWatchers.delete(el);}};
    reduced.addEventListener("change",sync);sync();
-   entries.set(el,{destroy(){attrs.disconnect();reduced.removeEventListener("change",sync);layer.detach();layer.remove();el.classList.remove("ml-m3-feedback");entries.delete(el);}});
+   entries.set(el,{destroy(){attrs.disconnect();reduced.removeEventListener("change",sync);layer.detach();layer.remove();el.classList.remove("ml-m3-feedback");delete el.dataset.rippleOwner;entries.delete(el);}});
    return;
   }
   mark(el);
