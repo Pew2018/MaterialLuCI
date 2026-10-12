@@ -271,7 +271,7 @@
   syncDisclosure();if(details.open)openAppearance(details);
  }
  const enhancementMetrics={fullScans:0,fastPaths:0};
- const layoutSelectors="div.btn,.cbi-checkbox>input[type=checkbox],input.cbi-input-checkbox,.cbi-value-field input[type=checkbox],.cbi-page-actions>input,table,.table,.cbi-section,fieldset,section,.cbi-map,#view,svg,.ifacebox-head[style]";
+ const layoutSelectors="div.btn,.cbi-checkbox>input[type=checkbox],input.cbi-input-checkbox,.cbi-value-field input[type=checkbox],.cbi-page-actions>input,table,.table,.cbi-section,.cbi-section-node,fieldset,section,.cbi-map,[data-tab],[data-table],.network-status-table,.ml-chart-surface,.ml-table-scroll,#view,svg,.ifacebox-head[style]";
  function enhance(root){
   if(root!==main&&!root.matches?.(layoutSelectors)&&!root.querySelector?.(layoutSelectors)){
    enhancementMetrics.fastPaths++;
