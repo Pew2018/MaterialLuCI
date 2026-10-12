@@ -188,23 +188,34 @@
   if(pendingRoots.size&&!pending){pending=true;requestAnimationFrame(()=>{pending=false;const roots=[...pendingRoots];pendingRoots.clear();for(const n of roots)if(n.isConnected&&!roots.some(p=>p!==n&&p.contains(n)))enhance(n);});}
  });
  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["aria-label","title","inert","aria-hidden","class","disabled"]});
- function closeMenus(){for(const e of selects.values())if(e.menu.open)e.menu.open=false;for(const el of actions.keys())if(el._mlMdcMenu.open)el._mlMdcMenu.open=false;for(const el of tips.keys())el._mlMdcTooltip.hide();}
- // User scrolling closes popups. Browser focus/scroll anchoring and LuCI's
- // programmatic scrolls must not turn a single toggle into close + reopen.
- window.addEventListener("resize",closeMenus);
- const userScroll=event=>{if(!event.target.closest?.(".ml-mdc-menu"))closeMenus();};
+ let scrollIdleTimer=0,scrollDismissals=0;
+ function closeMenus(fromScroll=false){
+  if(fromScroll===true)scrollDismissals++;
+  for(const e of selects.values())if(e.menu.open)e.menu.open=false;
+  for(const el of actions.keys())if(el._mlMdcMenu.open)el._mlMdcMenu.open=false;
+  for(const el of tips.keys())if(el._mlMdcTooltip?.isShown())el._mlMdcTooltip.hide();
+ }
+ // Close popups once per continuous wheel/touch gesture. Repeated per-frame
+ // map scans and tooltip animations were adding work to every scroll event.
+ window.addEventListener("resize",()=>closeMenus());
+ const userScroll=event=>{
+  if(event.target.closest?.(".ml-mdc-menu"))return;
+  if(!scrollIdleTimer)closeMenus(true);
+  clearTimeout(scrollIdleTimer);
+  scrollIdleTimer=setTimeout(()=>{scrollIdleTimer=0;},180);
+ };
  document.addEventListener("wheel",userScroll,{capture:true,passive:true});
  document.addEventListener("touchmove",userScroll,{capture:true,passive:true});
  document.addEventListener("keydown",event=>{if(["PageDown","PageUp","Home","End"].includes(event.key)&&!event.target.closest?.(".ml-mdc-menu"))closeMenus();},true);
  document.addEventListener("pointerdown",event=>{if(event.clientX>=document.documentElement.clientWidth)closeMenus();},true);
  document.addEventListener("change",event=>{if(event.target.closest("#ml-appearance"))feedback(document.documentElement.lang.startsWith("zh")?"已保存此浏览器的主题设置":"Theme preferences saved in this browser");});
  document.addEventListener("click",event=>{if(event.target.closest("#ml-appearance .ml-swatch-item,#ml-appearance .ml-mode-option"))feedback(document.documentElement.lang.startsWith("zh")?"已保存此浏览器的主题设置":"Theme preferences saved in this browser");});
- window.addEventListener("pagehide",event=>{if(!event.persisted){stopped=true;observer.disconnect();for(const e of [...selects.values()])e.destroy();for(const e of [...actions.values()])e.destroy();for(const e of [...tips.values()])e.destroy();if(notice){clearTimeout(notice.timer);notice.instance.destroy();notice.root.remove();notice=null;}}});
+ window.addEventListener("pagehide",event=>{if(!event.persisted){clearTimeout(scrollIdleTimer);scrollIdleTimer=0;stopped=true;observer.disconnect();for(const e of [...selects.values()])e.destroy();for(const e of [...actions.values()])e.destroy();for(const e of [...tips.values()])e.destroy();if(notice){clearTimeout(notice.timer);notice.instance.destroy();notice.root.remove();notice=null;}}});
  window.MaterialExtras={enhance,feedback,menu(anchor,options,value,onChange){
   const popup=make("div","mdc-menu mdc-menu-surface ml-action-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","menu");list.tabIndex=-1;replaceItems(list,options.map(([key,label,disabled])=>{const li=item(label,key,disabled,key===value);li.setAttribute("role","menuitem");return li;}));popup.append(list);const menu=portalMenu(popup);escapeFocus(popup,anchor);menu.setAnchorElement(anchor);
   menu.items.forEach((li,i)=>menu.setEnabled(i,li.getAttribute("aria-disabled")!=="true"));
   popup.addEventListener("MDCMenu:selected",event=>onChange(event.detail.item.dataset.value),{once:true});
   popup.addEventListener("MDCMenuSurface:closed",()=>{popup._mlEscapeCleanup?.();menu.destroy();popup.remove();},{once:true});menu.open=true;return menu;
- },counts(){return {selects:selects.size,menus:actions.size,tooltips:tips.size};}};
+ },counts(){return {selects:selects.size,menus:actions.size,tooltips:tips.size,scrollDismissals};}};
  enhance();
 })();
