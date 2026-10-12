@@ -43,7 +43,7 @@
    Object.defineProperty(input,key,{configurable:true,get(){return descriptor.get.call(this);},set(value){descriptor.set.call(this,value);sync();}});
    descriptors[key]=true;
   }
-  const attrs=new MutationObserver(sync);attrs.observe(input,{attributes:true,attributeFilter:["checked","disabled"]});
+  const attrs=MaterialComponents.watchState(input,sync);
   // MDC's click listener is registered first. Native click preserves LuCI's
   // click/update/change/dependency events exactly once, including cancellation.
   control.addEventListener("click",event=>{

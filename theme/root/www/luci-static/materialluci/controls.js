@@ -77,7 +77,7 @@
  }
  function syncLuCI(){
   const root=document.getElementById("modal_overlay"),panel=root?.querySelector(":scope > .modal");
-  if(!root||!panel)return;
+  if(!root||!panel){if(root)dialogs.get(root)?.destroy();return;}
   const active=document.body.classList.contains("modal-overlay-active"),current=dialogs.get(root);
   if(!active){current?.destroy();return;}
   for(const cls of ["mdc-dialog__container","mdc-dialog__surface","mdc-dialog__content"])if(!panel.classList.contains(cls))panel.classList.add(cls);

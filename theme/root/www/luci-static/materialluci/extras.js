@@ -18,6 +18,8 @@
   root.addEventListener("MDCMenuSurface:opening",()=>openMenus.add(menu));
   root.addEventListener("MDCMenuSurface:opened",()=>{if(menu.open)openMenus.add(menu);});
   root.addEventListener("MDCMenuSurface:closed",()=>{if(!menu.open)openMenus.delete(menu);});
+  const openDescriptor=Object.getOwnPropertyDescriptor(MDCMenu.prototype,"open");
+  if(openDescriptor?.get&&openDescriptor?.set)Object.defineProperty(menu,"open",{configurable:true,get(){return openDescriptor.get.call(this);},set(value){openDescriptor.set.call(this,value);if(openDescriptor.get.call(this))openMenus.add(this);else openMenus.delete(this);}});
   menu.wrapFocus=true;menu.hasTypeahead=true;root._mlMdcMenu=menu;
   // v14 transition callbacks may arrive after an opposite user action.
   // Do not let a superseded opened/closed event steal focus or select state.

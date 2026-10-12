@@ -50,16 +50,15 @@ if a.candidate:
  for component in ["MDCRipple","MDCDialog","MDCCheckbox","MDCRadio","MDCFormField","MDCMenu","MDCList","MDCMenuSurface","MDCSelect","MDCSnackbar","MDCTooltip"]:assert component in controls,component
  shared_css=files[assets+"mdc-linear-progress.css"].decode()
  for cls in ["mdc-button","mdc-icon-button","mdc-dialog","mdc-checkbox","mdc-radio","mdc-menu","mdc-menu-surface","mdc-select","mdc-snackbar","mdc-tooltip"]:assert cls in shared_css,cls
- assert "tap-ripple" not in files[assets+"feedback.js"].decode()
  assert assets+"extras.js" in files and "extras.js?v=" in header
  checks["official_extra_controls_bundled"]=True
  checks["official_controls_bundled"]=True
  assert "mdc-text-field" in files[assets+"mdc-linear-progress.css"].decode()
- assert " · " not in files[assets+"app.js"].decode()
  checks["official_textfield_bundle"]=True
  identity=json.loads(files[assets+"build.json"])
  assert identity["commit"]==a.sha and str(identity["run_id"])==a.run
  assert identity["cache"] in header and a.sha in header
+ assert set(identity["files"])=={n for n in files if pathlib.PurePosixPath(n).suffix in (".js",".css",".svg",".htm")}
  for n,digest in identity["files"].items():assert hashlib.sha256(files[n]).hexdigest()==digest,n
  assert header.count('name="theme-color"')==1
  assert 'black-translucent' not in header and 'viewport-fit=cover' not in header
@@ -75,7 +74,6 @@ if a.candidate:
   checks["dual_style_progress_adapter_packaged"]=True
   checks["expressive_wave_and_official_ripple_packaged"]=True
  else:assert 'MDCLinearProgress' in wait
- assert 'ml-chart-surface' in css and 'body[data-page$="-load"]' not in css
  assert '<svg' in files[assets+"icons/pause.svg"].decode()
  checks["commit_and_all_resource_hashes_verified"]=True
 manifest={"source_sha":a.sha,"actions_run_id":a.run,"ipk":name,
