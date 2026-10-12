@@ -7,6 +7,7 @@
  const decoration="[data-ml-component],.ml-progress-host,.ml-view-progress,.ml-mdc-select,.ml-mdc-menu,.mdc-tooltip,.mdc-snackbar,#ml-appearance,.ml-appearance-entry";
  const t=(zh,en)=>document.documentElement.lang.startsWith("zh")?zh:en;
  const node=(tag,attrs)=>{const el=document.createElement(tag);for(const [key,value] of Object.entries(attrs))el.setAttribute(key,String(value));return el;};
+ const isPlot=svg=>!!svg.querySelector("polyline,polygon")&&!!svg.querySelector("line,text")&&!svg.closest(".mdc-select,.mdc-button,.mdc-icon-button,.ml-icon-button,.ml-mdc-selection,.ml-toolbar,.ml-sidebar");
  function wrapTables(scope){
   // Includes live status div-tables as well as legacy Lua CBI tables.
   const tables=new Set([...(scope.matches?.("table,.table")?[scope]:[]),...scope.querySelectorAll("table,.table")]);const ancestor=scope.closest?.("table,.table");if(ancestor)tables.add(ancestor);
@@ -33,7 +34,7 @@
    if(value.classList.contains("ml-section-container")!==!!section)value.classList.toggle("ml-section-container",!!section);
   }
 
-  const isPlot=svg=>!!svg.querySelector("polyline,polygon")&&!!svg.querySelector("line,text")&&!svg.closest(".mdc-select,.mdc-button,.mdc-icon-button,.ml-icon-button,.ml-mdc-selection,.ml-toolbar,.ml-sidebar");
+
   for(const svg of all("#view svg"))if(isPlot(svg))svg.parentElement?.classList.add("ml-chart-surface");
   // Recognize the actual legacy flashops direct-child groups. Add only
   // presentation classes; forms, their children and business events stay put.
@@ -100,7 +101,12 @@
    if(!elements.length)continue;
    // Direct view replacement and genuine section/table structure matter;
    // polling text, table cells, clocks and SVG path updates do not.
-   if(r.target.id==="view"||r.target===main||elements.some(changed)){
+   const table=r.target.closest?.("table,.table");
+   const firstRows=table&&!table.closest(".ml-table-scroll,[data-chain]")&&elements.some(n=>n.matches("tr,.tr,td,th,.td,.th"));
+   const svg=r.target.closest?.("svg");
+   const firstPlot=svg&&!svg.parentElement?.classList.contains("ml-chart-surface")&&isPlot(svg);
+   const newPlot=elements.some(n=>n.matches("svg")&&isPlot(n));
+   if(r.target.id==="view"||r.target===main||firstRows||firstPlot||newPlot||elements.some(changed)){
     const root=owner(r.target);if(root)roots.add(root);
    }
   }

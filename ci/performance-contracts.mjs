@@ -178,6 +178,18 @@ function fixture(){
  assert.ok(table.parentElement.classList.contains("ml-table-scroll"));assert.ok(table.parentElement.classList.contains("ml-card-surface"));
  const tablePasses=f.window.MaterialSurfaces.count();row.append(f.document.createElement("td"));f.drain();
  assert.equal(f.window.MaterialSurfaces.count(),tablePasses,"polling table cells must not reclassify cards");
+
+ // An empty table can populate later; only its first effective row needs layout.
+ const lateTable=f.document.createElement("table");view.replaceChildren(lateTable);f.drain();
+ const lateRow=f.document.createElement("tr");for(let i=0;i<4;i++)lateRow.append(f.document.createElement("td"));lateTable.append(lateRow);f.drainMicro();
+ assert.ok(lateTable.parentElement.classList.contains("ml-table-scroll"));
+ // SVG construction may complete after the view; updates to an existing plot are cheap.
+ const plotHost=f.document.createElement("div"),plot=f.document.createElement("svg");plotHost.append(plot);view.replaceChildren(plotHost);f.drain();
+ plot.append(f.document.createElement("polyline"),f.document.createElement("line"));f.drainMicro();
+ assert.ok(plotHost.classList.contains("ml-chart-surface"));assert.ok(plotHost.classList.contains("ml-card-surface"));
+ const plotPasses=f.window.MaterialSurfaces.count();plot.append(f.document.createElement("text"));f.drain();
+ assert.equal(f.window.MaterialSurfaces.count(),plotPasses,"existing chart updates must not rescan card ownership");
+
  // Hidden native tabs are classified without waiting for their controls.
  const map=f.document.createElement("div");map.className="cbi-map";
  const tab=f.document.createElement("div");tab.setAttribute("data-tab","advanced");tab.setAttribute("data-tab-title","Advanced");
