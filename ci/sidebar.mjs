@@ -15,7 +15,16 @@ export async function verifySidebar(browser,engine,base){
  const switchProbe=page.locator(switchSelector);await switchProbe.hover();
  const switchHover=await switchProbe.evaluate(el=>({mdc:getComputedStyle(el).getPropertyValue("--mdc-switch-unselected-hover-state-layer-opacity").trim(),mdRipple:getComputedStyle(el).getPropertyValue("--md-ripple-hover-opacity").trim(),pseudo:el.querySelector(".mdc-switch__ripple")?getComputedStyle(el.querySelector(".mdc-switch__ripple"),"::before").opacity:null}));
  if(design==="classic"){assert.equal(switchHover.mdc,"0");assert.equal(switchHover.pseudo,"0","classic switch hover layer must be transparent");}
- else assert.equal(switchHover.mdRipple,"0","M3 switch hover layer must be transparent");
+ else {
+  assert.equal(switchHover.mdRipple,"0","M3 switch hover layer must be transparent");
+  const state=await switchProbe.evaluate(el=>{
+   const ripple=el.shadowRoot.querySelector("md-ripple"),style=getComputedStyle(ripple);
+   return {hover:style.getPropertyValue("--md-ripple-hover-opacity").trim(),pressed:style.getPropertyValue("--md-ripple-pressed-opacity").trim()};
+  });
+  assert.equal(state.hover,"0","M3 internal switch hover token overrides host");
+  assert.equal(state.pressed,"0","M3 internal switch pressed layer must be clear");
+ }
+
  for(const mode of ["light","dark"]){
   await page.evaluate(mode=>MaterialAppearance.set("mode",mode),mode);
   await page.waitForFunction(mode=>document.documentElement.dataset.theme===mode,mode);
@@ -54,6 +63,11 @@ export async function verifySidebar(browser,engine,base){
     const arrowColor=await first.locator(".ml-nav-chevron").evaluate(el=>getComputedStyle(el).backgroundColor);
     assert.equal(labelColor,"rgba(0, 0, 0, 0)","sidebar title hover must not paint a capsule");
     assert.equal(await first.locator(".ml-nav-parent-label").evaluate(el=>getComputedStyle(el).getPropertyValue("--md-ripple-hover-opacity").trim()),"0","sidebar ripple hover layer must stay clear");
+    const actualHover=await first.locator(".ml-nav-parent-label").evaluate(el=>{
+     const ink=el.querySelector("md-ripple");
+     return ink?getComputedStyle(ink.shadowRoot.querySelector(".surface"),"::before").opacity:getComputedStyle(el.querySelector(".ml-nav-region-ink"),"::before").opacity;
+    });
+    assert.equal(actualHover,"0","actual title shadow ripple paints hover capsule");
     await first.locator(".ml-nav-chevron").hover();await page.waitForTimeout(160);
     const labelAfter=await first.locator(".ml-nav-parent-label").evaluate(el=>getComputedStyle(el).backgroundColor);
     const arrowAfter=await first.locator(".ml-nav-chevron").evaluate(el=>getComputedStyle(el).backgroundColor);

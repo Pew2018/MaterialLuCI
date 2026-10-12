@@ -985,3 +985,24 @@ body .ml-sidebar button.ml-nav-parent>.ml-nav-parent-label,body .ml-sidebar butt
 @media(hover:hover){body .ml-sidebar button.ml-nav-parent>.ml-nav-chevron:hover{background:var(--hover)}}
 body .ml-sidebar .ml-nav-parent-label,body .ml-sidebar .ml-nav-chevron{--md-ripple-hover-color:transparent;--md-ripple-hover-opacity:0}
 body .ml-sidebar button.ml-nav-parent .ml-nav-region-ink{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;--mdc-ripple-color:currentColor;--mdc-ripple-fg-opacity:var(--ripple-opacity)}
+
+/* Switch state layers are decoration; retain the thumb, track and focus ring.
+   Material Web maps its own switch tokens onto its shadow md-ripple. */
+body .ml-switch-hit .mdc-switch .mdc-switch__ripple{display:none!important}
+body .ml-switch-hit md-switch{
+ --md-switch-hover-state-layer-opacity:0;
+ --md-switch-pressed-state-layer-opacity:0;
+ --md-switch-selected-hover-state-layer-opacity:0;
+ --md-switch-selected-pressed-state-layer-opacity:0;
+ --md-switch-hover-state-layer-color:transparent;
+ --md-switch-pressed-state-layer-color:transparent;
+ --md-switch-selected-hover-state-layer-color:transparent;
+ --md-switch-selected-pressed-state-layer-color:transparent;
+}
+/* Set tokens on the ripple itself: its local color overrides inherited tokens. */
+:root[data-design=m3e] body .ml-sidebar .ml-nav-parent-label>md-ripple,
+:root[data-design=m3e] body .ml-sidebar .ml-nav-chevron>md-ripple{
+ --md-ripple-hover-color:transparent;--md-ripple-hover-opacity:0
+}
+body .ml-sidebar .ml-nav-parent-label>.ml-nav-region-ink::before,
+body .ml-sidebar .ml-nav-chevron>.ml-nav-region-ink::before{opacity:0!important}

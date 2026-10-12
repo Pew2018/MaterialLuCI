@@ -71,6 +71,37 @@ async function verifyRipple(browser,engine){
  console.log(engine+": native mouse/touch/keyboard callbacks once, cancellation, disabled state, ripple instance cleanup passed");
 }
 
+async function verifyRefresh(browser,engine){
+ const page=await browser.newPage({viewport:{width:390,height:900},hasTouch:true});
+ await page.addInitScript(audit);
+ for(let cycle=0;cycle<2;cycle++){
+  if(cycle)await page.reload();else await page.goto(base+"/system.html");
+  await page.waitForSelector("#localtime");await page.waitForTimeout(800);
+  await page.evaluate(()=>{
+   const host=document.createElement("div");host.id="poll-performance";document.getElementById("view").append(host);
+  });
+  await page.waitForTimeout(200);
+  await page.evaluate(()=>{
+   MaterialLuCI.metrics.fullScans=0;MaterialLuCI.metrics.surfacePasses=0;
+   acceptance.frames=[];acceptance.longTasks=[];acceptance.rootStyleMutations=0;
+   let tick=0;window.refreshPoll=setInterval(()=>{
+    const host=document.getElementById("poll-performance");
+    host.innerHTML='<span>Live status '+(++tick)+'</span><svg width="16" height="16"><path d="M0 0h16v16z"/></svg>';
+   },50);
+  });
+  for(let i=0;i<20;i++){await page.mouse.wheel(0,i<10?80:-80);await page.waitForTimeout(50);}
+  await page.waitForTimeout(200);
+  const result=await page.evaluate(()=>{
+   clearInterval(refreshPoll);const f=acceptance.frames.slice().sort((a,b)=>a-b);
+   return {enhancement:{...MaterialLuCI.metrics},rootStyleMutations:acceptance.rootStyleMutations,longTasks:acceptance.longTasks,p95FrameMs:f[Math.floor(f.length*.95)],maxFrameMs:Math.max(...f)};
+  });
+  assert.equal(result.enhancement.fullScans,0,"polling SVG icons must not re-enhance the entire layout");
+  assert.equal(result.enhancement.surfacePasses,0,"polling must not repeat global card scans");
+  assert.equal(result.rootStyleMutations,0,"refresh scrolling writes root viewport geometry");
+  reports.push({version,engine,test:"refresh-scroll-poll",cycle,metrics:result});
+ }
+ await page.close();
+}
 async function measure(browser,baseline){
  const page=await browser.newPage({viewport:{width:1280,height:900}});
  await page.addInitScript(audit);await page.addInitScript(()=>localStorage.setItem("materialluci-design","m3e"));
@@ -160,6 +191,7 @@ try{
   const browser=await type.launch();
   if(engine==="chromium"){await measure(browser,true);await measure(browser,false);}
   await verifyRipple(browser,engine);
+  await verifyRefresh(browser,engine);
   await Promise.all([390,1280].flatMap(width=>["light","dark"].map(mode=>verify(browser,engine,width,mode,null))));
   await verify(browser,engine,1280,"dark","classic");
   await browser.close();

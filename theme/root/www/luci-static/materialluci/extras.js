@@ -177,9 +177,11 @@
  const observer=new MutationObserver(records=>{
   for(const r of records)if(r.type==="attributes"&&r.attributeName==="disabled"&&r.target.tagName==="FIELDSET")for(const [select,entry] of selects)if(r.target.contains(select))entry.sync();
   if(records.some(r=>r.type==="attributes"&&(r.attributeName==="inert"||r.attributeName==="aria-hidden"||r.target===document.body)))for(const el of tips.keys())if(el.closest('[inert],[aria-hidden="true"]'))el._mlMdcTooltip.hide();
-  for(const [el,entry] of selects)if(!el.isConnected||!entry.root.isConnected)entry.destroy();
-  for(const [el,entry] of actions)if(!el.isConnected)entry.destroy();
-  for(const [el,entry] of tips)if(!el.isConnected)entry.destroy();
+  if(records.some(r=>r.type==="childList"&&r.removedNodes.length)){
+   for(const [el,entry] of selects)if(!el.isConnected||!entry.root.isConnected)entry.destroy();
+   for(const [el,entry] of actions)if(!el.isConnected)entry.destroy();
+   for(const [el,entry] of tips)if(!el.isConnected)entry.destroy();
+  }
   for(const r of records){
    if(decorative(r.target))continue;
    if(r.type==="childList")for(const n of r.addedNodes)if(n.nodeType===1&&!decorative(n))pendingRoots.add(n);

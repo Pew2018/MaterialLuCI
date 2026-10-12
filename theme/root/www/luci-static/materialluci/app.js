@@ -271,9 +271,63 @@
   if(desktop.addEventListener)desktop.addEventListener("change",syncDisclosure);else desktop.addListener(syncDisclosure);
   syncDisclosure();if(details.open)openAppearance(details);
  }
- const enhancementMetrics={fullScans:0,fastPaths:0};
- const layoutSelectors="div.btn,.cbi-checkbox>input[type=checkbox],input.cbi-input-checkbox,.cbi-value-field input[type=checkbox],.cbi-page-actions>input,table,.table,.cbi-section,.cbi-section-node,fieldset,section,.cbi-map,[data-tab],[data-table],.network-status-table,.ml-chart-surface,.ml-table-scroll,#view,svg,.ifacebox-head[style]";
+ const surfaceSelectors=".cbi-value,.cbi-section,.cbi-section-node,fieldset,section,.cbi-map,[data-tab-title],[data-table],.network-status-table,.ml-chart-surface,.ml-table-scroll,#view";
+ let surfaceFrame=0;
+ function queueSurfaces(){if(!surfaceFrame)surfaceFrame=requestAnimationFrame(()=>{surfaceFrame=0;updateSurfaces();});}
+ function updateSurfaces(){
+  enhancementMetrics.surfacePasses++;
+  // SectionValue embeds complete sections inside field containers (flash,
+  // backup and vendor pages). Mark those wrappers without moving native nodes.
+  for(const value of main.querySelectorAll(".cbi-value")){
+   const section=[...value.querySelectorAll(".cbi-section,fieldset")].find(el=>el.closest(".cbi-value")===value);
+   if(value.classList.contains("ml-section-container")!==!!section)value.classList.toggle("ml-section-container",!!section);
+  }
+
+  const isPlot=svg=>!!svg.querySelector("polyline,polygon")&&!!svg.querySelector("line,text")&&!svg.closest(".mdc-select,.mdc-button,.mdc-icon-button,.ml-icon-button,.ml-mdc-selection,.ml-toolbar,.ml-sidebar");
+  for(const svg of main.querySelectorAll("#view svg"))if(isPlot(svg))svg.parentElement?.classList.add("ml-chart-surface");
+  // Recognize the actual legacy flashops direct-child groups. Add only
+  // presentation classes; forms, their children and business events stay put.
+  for(const section of main.querySelectorAll(".cbi-section")){
+   const heads=[...section.children].filter(el=>el.tagName==="H3");
+   const legacy=!main.querySelector("#view")&&["flashops","flash"].includes(main.dataset.mlPage)&&heads.length>1;
+   if(section.classList.contains("ml-legacy-flash-section")!==legacy)section.classList.toggle("ml-legacy-flash-section",legacy);
+   if(!legacy)continue;
+   const children=[...section.children];
+   children.forEach(el=>el.classList.remove("ml-legacy-card-start","ml-legacy-card-body","ml-legacy-card-end"));
+   for(let i=0;i<heads.length;i++){
+    const start=children.indexOf(heads[i]),end=i+1<heads.length?children.indexOf(heads[i+1]):children.length;
+    const group=children.slice(start,end);heads[i].classList.add("ml-legacy-card-start");
+    group.slice(1).forEach((el,j)=>el.classList.add(j===group.length-2?"ml-legacy-card-end":"ml-legacy-card-body"));
+   }
+  }
+  const candidates=[...main.querySelectorAll(".cbi-section,.cbi-section-node,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table,#view [data-table],.ml-chart-surface,#view > .ml-table-scroll,.cbi-map > .ml-table-scroll")]
+   .filter(section=>{
+    if(section.closest(".ml-legacy-flash-section"))return false;
+    const option=section.closest(".cbi-value");
+    return !section.closest("#ml-appearance,.modal,table,.table")&&
+     (!option||option.classList.contains("ml-section-container"))&&
+     !section.matches(".cbi-section-node:empty")&&section.id!=="view"&&
+     // A container of SectionValues has no surface: each complete subsection does.
+     !section.querySelector(".ml-section-container .cbi-section,.ml-section-container fieldset");
+   });
+  const surfaces=new Set(candidates.filter(section=>!candidates.some(parent=>parent!==section&&parent.contains(section))));
+  // Flat views (reboot, SSH keys, firewall status, vendor views) have no CBI
+  // section. Their existing content host owns the surface; never wrap children.
+  const view=main.querySelector("#view");
+  if(view&&view.children.length&&!view.querySelector(":scope > .spinning,.cbi-map,.cbi-section,fieldset,.ml-card-surface")&&!candidates.some(section=>view.contains(section)))surfaces.add(view);
+  // Legacy Lua reboot templates render h2/p/hr/input directly without #view.
+  // Keep their nodes and handlers in place; style the existing main surface.
+  if(!view&&main.dataset.mlPage==="reboot"&&main.children.length&&[...main.children].some(el=>el.matches("h2,p,hr,form,input,button")))surfaces.add(main);
+  for(const map of main.querySelectorAll(".cbi-map"))if(map.querySelector(".cbi-value")&&!map.querySelector(".ml-section-container")&&!candidates.some(section=>map.contains(section)))surfaces.add(map);
+  main.querySelectorAll(".ml-card-surface").forEach(el=>{if(!surfaces.has(el))el.classList.remove("ml-card-surface");});
+  if(main.classList.contains("ml-card-surface")&&!surfaces.has(main))main.classList.remove("ml-card-surface");
+  for(const section of surfaces)if(!section.classList.contains("ml-card-surface"))section.classList.add("ml-card-surface");
+
+ }
+ const enhancementMetrics={fullScans:0,fastPaths:0,surfacePasses:0};
+ const layoutSelectors="div.btn,.cbi-checkbox>input[type=checkbox],input.cbi-input-checkbox,.cbi-value-field input[type=checkbox],.cbi-page-actions>input,table,.table,.cbi-section,.cbi-section-node,fieldset,section,.cbi-map,[data-tab],[data-table],.network-status-table,.ml-chart-surface,.ml-table-scroll,#view,.ifacebox-head[style]";
  function enhance(root){
+  if(root.matches?.("svg")&&root.querySelector("polyline,polygon")&&root.querySelector("line,text")&&!root.closest("[data-ml-component],.ml-icon-button,.ml-sidebar")){root.parentElement?.classList.add("ml-chart-surface");queueSurfaces();}
   const viewHost=root.closest?.("#view");
   const needsFirstSurface=viewHost&&viewHost.children.length&&!viewHost.classList.contains("ml-card-surface")&&!viewHost.querySelector(".cbi-map,.cbi-section,fieldset,.ml-card-surface");
   if(root!==main&&!needsFirstSurface&&!root.matches?.(layoutSelectors)&&!root.querySelector?.(layoutSelectors)){
@@ -319,59 +373,9 @@
    if(cells>=5)table.classList.add("ml-wide-table");
    table.parentNode.insertBefore(wrapper,table);wrapper.append(table);
   }
-  // SectionValue embeds complete sections inside field containers (flash,
-  // backup and vendor pages). Mark those wrappers without moving native nodes.
-  for(const value of main.querySelectorAll(".cbi-value")){
-   const section=[...value.querySelectorAll(".cbi-section,fieldset")].find(el=>el.closest(".cbi-value")===value);
-   value.classList.toggle("ml-section-container",!!section);
-  }
-  main.classList.remove("ml-card-surface");
-  const isPlot=svg=>!!svg.querySelector("polyline,polygon")&&!!svg.querySelector("line,text")&&!svg.closest(".mdc-select,.mdc-button,.mdc-icon-button,.ml-icon-button,.ml-mdc-selection,.ml-toolbar,.ml-sidebar");
-  for(const svg of main.querySelectorAll("#view svg"))if(isPlot(svg))svg.parentElement?.classList.add("ml-chart-surface");
-  // Recognize the actual legacy flashops direct-child groups. Add only
-  // presentation classes; forms, their children and business events stay put.
-  for(const section of main.querySelectorAll(".cbi-section")){
-   const heads=[...section.children].filter(el=>el.tagName==="H3");
-   const legacy=!main.querySelector("#view")&&["flashops","flash"].includes(main.dataset.mlPage)&&heads.length>1;
-   section.classList.toggle("ml-legacy-flash-section",legacy);
-   if(!legacy)continue;
-   const children=[...section.children];
-   children.forEach(el=>el.classList.remove("ml-legacy-card-start","ml-legacy-card-body","ml-legacy-card-end"));
-   for(let i=0;i<heads.length;i++){
-    const start=children.indexOf(heads[i]),end=i+1<heads.length?children.indexOf(heads[i+1]):children.length;
-    const group=children.slice(start,end);heads[i].classList.add("ml-legacy-card-start");
-    group.slice(1).forEach((el,j)=>el.classList.add(j===group.length-2?"ml-legacy-card-end":"ml-legacy-card-body"));
-   }
-  }
-  const candidates=[...main.querySelectorAll(".cbi-section,.cbi-section-node,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table,#view [data-table],.ml-chart-surface,#view > .ml-table-scroll,.cbi-map > .ml-table-scroll")]
-   .filter(section=>{
-    if(section.closest(".ml-legacy-flash-section"))return false;
-    const option=section.closest(".cbi-value");
-    return !section.closest("#ml-appearance,.modal,table,.table")&&
-     (!option||option.classList.contains("ml-section-container"))&&
-     !section.matches(".cbi-section-node:empty")&&section.id!=="view"&&
-     // A container of SectionValues has no surface: each complete subsection does.
-     !section.querySelector(".ml-section-container .cbi-section,.ml-section-container fieldset");
-   });
-  const surfaces=new Set(candidates.filter(section=>!candidates.some(parent=>parent!==section&&parent.contains(section))));
-  // Flat views (reboot, SSH keys, firewall status, vendor views) have no CBI
-  // section. Their existing content host owns the surface; never wrap children.
-  const view=main.querySelector("#view");
-  if(view&&view.children.length&&!view.querySelector(":scope > .spinning,.cbi-map,.cbi-section,fieldset,.ml-card-surface")&&!candidates.some(section=>view.contains(section)))surfaces.add(view);
-  // Legacy Lua reboot templates render h2/p/hr/input directly without #view.
-  // Keep their nodes and handlers in place; style the existing main surface.
-  if(!view&&main.dataset.mlPage==="reboot"&&main.children.length&&[...main.children].some(el=>el.matches("h2,p,hr,form,input,button")))surfaces.add(main);
-  for(const map of main.querySelectorAll(".cbi-map"))if(map.querySelector(".cbi-value")&&!map.querySelector(".ml-section-container")&&!candidates.some(section=>map.contains(section)))surfaces.add(map);
-  main.querySelectorAll(".ml-card-surface").forEach(el=>{if(!surfaces.has(el))el.classList.remove("ml-card-surface");});
-  for(const section of surfaces)section.classList.add("ml-card-surface");
-  // Identify plots structurally, across every realtime view and vendor route.
-  // Do not depend on URL spelling or the serialized inline background color.
-  for(const svg of all("#view svg")){
-   if(!isPlot(svg))continue;
-   const plot=svg.parentElement;
-   if(plot&&plot!==main&&plot.id!=="view")plot.classList.add("ml-chart-surface");
-  }
-
+  // Polling rows and SVG updates do not change section ownership.
+  // Coalesce structural changes into one surface pass for the entire batch.
+  if(root===main||needsFirstSurface||root.matches?.(surfaceSelectors)||root.querySelector?.(surfaceSelectors))queueSurfaces();
   // Preserve zone/status background semantics, with readable foreground in either mode.
   for(const head of all('.ifacebox-head[style*="background"]')){
    const rgb=getComputedStyle(head).backgroundColor.match(/[0-9.]+/g)?.map(Number);

@@ -104,7 +104,7 @@
  let scheduled=false;const roots=new Set();
  new MutationObserver(records=>{
   for(const record of records){const target=record.target.closest?.(selector);if(target)roots.add(target);for(const n of record.addedNodes)if(n.nodeType===1&&!n.matches(".mdc-button__ripple,.mdc-icon-button__ripple,md-ripple"))roots.add(n);}
-  for(const [el,entry] of entries)if(!el.isConnected)entry.destroy();
+  if(records.some(r=>r.removedNodes.length))for(const [el,entry] of entries)if(!el.isConnected)entry.destroy();
   if(roots.size&&!scheduled){scheduled=true;requestAnimationFrame(()=>{scheduled=false;for(const n of roots)if(n.isConnected)enhance(n);roots.clear();});}
  }).observe(document.body,{childList:true,subtree:true});
  window.addEventListener("pagehide",event=>{if(!event.persisted)for(const entry of [...entries.values()])entry.destroy();});
