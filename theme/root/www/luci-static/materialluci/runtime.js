@@ -1,25 +1,39 @@
 "use strict";
 /* One discovery/removal queue; adapters retain their own local state observers. */
 (function(){
- const adapters=[],added=new Set(),removed=new Set(),jobs=[];
+ const adapters=[],added=new Set(),removed=new Set(),jobs=[],queued=new Map();
  let jobIndex=0,timer=0,stopped=false,started=false,geometryFrame=0;
  const geometryJobs=new Map(),sizes=new WeakMap(),sizeCallbacks=new WeakMap();
  const decorative=n=>!!n.matches?.("md-ripple,[data-ml-component],.mdc-button__ripple,.mdc-icon-button__ripple,.mdc-text-field__ripple,.mdc-line-ripple,.mdc-checkbox__background,.mdc-checkbox__ripple,.mdc-checkbox__focus-ring,.mdc-radio__background,.mdc-radio__ripple,.mdc-radio__focus-ring,.ml-mdc-menu,.mdc-tooltip,.mdc-snackbar,.ml-mdc-select,.ml-progress-host,.ml-view-progress")||!!n.closest?.("[data-ml-component],.ml-mdc-menu,.mdc-tooltip,.mdc-snackbar,.ml-mdc-select,.ml-view-progress,.ml-progress-host");
  function compact(set){const roots=[...set];set.clear();const members=new Set(roots);return roots.filter(n=>{for(let p=n.parentElement;p;p=p.parentElement)if(members.has(p))return false;return true;});}
  function schedule(){if(!timer&&!stopped)timer=setTimeout(flush,0);}
+ function enqueue(a,node,run){
+  let nodes=queued.get(a);if(!nodes){nodes=new WeakSet();queued.set(a,nodes);}
+  if(nodes.has(node))return;nodes.add(node);
+  jobs.push(()=>{nodes.delete(node);if(node.isConnected)run();});
+ }
  function collect(root,initial=false){
   for(const a of adapters){
    if(initial&&a.initial===false)continue;
-   if(a.range){jobs.push(()=>{if(root.isConnected)a.enhance(root);});continue;}
-   const nodes=[...(root.matches?.(a.selector)?[root]:[]),...root.querySelectorAll(a.selector)];
-   for(const n of nodes)if(!decorative(n))jobs.push(()=>{if(n.isConnected)a.enhance(n);});
+   // Discovery itself is scheduled, rather than running outside the budget.
+   enqueue(a,root,()=>{
+    if(a.range){a.enhance(root);return;}
+    const nodes=[...(root.matches?.(a.selector)?[root]:[]),...root.querySelectorAll(a.selector)];
+    for(const n of nodes)if(!decorative(n)){
+     let pending=a.pending;if(!pending)a.pending=new WeakSet();
+     if(a.pending.has(n))continue;a.pending.add(n);
+     jobs.push(()=>{a.pending.delete(n);if(n.isConnected)a.enhance(n);});
+    }
+   });
   }
  }
  function flush(){
   timer=0;if(stopped)return;
-  for(const n of compact(removed))if(!n.isConnected)for(const a of adapters)a.cleanup?.(n);
+  for(const n of compact(removed))if(!n.isConnected)for(const a of adapters)if(a.cleanup)jobs.push(()=>{if(!n.isConnected)a.cleanup(n);});
   for(const n of compact(added))if(n.isConnected&&!decorative(n))collect(n);
   const until=performance.now()+8;
+  // Cooperative budget: a single selector query/component constructor cannot
+  // be preempted. Avoid promising a hard maximum duration for a browser task.
   while(jobIndex<jobs.length&&performance.now()<until){const job=jobs[jobIndex++];try{job();}catch(error){console.error("MaterialLuCI enhancement failed",error);}}
   if(jobIndex===jobs.length){jobs.length=0;jobIndex=0;}
   if(jobs.length||added.size||removed.size)schedule();

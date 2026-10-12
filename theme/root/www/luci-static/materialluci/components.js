@@ -71,7 +71,7 @@
   const unwatch=MaterialRuntime.watchSize(root,geometry);
   let destroyed=false;
   const entry={control:el,sync,destroy(){if(destroyed)return;destroyed=true;attrs.disconnect();unwatch();MaterialRuntime.dropPosition(input);leaveGroup(input);input.removeEventListener("change",change);document.removeEventListener("reset",reset,true);for(const key of hooks)delete input[key];input.classList.remove("ml-m3-selection-source");root.classList.remove("ml-m3-selection");for(const [key,value] of [["tabindex",oldTab],["aria-hidden",oldAria]])if(value===null)input.removeAttribute(key);else input.setAttribute(key,value);selectionEntries.delete(input);el.remove();}};
-  selectionEntries.set(input,entry);root.append(el);syncSelections(input);geometry();return entry;
+  selectionEntries.set(input,entry);root.append(el);sync();syncSelections(input);geometry();return entry;
  }
  const selectionEntries=new Map();
  const groupRoots=new WeakMap(),membership=new WeakMap(),groupOwners=new WeakMap();
@@ -83,8 +83,10 @@
   let group=names.get(input.name);if(!group){group=new Set();names.set(input.name,group);groupOwners.set(group,{forms,names,form,name:input.name});}
   return group;
  }
+ const pendingGroups=new Set();let groupScheduled=false;
+ function queueGroup(group){pendingGroups.add(group);if(groupScheduled)return;groupScheduled=true;queueMicrotask(()=>{groupScheduled=false;const groups=[...pendingGroups];pendingGroups.clear();for(const group of groups)updateGroup(group);});}
  function pruneGroup(group){const owner=groupOwners.get(group);if(!group.size&&owner){owner.names.delete(owner.name);if(!owner.names.size)owner.forms.delete(owner.form);groupOwners.delete(group);}}
- function leaveGroup(input){const group=membership.get(input);if(group){group.delete(input);membership.delete(input);updateGroup(group);pruneGroup(group);}}
+ function leaveGroup(input){const group=membership.get(input);if(group){group.delete(input);membership.delete(input);queueGroup(group);pruneGroup(group);}}
  function updateGroup(group){
   const enabled=[...group].filter(n=>n.isConnected&&!n.matches(":disabled")),active=enabled.find(n=>n.checked)||enabled[0];
   for(const n of group){const entry=selectionEntries.get(n);if(!entry)continue;entry.sync();const tab=n.matches(":disabled")?-1:!n.name||n===active?0:-1;if(entry.control.tabIndex!==tab)entry.control.tabIndex=tab;}
@@ -92,8 +94,8 @@
  function syncSelections(input){
   if(!input||!selectionEntries.has(input))return;
   const group=groupFor(input),old=membership.get(input);
-  if(old!==group){if(old){old.delete(input);updateGroup(old);pruneGroup(old);}group.add(input);membership.set(input,group);}
-  updateGroup(group);
+  if(old!==group){if(old){old.delete(input);queueGroup(old);pruneGroup(old);}group.add(input);membership.set(input,group);}
+  queueGroup(group);
  }
  function progress(node){
   if(m3()){

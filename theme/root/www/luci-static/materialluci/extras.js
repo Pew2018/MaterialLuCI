@@ -63,21 +63,24 @@
   // Sibling decoration preserves ui.Select.node.firstChild and original label.
   select.after(root);
   const oldTab=select.getAttribute("tabindex"),oldHidden=select.getAttribute("aria-hidden"),restore=[],optionHooks=new WeakSet();
-  let instance,menu,syncing=false,queued=false,signature="";
+  let instance,menu,syncing=false,queued=false,signature="",optionsDirty=true,cachedOptions=[];
   function queue(){if(!queued){queued=true;queueMicrotask(()=>{queued=false;if(select.isConnected)sync();});}}
   function sync(){
    if(!simple(select)){entry.destroy();return;}
    syncing=true;
    try{
-    const options=[...select.options],next=JSON.stringify(options.map(o=>[o.value,o.textContent,o.disabled]));
-    if(next!==signature){
-     signature=next;replaceItems(list,options.map(o=>item(o.textContent,o.value,o.disabled,o.selected)));
-     for(const option of options)if(!optionHooks.has(option)){optionHooks.add(option);hook(option,"selected",queue,restore);}
-     if(instance){menu.layout();instance.layoutOptions();}
+    if(optionsDirty){
+     optionsDirty=false;cachedOptions=[...select.options];
+     const next=JSON.stringify(cachedOptions.map(o=>[o.value,o.textContent,o.disabled]));
+     if(next!==signature){
+      signature=next;replaceItems(list,cachedOptions.map(o=>item(o.textContent,o.value,o.disabled,o.selected)));
+      for(const option of cachedOptions)if(!optionHooks.has(option)){optionHooks.add(option);hook(option,"selected",queue,restore);}
+      if(instance){menu.layout();instance.layoutOptions();}
+     }
     }
     const label=select.getAttribute("aria-label")||select.labels?.[0]?.textContent.trim()||select.closest(".cbi-value")?.querySelector(".cbi-value-title")?.textContent.trim()||select.name||"选择";
     MaterialRuntime.setAttr(anchor,"aria-label",label);MaterialRuntime.setAttr(list,"aria-label",label);
-    const description=select.getAttribute("aria-describedby");if(description)anchor.setAttribute("aria-describedby",description);else anchor.removeAttribute("aria-describedby");
+    const description=select.getAttribute("aria-describedby");if(description)MaterialRuntime.setAttr(anchor,"aria-describedby",description);else if(anchor.hasAttribute("aria-describedby"))anchor.removeAttribute("aria-describedby");
     if(instance){
      const disabled=select.matches(":disabled");if(instance.disabled!==disabled)instance.disabled=disabled;if(instance.required!==select.required)instance.required=select.required;instance.useDefaultValidation=false;
      if(instance.selectedIndex!==select.selectedIndex)instance.setSelectedIndex(select.selectedIndex,true);
@@ -110,7 +113,10 @@
   function reset(){setTimeout(queue,0);}
   select.addEventListener("input",queue);select.addEventListener("change",queue);select.addEventListener("focus",focus);select.addEventListener("invalid",invalid);select.form?.addEventListener("reset",reset);
   hook(select,"value",queue,restore);hook(select,"selectedIndex",queue,restore);
-  const observer=new MutationObserver(queue);observer.observe(select,{attributes:true,childList:true,subtree:true,characterData:true});
+  const observer=new MutationObserver(records=>{
+   if(records.some(r=>r.type!=="attributes"||(r.target!==select&&["value","label","disabled"].includes(r.attributeName))))optionsDirty=true;
+   queue();
+  });observer.observe(select,{attributes:true,childList:true,subtree:true,characterData:true});
   select.classList.add("ml-mdc-native-select");select.tabIndex=-1;select.setAttribute("aria-hidden","true");sync();
  }
  function actionMenu(owner){
