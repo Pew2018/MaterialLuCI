@@ -1,8 +1,13 @@
-name: Review final 0.3.0-12 artifacts
+name: Review selected package
 on:
-  push:
-    branches: ["feature/m3e-theme"]
-    paths: [".github/workflows/review-final-artifacts.yml"]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Exact successful package build run ID
+        required: true
+      commit:
+        description: Exact source commit SHA (40 hex characters)
+        required: true
 permissions:
   contents: read
   actions: read
@@ -11,39 +16,46 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: MaterialLuCI-UI-previews-53ae6ddfdea1de8e8806ee626059e155bc8b6c39
-          run-id: 38155572776
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: review/previews
-      - uses: actions/download-artifact@v4
-        with:
-          name: MaterialLuCI-0.3.0-12-IPK-53ae6ddfdea1de8e8806ee626059e155bc8b6c39-AX3000T
-          run-id: 38155572776
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: review/ipk
-      - name: Read-only package and screenshot review evidence
+      - name: Validate selected run and resolve artifact
+        id: target
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_RUN: ${{ inputs.run_id }}
+          TARGET_SHA: ${{ inputs.commit }}
         run: |
           python3 - <<'PY'
-          import pathlib,json,hashlib,io,tarfile,base64
-          v=pathlib.Path("review/previews")
-          a=json.loads((v/"package-audit.json").read_text())
-          p=next(pathlib.Path("review/ipk").glob("*.ipk"))
-          raw=p.read_bytes()
-          assert hashlib.sha256(raw).hexdigest()==a["ipk_sha256"]
-          assert a["source_sha"]=="53ae6ddfdea1de8e8806ee626059e155bc8b6c39"
-          with tarfile.open(fileobj=io.BytesIO(raw)) as o:
-           data=o.extractfile(next(x for x in o.getmembers() if x.name.endswith("data.tar.gz"))).read()
-          with tarfile.open(fileobj=io.BytesIO(data)) as t:
-           files={x.name.lstrip("./"):t.extractfile(x).read() for x in t.getmembers() if x.isfile()}
-          css=files["www/luci-static/materialluci/cascade.css"].decode()
-          assert "item[data-key]" in css and "overflow-wrap:anywhere" in css
-          r=json.loads((v/"luci-fixture-acceptance.json").read_text())
-          ripples=[json.loads(x.read_text()) for x in sorted(v.glob("*-ripple.json"))]
-          d={"identity":{k:a[k] for k in ["source_sha","actions_run_id","ipk","ipk_sha256","resource_cache"]},"ssh_wrap_in_actual_ipk":True,"performance":r[:2],"panes":len(r)-2,"max_height_delta":max(abs(x["before"]["h"]-x["after"]["h"]) for x in r[2:]),"max_scroll_delta":max(abs(x["before"]["y"]-x["after"]["y"]) for x in r[2:]),"ripples":ripples}
-          print("REVIEW_JSON="+json.dumps(d,separators=(",",":")))
-          for name in ["luci-fixture-webkit-390-dark-default-general.png","luci-fixture-webkit-390-dark-default-logging.png","luci-fixture-webkit-390-dark-default-timesync.png","luci-fixture-webkit-390-dark-default-zram.png","luci-fixture-webkit-390-dark-default-status-syslog.png","luci-fixture-webkit-390-dark-default-ssh.png","luci-fixture-webkit-1280-light-default-ssh.png","webkit-m3-progress-390-dark.png","webkit-m3-view-loading-1280-light.png"]:
-           image=(v/name).read_bytes()
-           print("REVIEW_IMAGE_"+name+"="+base64.b64encode(image).decode())
+          import json,os,re,urllib.request
+          run=os.environ["TARGET_RUN"];sha=os.environ["TARGET_SHA"]
+          assert run.isdigit() and re.fullmatch("[0-9a-fA-F]{40}",sha)
+          base="https://api.github.com/repos/"+os.environ["GITHUB_REPOSITORY"]
+          def get(path):
+              request=urllib.request.Request(base+path,headers={"Authorization":"Bearer "+os.environ["GH_TOKEN"],"Accept":"application/vnd.github+json"})
+              return json.load(urllib.request.urlopen(request))
+          info=get("/actions/runs/"+run)
+          assert info["head_sha"].lower()==sha.lower() and info["conclusion"]=="success"
+          artifacts=get("/actions/runs/"+run+"/artifacts")["artifacts"]
+          matches=[a for a in artifacts if not a["expired"] and sha[:12] in a["name"] and a["name"].startswith("MaterialLuCI-") and "previews" not in a["name"]]
+          assert len(matches)==1,[a["name"] for a in artifacts]
+          with open(os.environ["GITHUB_OUTPUT"],"a") as out:out.write("artifact="+matches[0]["name"]+"\n")
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.target.outputs.artifact }}
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+          path: review
+      - name: Verify downloaded package identity
+        env:
+          TARGET_SHA: ${{ inputs.commit }}
+          TARGET_RUN: ${{ inputs.run_id }}
+        run: |
+          python3 - <<'PY'
+          import pathlib,json,hashlib,os
+          manifest=json.loads(pathlib.Path("review/build-manifest.json").read_text())
+          package=pathlib.Path("review")/manifest["ipk"]
+          assert manifest["commit"].lower()==os.environ["TARGET_SHA"].lower()
+          assert str(manifest["run_id"])==os.environ["TARGET_RUN"]
+          assert hashlib.sha256(package.read_bytes()).hexdigest()==manifest["ipk_sha256"]
+          print(json.dumps(manifest,indent=2))
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as out:out.write("Selected package identity and SHA256 verified. This is not router UI acceptance.\n")
           PY

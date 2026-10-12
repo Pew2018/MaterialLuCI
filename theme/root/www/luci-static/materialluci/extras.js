@@ -2,7 +2,7 @@
 /* Official MDC presentation. Original LuCI nodes and callbacks own data. */
 (function(){
  const {MDCRipple,MDCMenu,DefaultFocusState,MDCList,MDCSelect,MDCSnackbar,MDCTooltip}=MaterialMDCControls;
- const selects=new Map(),actions=new Map(),tips=new Map();let sequence=0,notice=null,stopped=false;
+ const selects=new Map(),actions=new Map(),tips=new Map(),openMenus=new Set(),shownTips=new Set();let sequence=0,notice=null,stopped=false;
  const make=(tag,cls,text)=>{const el=document.createElement(tag);el.className=cls;if(text!=null)el.textContent=text;return el;};
  function item(label,value,disabled=false,selected=false){
   const li=make("li","mdc-deprecated-list-item"+(selected?" mdc-deprecated-list-item--selected":"")+(disabled?" mdc-deprecated-list-item--disabled":""));
@@ -15,6 +15,9 @@
  function portalMenu(root){
   root.classList.add("ml-mdc-menu");document.body.append(root);
   const menu=new MDCMenu(root,undefined,undefined,el=>{const list=new MDCList(el);list.disabledItemsFocusable=false;return list;});menu.setIsHoisted(true);menu.setFixedPosition(true);
+  root.addEventListener("MDCMenuSurface:opening",()=>openMenus.add(menu));
+  root.addEventListener("MDCMenuSurface:opened",()=>{if(menu.open)openMenus.add(menu);});
+  root.addEventListener("MDCMenuSurface:closed",()=>{if(!menu.open)openMenus.delete(menu);});
   menu.wrapFocus=true;menu.hasTypeahead=true;root._mlMdcMenu=menu;
   // v14 transition callbacks may arrive after an opposite user action.
   // Do not let a superseded opened/closed event steal focus or select state.
@@ -71,18 +74,18 @@
      if(instance){menu.layout();instance.layoutOptions();}
     }
     const label=select.getAttribute("aria-label")||select.labels?.[0]?.textContent.trim()||select.closest(".cbi-value")?.querySelector(".cbi-value-title")?.textContent.trim()||select.name||"选择";
-    anchor.setAttribute("aria-label",label);list.setAttribute("aria-label",label);
+    MaterialRuntime.setAttr(anchor,"aria-label",label);MaterialRuntime.setAttr(list,"aria-label",label);
     const description=select.getAttribute("aria-describedby");if(description)anchor.setAttribute("aria-describedby",description);else anchor.removeAttribute("aria-describedby");
     if(instance){
-     instance.disabled=select.matches(":disabled");instance.required=select.required;instance.useDefaultValidation=false;
+     const disabled=select.matches(":disabled");if(instance.disabled!==disabled)instance.disabled=disabled;if(instance.required!==select.required)instance.required=select.required;instance.useDefaultValidation=false;
      if(instance.selectedIndex!==select.selectedIndex)instance.setSelectedIndex(select.selectedIndex,true);
-     instance.valid=select.validity.valid&&!select.classList.contains("cbi-input-invalid")&&select.getAttribute("aria-invalid")!=="true";
-     anchor.setAttribute("aria-invalid",String(!instance.valid));anchor.setAttribute("aria-required",String(select.required));
+     const valid=select.validity.valid&&!select.classList.contains("cbi-input-invalid")&&select.getAttribute("aria-invalid")!=="true";if(instance.valid!==valid)instance.valid=valid;
+     MaterialRuntime.setAttr(anchor,"aria-invalid",!instance.valid);MaterialRuntime.setAttr(anchor,"aria-required",select.required);
     }
    }finally{syncing=false;}
   }
   const entry={root,anchor,sync:queue,get menu(){return menu;},destroy(){
-   observer.disconnect();popup._mlEscapeCleanup?.();clearItems(list);instance?.destroy();popup.remove();root.remove();select.classList.remove("ml-mdc-native-select");select._mlMdcSelect=null;
+   observer.disconnect();openMenus.delete(menu);popup._mlEscapeCleanup?.();clearItems(list);instance?.destroy();popup.remove();root.remove();select.classList.remove("ml-mdc-native-select");select._mlMdcSelect=null;
    select.removeEventListener("input",queue);select.removeEventListener("change",queue);select.removeEventListener("focus",focus);select.removeEventListener("invalid",invalid);
    select.form?.removeEventListener("reset",reset);restore.forEach(fn=>fn());
    for(const [attr,old] of [["tabindex",oldTab],["aria-hidden",oldHidden]])if(old===null)select.removeAttribute(attr);else select.setAttribute(attr,old);
@@ -136,7 +139,7 @@
    li.dispatchEvent(new CustomEvent("cbi-dropdown-select",{bubbles:true}));arrow.focus({preventScroll:true});
   });
   popup.addEventListener("MDCMenuSurface:closed",()=>{arrow.setAttribute("aria-expanded",String(menu.open));});
-  actions.set(owner,{open,destroy(){popup._mlEscapeCleanup?.();clearItems(list);menu.destroy();popup.remove();owner.removeEventListener("click",click,true);arrow.removeEventListener("keydown",key);owner._mlMdcMenu=null;for(const a of ["aria-label","aria-haspopup","aria-controls","aria-expanded"])arrow.removeAttribute(a);for(const [a,v] of [["role",oldRole],["tabindex",oldTab]])if(v===null)arrow.removeAttribute(a);else arrow.setAttribute(a,v);actions.delete(owner);}});
+  actions.set(owner,{open,destroy(){openMenus.delete(menu);popup._mlEscapeCleanup?.();clearItems(list);menu.destroy();popup.remove();owner.removeEventListener("click",click,true);arrow.removeEventListener("keydown",key);owner._mlMdcMenu=null;for(const a of ["aria-label","aria-haspopup","aria-controls","aria-expanded"])arrow.removeAttribute(a);for(const [a,v] of [["role",oldRole],["tabindex",oldTab]])if(v===null)arrow.removeAttribute(a);else arrow.setAttribute(a,v);actions.delete(owner);}});
  }
  function tooltip(anchor){
   const label=anchor.getAttribute("aria-label")||anchor.title;if(!label)return;
@@ -148,8 +151,8 @@
   const instance=new MDCTooltip(root);instance.setShowDelay(500);anchor._mlMdcTooltip=instance;
   const guard=event=>{if(anchor.closest('[inert],[aria-hidden="true"]')||!anchor.getClientRects().length){instance.hide();event.stopImmediatePropagation();}};
   for(const event of ["focus","mouseenter","touchstart"])anchor.addEventListener(event,guard,true);
-  const visibility=new MutationObserver(()=>root.setAttribute("aria-hidden",String(!instance.isShown())));visibility.observe(root,{attributes:true,attributeFilter:["class"]});
-  tips.set(anchor,{surface,destroy(){visibility.disconnect();for(const event of ["focus","mouseenter","touchstart"])anchor.removeEventListener(event,guard,true);instance.destroy();root.remove();anchor._mlMdcTooltip=null;for(const [a,v] of [["aria-describedby",description],["title",title],["data-tooltip-id",data]])if(v===null)anchor.removeAttribute(a);else anchor.setAttribute(a,v);tips.delete(anchor);}});
+  const visibility=new MutationObserver(()=>{const shown=instance.isShown();MaterialRuntime.setAttr(root,"aria-hidden",!shown);if(shown)shownTips.add(instance);else shownTips.delete(instance);});visibility.observe(root,{attributes:true,attributeFilter:["class"]});
+  tips.set(anchor,{surface,destroy(){shownTips.delete(instance);visibility.disconnect();for(const event of ["focus","mouseenter","touchstart"])anchor.removeEventListener(event,guard,true);instance.destroy();root.remove();anchor._mlMdcTooltip=null;for(const [a,v] of [["aria-describedby",description],["title",title],["data-tooltip-id",data]])if(v===null)anchor.removeAttribute(a);else anchor.setAttribute(a,v);tips.delete(anchor);}});
  }
  // Run before the surface's later body capture listener so clicking the
  // native arrow toggles once instead of closing and immediately reopening.
@@ -172,36 +175,29 @@
   for(const owner of all(".cbi-dropdown.btn,.cbi-dropdown.cbi-button"))actionMenu(owner);
   for(const anchor of all(".ml-icon-button,.ml-poll-action,#ml-drawer-close,button[aria-label]:has(svg):not(.mdc-switch)"))tooltip(anchor);
  }
- let pending=false;const pendingRoots=new Set();
- const decorative=n=>!!n.closest?.(".mdc-tooltip,.ml-mdc-menu,.mdc-snackbar,[data-ml-component],.mdc-text-field__ripple,.mdc-line-ripple");
  const observer=new MutationObserver(records=>{
-  for(const r of records)if(r.type==="attributes"&&r.attributeName==="disabled"&&r.target.tagName==="FIELDSET")for(const [select,entry] of selects)if(r.target.contains(select))entry.sync();
-  if(records.some(r=>r.type==="attributes"&&(r.attributeName==="inert"||r.attributeName==="aria-hidden"||r.target===document.body)))for(const el of tips.keys())if(el.closest('[inert],[aria-hidden="true"]'))el._mlMdcTooltip.hide();
-  if(records.some(r=>r.type==="childList"&&r.removedNodes.length)){
-   for(const [el,entry] of selects)if(!el.isConnected||!entry.root.isConnected)entry.destroy();
-   for(const [el,entry] of actions)if(!el.isConnected)entry.destroy();
-   for(const [el,entry] of tips)if(!el.isConnected)entry.destroy();
-  }
   for(const r of records){
-   if(decorative(r.target))continue;
-   if(r.type==="childList")for(const n of r.addedNodes)if(n.nodeType===1&&!decorative(n))pendingRoots.add(n);
-   if(r.type==="attributes"&&r.target.matches(".ml-icon-button,.ml-poll-action,#ml-drawer-close"))pendingRoots.add(r.target);
+   if(r.attributeName==="disabled"&&r.target.tagName==="FIELDSET")for(const select of r.target.querySelectorAll("select"))selects.get(select)?.sync();
+   if(["aria-label","title"].includes(r.attributeName)&&r.target.matches(".ml-icon-button,.ml-poll-action,#ml-drawer-close"))tooltip(r.target);
+   if(["inert","aria-hidden"].includes(r.attributeName)&&shownTips.size)for(const el of tips.keys())if(el.closest('[inert],[aria-hidden="true"]'))el._mlMdcTooltip?.hide();
   }
-  if(pendingRoots.size&&!pending){pending=true;requestAnimationFrame(()=>{pending=false;const roots=[...pendingRoots];pendingRoots.clear();for(const n of roots)if(n.isConnected&&!roots.some(p=>p!==n&&p.contains(n)))enhance(n);});}
  });
- observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["aria-label","title","inert","aria-hidden","class","disabled"]});
+ observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:["aria-label","title","inert","aria-hidden","disabled"]});
+ MaterialRuntime.register({selector:"select,.cbi-dropdown.btn,.cbi-dropdown.cbi-button,.ml-icon-button,.ml-poll-action,#ml-drawer-close,button[aria-label]:has(svg):not(.mdc-switch)",enhance,cleanup(root){
+  MaterialRuntime.cleanup(root,selects,"select");MaterialRuntime.cleanup(root,actions,".cbi-dropdown");MaterialRuntime.cleanup(root,tips,"button,.ml-poll-action");
+ }});
  let scrollIdleTimer=0,scrollDismissals=0;
  function closeMenus(fromScroll=false){
+  if(!openMenus.size&&!shownTips.size)return;
   if(fromScroll===true)scrollDismissals++;
-  for(const e of selects.values())if(e.menu.open)e.menu.open=false;
-  for(const el of actions.keys())if(el._mlMdcMenu.open)el._mlMdcMenu.open=false;
-  for(const el of tips.keys())if(el._mlMdcTooltip?.isShown())el._mlMdcTooltip.hide();
+  for(const menu of openMenus)if(menu.open)menu.open=false;
+  for(const tip of shownTips)tip.hide();
  }
  // Close popups once per continuous wheel/touch gesture. Repeated per-frame
  // map scans and tooltip animations were adding work to every scroll event.
  window.addEventListener("resize",()=>closeMenus());
  const userScroll=event=>{
-  if(event.target.closest?.(".ml-mdc-menu"))return;
+  if(event.target.closest?.(".ml-mdc-menu")||(!openMenus.size&&!shownTips.size))return;
   if(!scrollIdleTimer)closeMenus(true);
   clearTimeout(scrollIdleTimer);
   scrollIdleTimer=setTimeout(()=>{scrollIdleTimer=0;},180);
@@ -217,7 +213,6 @@
   const popup=make("div","mdc-menu mdc-menu-surface ml-action-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","menu");list.tabIndex=-1;replaceItems(list,options.map(([key,label,disabled])=>{const li=item(label,key,disabled,key===value);li.setAttribute("role","menuitem");return li;}));popup.append(list);const menu=portalMenu(popup);escapeFocus(popup,anchor);menu.setAnchorElement(anchor);
   menu.items.forEach((li,i)=>menu.setEnabled(i,li.getAttribute("aria-disabled")!=="true"));
   popup.addEventListener("MDCMenu:selected",event=>onChange(event.detail.item.dataset.value),{once:true});
-  popup.addEventListener("MDCMenuSurface:closed",()=>{popup._mlEscapeCleanup?.();menu.destroy();popup.remove();},{once:true});menu.open=true;return menu;
+  popup.addEventListener("MDCMenuSurface:closed",()=>{popup._mlEscapeCleanup?.();openMenus.delete(menu);menu.destroy();popup.remove();},{once:true});menu.open=true;return menu;
  },counts(){return {selects:selects.size,menus:actions.size,tooltips:tips.size,scrollDismissals};}};
- enhance();
 })();

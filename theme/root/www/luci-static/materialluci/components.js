@@ -4,9 +4,11 @@
  const m3=()=>MaterialAppearance.activeDesign==="m3e";
  const stateWatchers=new Map();
  const stateObserver=new MutationObserver(records=>{
-  for(const [input,sync] of stateWatchers)if(records.some(r=>r.target===input||r.target.contains(input)))sync();
+  const pending=new Set();
+  for(const r of records){if(stateWatchers.has(r.target))pending.add(r.target);else if(r.target.tagName==="FIELDSET")for(const input of r.target.querySelectorAll("input"))if(stateWatchers.has(input))pending.add(input);}
+  for(const input of pending)stateWatchers.get(input)?.();
  });
- stateObserver.observe(document.body,{subtree:true,attributes:true,attributeFilter:["checked","disabled"]});
+ stateObserver.observe(document.body,{subtree:true,attributes:true,attributeFilter:["checked","disabled","name","form","type"]});
  function watchState(input,sync){stateWatchers.set(input,sync);return {disconnect(){stateWatchers.delete(input);}};}
  const supported=name=>m3()&&!!window.customElements?.get(name);
  function button(label,listener,className,kind="outlined"){
@@ -23,7 +25,7 @@
   if(!supported("md-switch"))return null;
   const el=document.createElement("md-switch");el.dataset.mlComponent="switch";el.setAttribute("aria-label",label);
   const saved={tabindex:input.getAttribute("tabindex"),aria:input.getAttribute("aria-hidden")};
-  const sync=()=>{el.selected=!!input.checked;el.disabled=input.matches(":disabled");};
+  const sync=()=>{const checked=!!input.checked,disabled=input.matches(":disabled");if(el.selected!==checked)el.selected=checked;if(el.disabled!==disabled)el.disabled=disabled;};
   input.classList.add("ml-switch-source");input.tabIndex=-1;input.setAttribute("aria-hidden","true");
   const descriptors=[];
   for(const key of ["checked","disabled"]){
@@ -49,37 +51,48 @@
   el.dataset.mlComponent=radio?"radio":"checkbox";el.setAttribute("aria-label",label);
   const oldTab=input.getAttribute("tabindex"),oldAria=input.getAttribute("aria-hidden");
   input.classList.add("ml-m3-selection-source");input.tabIndex=-1;input.setAttribute("aria-hidden","true");root.classList.add("ml-m3-selection");
-  const sync=()=>{el.checked=input.checked;el.disabled=input.matches(":disabled");if(!radio)el.indeterminate=input.indeterminate;};
+  const sync=()=>{const disabled=input.matches(":disabled");if(el.checked!==input.checked)el.checked=input.checked;if(el.disabled!==disabled)el.disabled=disabled;if(!radio&&el.indeterminate!==input.indeterminate)el.indeterminate=input.indeterminate;};
   const hooks=[];
   for(const key of ["checked","disabled","indeterminate"]){
    if(Object.getOwnPropertyDescriptor(input,key))continue;
    const d=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,key);
-   Object.defineProperty(input,key,{configurable:true,get(){return d.get.call(this);},set(value){d.set.call(this,value);syncSelections();}});hooks.push(key);
+   Object.defineProperty(input,key,{configurable:true,get(){return d.get.call(this);},set(value){d.set.call(this,value);syncSelections(input);}});hooks.push(key);
   }
-  const click=event=>{event.preventDefault();event.stopPropagation();if(!input.matches(":disabled"))input.click();syncSelections();};
+  const click=event=>{event.preventDefault();event.stopPropagation();if(!input.matches(":disabled"))input.click();syncSelections(input);};
   el.addEventListener("click",click);el.addEventListener("input",event=>event.stopPropagation());el.addEventListener("change",event=>event.stopPropagation());
   const key=event=>{if(!radio||!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key))return;event.preventDefault();event.stopImmediatePropagation();
-   const group=[...selectionEntries.keys()].filter(n=>n.type==="radio"&&n.name===input.name&&n.form===input.form&&n.getRootNode()===input.getRootNode()&&!n.matches(":disabled"));
-   if(!input.name||!group.length)return;const backwards=["ArrowLeft","ArrowUp"].includes(event.key),next=group[(group.indexOf(input)+(backwards?-1:1)+group.length)%group.length];next.click();syncSelections();selectionEntries.get(next)?.control.focus();};
+   const group=[...groupFor(input)].filter(n=>!n.matches(":disabled")).sort((a,b)=>a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_PRECEDING?1:-1);
+   if(!input.name||!group.length)return;const backwards=["ArrowLeft","ArrowUp"].includes(event.key),next=group[(group.indexOf(input)+(backwards?-1:1)+group.length)%group.length];next.click();syncSelections(next);selectionEntries.get(next)?.control.focus();};
   el.addEventListener("keydown",key);
-  const change=()=>syncSelections();input.addEventListener("change",change);
+  const change=()=>syncSelections(input);input.addEventListener("change",change);
   const attrs=watchState(input,change);
-  const reset=()=>queueMicrotask(change);document.addEventListener("reset",reset,true);
-  const geometry=()=>{el.style.left=input.offsetLeft+"px";el.style.top=input.offsetTop+"px";};
-  const resize=new ResizeObserver(geometry);resize.observe(root);
+  const reset=event=>{if(input.form===event.target)queueMicrotask(change);};document.addEventListener("reset",reset,true);
+  const geometry=()=>MaterialRuntime.position(input,()=>input.isConnected?[input.offsetLeft,input.offsetTop]:null,([x,y])=>{MaterialRuntime.setStyle(el,"left",x+"px");MaterialRuntime.setStyle(el,"top",y+"px");});
+  const unwatch=MaterialRuntime.watchSize(root,geometry);
   let destroyed=false;
-  const entry={control:el,sync,destroy(){if(destroyed)return;destroyed=true;attrs.disconnect();resize.disconnect();input.removeEventListener("change",change);document.removeEventListener("reset",reset,true);for(const key of hooks)delete input[key];input.classList.remove("ml-m3-selection-source");root.classList.remove("ml-m3-selection");for(const [key,value] of [["tabindex",oldTab],["aria-hidden",oldAria]])if(value===null)input.removeAttribute(key);else input.setAttribute(key,value);selectionEntries.delete(input);el.remove();}};
-  selectionEntries.set(input,entry);root.append(el);syncSelections();geometry();return entry;
+  const entry={control:el,sync,destroy(){if(destroyed)return;destroyed=true;attrs.disconnect();unwatch();MaterialRuntime.dropPosition(input);leaveGroup(input);input.removeEventListener("change",change);document.removeEventListener("reset",reset,true);for(const key of hooks)delete input[key];input.classList.remove("ml-m3-selection-source");root.classList.remove("ml-m3-selection");for(const [key,value] of [["tabindex",oldTab],["aria-hidden",oldAria]])if(value===null)input.removeAttribute(key);else input.setAttribute(key,value);selectionEntries.delete(input);el.remove();}};
+  selectionEntries.set(input,entry);root.append(el);syncSelections(input);geometry();return entry;
  }
  const selectionEntries=new Map();
- function syncSelections(){
-  for(const entry of selectionEntries.values())entry.sync();
-  for(const [input,entry] of selectionEntries){
-   if(input.type!=="radio")continue;
-   const group=[...selectionEntries.keys()].filter(n=>n.type==="radio"&&n.name===input.name&&n.form===input.form&&n.getRootNode()===input.getRootNode()&&!n.matches(":disabled"));
-   const active=group.find(n=>n.checked)||group[0];
-   entry.control.tabIndex=input.matches(":disabled")?-1:!input.name||input===active?0:-1;
-  }
+ const groupRoots=new WeakMap(),membership=new WeakMap();
+ function groupFor(input){
+  if(input.type!=="radio"||!input.name)return new Set([input]);
+  const root=input.getRootNode(),form=input.form;
+  let forms=groupRoots.get(root);if(!forms){forms=new Map();groupRoots.set(root,forms);}
+  let names=forms.get(form);if(!names){names=new Map();forms.set(form,names);}
+  let group=names.get(input.name);if(!group){group=new Set();names.set(input.name,group);}
+  return group;
+ }
+ function leaveGroup(input){const group=membership.get(input);if(group){group.delete(input);membership.delete(input);updateGroup(group);}}
+ function updateGroup(group){
+  const enabled=[...group].filter(n=>n.isConnected&&!n.matches(":disabled")),active=enabled.find(n=>n.checked)||enabled[0];
+  for(const n of group){const entry=selectionEntries.get(n);if(!entry)continue;entry.sync();const tab=n.matches(":disabled")?-1:!n.name||n===active?0:-1;if(entry.control.tabIndex!==tab)entry.control.tabIndex=tab;}
+ }
+ function syncSelections(input){
+  if(!input||!selectionEntries.has(input))return;
+  const group=groupFor(input),old=membership.get(input);
+  if(old!==group){if(old){old.delete(input);updateGroup(old);}group.add(input);membership.set(input,group);}
+  updateGroup(group);
  }
  function progress(node){
   if(m3()){
@@ -109,5 +122,6 @@
   if(root.closest?.("[data-ml-component]"))return;
   window.MaterialTextFields?.enhance(root);window.MaterialControls?.enhance(root);window.MaterialFeedback?.bind(root);window.MaterialExtras?.enhance(root);
  }
- window.MaterialComponents={button,switchControl,selectionControl,progress,enhance,isM3:m3};
+ window.addEventListener("pagehide",event=>{if(!event.persisted)stateObserver.disconnect();});
+ window.MaterialComponents={button,switchControl,selectionControl,syncSelections,progress,enhance,isM3:m3};
 })();

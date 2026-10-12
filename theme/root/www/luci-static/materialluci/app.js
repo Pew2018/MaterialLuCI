@@ -9,7 +9,7 @@
   const parts=route=>Array.isArray(route)?route.filter(Boolean):typeof route==="string"?route.split(/[\\/-]+/).filter(Boolean):[];
   const routes=[document.body.dataset.page,window.L?.env?.dispatchpath,window.L?.env?.requestpath,location.pathname];
   const segments=routes.map(parts).find(route=>route.length&&route[route.length-1]!=="luci")||[];
-  main.dataset.mlPage=segments[segments.length-1]||"";
+  const page=segments[segments.length-1]||"";if(main.dataset.mlPage!==page)main.dataset.mlPage=page;
  }
  identifyPage();
  const zh=document.documentElement.lang.startsWith("zh"),t=(cn,en)=>zh?cn:en;
@@ -33,7 +33,7 @@
   catch(error){console.error("MaterialLuCI: MDCSwitch initialization failed",error);control.hidden=true;return control;}
   const original={tabindex:input.getAttribute("tabindex"),hidden:input.getAttribute("aria-hidden")};
   // Checkbox is the sole saved-field authority. Only MDC writes its classes/ARIA.
-  const sync=()=>{instance.selected=!!input.checked;instance.disabled=!!input.disabled;};
+  const sync=()=>{const checked=!!input.checked,disabled=input.matches(":disabled");if(instance.selected!==checked)instance.selected=checked;if(instance.disabled!==disabled)instance.disabled=disabled;};
   input.classList.add("ml-switch-source");input.tabIndex=-1;input.setAttribute("aria-hidden","true");
   input.addEventListener("change",sync);input.addEventListener("input",sync);
   const descriptors={};
@@ -63,8 +63,8 @@
   }});
   sync();return control;
  }
- new MutationObserver(()=>{for(const [input,entry] of switches)if(!input.isConnected||!entry.control.isConnected)entry.destroy();}).observe(document.body,{childList:true,subtree:true});
- window.addEventListener("pagehide",()=>{for(const entry of [...switches.values()])entry.destroy();});
+ 
+ window.addEventListener("pagehide",event=>{if(!event.persisted)for(const entry of [...switches.values()])entry.destroy();});
 
  // Keep LuCI's span and first text node: ui.showIndicator updates them in place.
  // Only poll-status is an automatic-refresh action; other indicators keep their semantics.
@@ -118,13 +118,19 @@
      node("span",{class:"ml-nav-parent-label mdc-button__label",text:entry.title}),
      node("span",{class:"ml-nav-chevron mdc-button__icon","aria-hidden":"true"})
     ]);
-    toggle.addEventListener("click",()=>{
+    // A dragged/cancelled touch cannot expand a section via a compatibility click.
+    let gesture=null,cancelled=false;
+    toggle.addEventListener("pointerdown",e=>{gesture={x:e.clientX,y:e.clientY};cancelled=false;},{passive:true});
+    toggle.addEventListener("pointermove",e=>{if(gesture&&Math.hypot(e.clientX-gesture.x,e.clientY-gesture.y)>10)cancelled=true;},{passive:true});
+    toggle.addEventListener("pointercancel",()=>{cancelled=true;gesture=null;},{passive:true});
+    toggle.addEventListener("click",event=>{
+     if(event.detail&&cancelled){event.preventDefault();return;}gesture=null;
      const open=list.hidden;
      for(const other of host.querySelectorAll("button[aria-controls]")){
       const selected=other===toggle&&open;
       document.getElementById(other.getAttribute("aria-controls")).hidden=!selected;
-      other.setAttribute("aria-expanded",String(selected));
-      other.closest(".ml-nav-group").dataset.active=String(selected);
+      MaterialRuntime.setAttr(other,"aria-expanded",selected);
+      const group=other.closest(".ml-nav-group");if(group.dataset.active!==String(selected))group.dataset.active=String(selected);
      }
     });
     const header=node("div",{class:"ml-nav-row ml-nav-row-action"},[toggle]);group.append(header);
@@ -272,22 +278,27 @@
   syncDisclosure();if(details.open)openAppearance(details);
  }
  const surfaceSelectors=".cbi-value,.cbi-section,.cbi-section-node,fieldset,section,.cbi-map,[data-tab-title],[data-table],.network-status-table,.ml-chart-surface,.ml-table-scroll,#view";
- let surfaceBatch=false,surfaceDone=false;
- function queueSurfaces(){if(surfaceBatch&&surfaceDone)return;updateSurfaces();if(surfaceBatch)surfaceDone=true;}
- function updateSurfaces(){
+ const surfaceRoots=new Set();let surfaceTimer=0;
+ function queueSurfaces(scope=main){
+  const owner=scope===main?main:scope.closest?.(".cbi-map,#view")||main;
+  surfaceRoots.add(owner);
+  if(!surfaceTimer)surfaceTimer=setTimeout(()=>{surfaceTimer=0;const roots=[...surfaceRoots];surfaceRoots.clear();for(const root of roots)if(root.isConnected&&!roots.some(p=>p!==root&&p.contains(root)))updateSurfaces(root);},0);
+ }
+ function updateSurfaces(scope=main){
+  const all=selector=>[...(scope.matches?.(selector)?[scope]:[]),...scope.querySelectorAll(selector)];
   enhancementMetrics.surfacePasses++;
   // SectionValue embeds complete sections inside field containers (flash,
   // backup and vendor pages). Mark those wrappers without moving native nodes.
-  for(const value of main.querySelectorAll(".cbi-value")){
+  for(const value of all(".cbi-value")){
    const section=[...value.querySelectorAll(".cbi-section,fieldset")].find(el=>el.closest(".cbi-value")===value);
    if(value.classList.contains("ml-section-container")!==!!section)value.classList.toggle("ml-section-container",!!section);
   }
 
   const isPlot=svg=>!!svg.querySelector("polyline,polygon")&&!!svg.querySelector("line,text")&&!svg.closest(".mdc-select,.mdc-button,.mdc-icon-button,.ml-icon-button,.ml-mdc-selection,.ml-toolbar,.ml-sidebar");
-  for(const svg of main.querySelectorAll("#view svg"))if(isPlot(svg))svg.parentElement?.classList.add("ml-chart-surface");
+  for(const svg of all("#view svg"))if(isPlot(svg))svg.parentElement?.classList.add("ml-chart-surface");
   // Recognize the actual legacy flashops direct-child groups. Add only
   // presentation classes; forms, their children and business events stay put.
-  for(const section of main.querySelectorAll(".cbi-section")){
+  for(const section of all(".cbi-section")){
    const heads=[...section.children].filter(el=>el.tagName==="H3");
    const legacy=!main.querySelector("#view")&&["flashops","flash"].includes(main.dataset.mlPage)&&heads.length>1;
    if(section.classList.contains("ml-legacy-flash-section")!==legacy)section.classList.toggle("ml-legacy-flash-section",legacy);
@@ -300,7 +311,7 @@
     group.slice(1).forEach((el,j)=>el.classList.add(j===group.length-2?"ml-legacy-card-end":"ml-legacy-card-body"));
    }
   }
-  const candidates=[...main.querySelectorAll(".cbi-section,.cbi-section-node,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table,#view [data-table],.ml-chart-surface,#view > .ml-table-scroll,.cbi-map > .ml-table-scroll")]
+  const candidates=[...all(".cbi-section,.cbi-section-node,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table,#view [data-table],.ml-chart-surface,#view > .ml-table-scroll,.cbi-map > .ml-table-scroll")]
    .filter(section=>{
     if(section.closest(".ml-legacy-flash-section"))return false;
     const option=section.closest(".cbi-value");
@@ -310,18 +321,30 @@
      // A container of SectionValues has no surface: each complete subsection does.
      !section.querySelector(".ml-section-container .cbi-section,.ml-section-container fieldset");
    });
-  const surfaces=new Set(candidates.filter(section=>!candidates.some(parent=>parent!==section&&parent.contains(section))));
+  const candidateSet=new Set(candidates);
+  const surfaces=new Set(candidates.filter(section=>{for(let p=section.parentElement;p&&p!==scope.parentElement;p=p.parentElement)if(candidateSet.has(p))return false;return true;}));
   // Flat views (reboot, SSH keys, firewall status, vendor views) have no CBI
   // section. Their existing content host owns the surface; never wrap children.
-  const view=main.querySelector("#view");
+  const view=scope.id==="view"?scope:scope.querySelector("#view");
   if(view&&view.children.length&&!view.querySelector(":scope > .spinning,.cbi-map,.cbi-section,fieldset,.ml-card-surface")&&!candidates.some(section=>view.contains(section)))surfaces.add(view);
   // Legacy Lua reboot templates render h2/p/hr/input directly without #view.
   // Keep their nodes and handlers in place; style the existing main surface.
-  if(!view&&main.dataset.mlPage==="reboot"&&main.children.length&&[...main.children].some(el=>el.matches("h2,p,hr,form,input,button")))surfaces.add(main);
-  for(const map of main.querySelectorAll(".cbi-map"))if(map.querySelector(".cbi-value")&&!map.querySelector(".ml-section-container")&&!candidates.some(section=>map.contains(section)))surfaces.add(map);
-  main.querySelectorAll(".ml-card-surface").forEach(el=>{if(!surfaces.has(el))el.classList.remove("ml-card-surface");});
-  if(main.classList.contains("ml-card-surface")&&!surfaces.has(main))main.classList.remove("ml-card-surface");
+  if(scope===main&&!view&&main.dataset.mlPage==="reboot"&&main.children.length&&[...main.children].some(el=>el.matches("h2,p,hr,form,input,button")))surfaces.add(main);
+  for(const map of all(".cbi-map"))if(map.querySelector(".cbi-value")&&!map.querySelector(".ml-section-container")&&!candidates.some(section=>map.contains(section)))surfaces.add(map);
+  all(".ml-card-surface").forEach(el=>{if(!surfaces.has(el))el.classList.remove("ml-card-surface");});
+  if(scope===main&&main.classList.contains("ml-card-surface")&&!surfaces.has(main))main.classList.remove("ml-card-surface");
   for(const section of surfaces)if(!section.classList.contains("ml-card-surface"))section.classList.add("ml-card-surface");
+
+ }
+ function enhanceSwitch(input){
+   if(input.classList.contains("ml-switch")||input.closest(".cbi-dropdown,[role=group]"))return;
+   const field=input.closest(".cbi-value-field");
+   if(!field||field.querySelectorAll("input[type=checkbox]").length!==1)return;
+   input.classList.add("ml-switch");
+   const title=input.getAttribute("aria-label")||input.closest(".cbi-value")?.querySelector(".cbi-value-title")?.textContent.trim()||t("开关","Switch");
+   if(input.closest("label")){const label=input.closest("label");label.classList.add("ml-switch-hit");label.append(switchControl(input,title));}
+   else{const hit=node("span",{class:"ml-switch-hit"});const parent=input.parentNode;parent.insertBefore(hit,input);hit.append(input,switchControl(input,title));}
+   if(input.disabled)input.setAttribute("aria-disabled","true");
 
  }
  const enhancementMetrics={fullScans:0,fastPaths:0,surfacePasses:0};
@@ -334,12 +357,11 @@
     if(plot&&!plot.classList.contains("ml-chart-surface")){plot.classList.add("ml-chart-surface");newPlot=true;}
    }
   }
-  if(newPlot)queueSurfaces();
+  if(newPlot)queueSurfaces(root);
   const viewHost=root.closest?.("#view");
   const needsFirstSurface=viewHost&&viewHost.children.length&&!viewHost.classList.contains("ml-card-surface")&&!viewHost.querySelector(".cbi-map,.cbi-section,fieldset,.ml-card-surface");
   if(root!==main&&!needsFirstSurface&&!root.matches?.(layoutSelectors)&&!root.querySelector?.(layoutSelectors)){
    enhancementMetrics.fastPaths++;
-   MaterialComponents.enhance(root);
    return;
   }
   enhancementMetrics.fullScans++;
@@ -352,17 +374,6 @@
    button.setAttribute("role","button");button.tabIndex=button.hasAttribute("disabled")?-1:0;
    if(button.hasAttribute("disabled"))button.setAttribute("aria-disabled","true");
    button.addEventListener("keydown",event=>{if((event.key==="Enter"||event.key===" ")&&!button.hasAttribute("disabled")&&button.getAttribute("aria-disabled")!=="true"){event.preventDefault();button.click();}});
-  }
-  // Only explicit boolean LuCI fields get switches; list/group checkboxes remain checkboxes.
-  for(const input of all('.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox,.cbi-value-field input[type="checkbox"]')){
-   if(input.classList.contains("ml-switch")||input.closest(".cbi-dropdown,[role=group]"))continue;
-   const field=input.closest(".cbi-value-field");
-   if(!field||field.querySelectorAll("input[type=checkbox]").length!==1)continue;
-   input.classList.add("ml-switch");
-   const title=input.getAttribute("aria-label")||input.closest(".cbi-value")?.querySelector(".cbi-value-title")?.textContent.trim()||t("开关","Switch");
-   if(input.closest("label")){const label=input.closest("label");label.classList.add("ml-switch-hit");label.append(switchControl(input,title));}
-   else{const hit=node("span",{class:"ml-switch-hit"});const parent=input.parentNode;parent.insertBefore(hit,input);hit.append(input,switchControl(input,title));}
-   if(input.disabled)input.setAttribute("aria-disabled","true");
   }
   for(const input of all('.cbi-page-actions>input[type="submit"],.cbi-page-actions>input[type="button"],.cbi-page-actions>input[type="reset"]')){
    if(input.closest(".ml-native-button"))continue;const wrapper=node("span",{class:"ml-native-button"});input.parentNode.insertBefore(wrapper,input);wrapper.append(input);
@@ -382,7 +393,7 @@
   }
   // Polling rows and SVG updates do not change section ownership.
   // Coalesce structural changes into one surface pass for the entire batch.
-  if(root===main||needsFirstSurface||root.matches?.(surfaceSelectors)||root.querySelector?.(surfaceSelectors))queueSurfaces();
+  if(root===main||needsFirstSurface||root.matches?.(surfaceSelectors)||root.querySelector?.(surfaceSelectors))queueSurfaces(root);
   // Preserve zone/status background semantics, with readable foreground in either mode.
   for(const head of all('.ifacebox-head[style*="background"]')){
    const rgb=getComputedStyle(head).backgroundColor.match(/[0-9.]+/g)?.map(Number);
@@ -393,20 +404,14 @@
    }
   }
   // Keep original selects and LuCI dropdowns authoritative, including keyboard behavior.
-  appearanceEntry(root);MaterialComponents.enhance(root);
+  appearanceEntry(root);
  }
  window.addEventListener("popstate",()=>{if(dialog&&(!history.state||history.state.materialluci!=="dialog"||history.state.id!==dialog.id))finishDialog();setDrawer(false);});
  if(document.querySelector('input[name="luci_password"]'))document.body.classList.add("ml-login");
  enhance(main);
- const decoration=n=>n.closest("[data-ml-component]")||n.matches(".mdc-button__ripple,.mdc-icon-button__ripple,.mdc-checkbox__background,.mdc-checkbox__ripple,.mdc-checkbox__focus-ring,.mdc-radio__background,.mdc-radio__ripple,.mdc-radio__focus-ring");
- let scheduled=false;const pending=new Set();
- function flush(){scheduled=false;const roots=[...pending];pending.clear();surfaceBatch=true;surfaceDone=false;try{for(const n of roots)if(n.isConnected&&!roots.some(p=>p!==n&&p.contains(n)))enhance(n);}finally{surfaceBatch=false;}}
- const observer=new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&!decoration(n))pending.add(n);if(pending.size&&!scheduled){scheduled=true;requestAnimationFrame(flush);}});
- observer.observe(main,{childList:true,subtree:true});
- const watched=new WeakSet();
- function watchModal(modal){if(!modal||watched.has(modal))return;watched.add(modal);enhance(modal);new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&!decoration(n))enhance(n);}).observe(modal,{childList:true,subtree:true});}
- watchModal(document.getElementById("modal_overlay"));
- new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&n.id==="modal_overlay")watchModal(n);}).observe(document.body,{childList:true});
+ MaterialRuntime.register({range:true,priority:-20,initial:false,enhance(root){if(root.closest?.("#maincontent,#modal_overlay,.ml-backdrop"))enhance(root);},cleanup(root){MaterialRuntime.cleanup(root,switches,"input");if(root.matches?.(".cbi-map,.cbi-section,#view")||root.querySelector?.(".cbi-map,.cbi-section"))queueSurfaces();}});
+ MaterialRuntime.register({priority:-10,selector:'.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox,.cbi-value-field input[type="checkbox"]',enhance:enhanceSwitch});
+ MaterialRuntime.start(document.body);
  const vv=window.visualViewport,root=document.documentElement;let viewportFrame=0;
  const editorSelector='input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),textarea';
  function viewport(){
@@ -440,7 +445,12 @@
  if(vv){vv.addEventListener("resize",queueViewport,{passive:true});vv.addEventListener("scroll",queueViewportOnScroll,{passive:true});}
  // Reused LuCI modals may reopen after a viewport resize. Update their
  // geometry immediately when visibility changes, before the first paint.
- new MutationObserver(()=>viewport()).observe(document.body,{attributes:true,attributeFilter:["class"]});
+ let viewportState="";
+ const viewportObserver=new MutationObserver(()=>{
+  const state=["ml-drawer-open","modal-overlay-active","ml-dialog-open"].map(c=>document.body.classList.contains(c)).join();
+  if(state!==viewportState){viewportState=state;queueViewport();}
+ });
+ viewportObserver.observe(document.body,{attributes:true,attributeFilter:["class"]});
  window.addEventListener("resize",queueViewport,{passive:true});viewport();
  // A one-time focus correction after keyboard resize; avoid scroll-event feedback loops.
  let focusTimer;
@@ -463,6 +473,8 @@
  document.addEventListener("focusin",()=>{queueViewport();clearTimeout(focusTimer);focusTimer=setTimeout(revealFocused,280);});
  document.addEventListener("focusout",queueViewport);
  if(vv)vv.addEventListener("resize",()=>{clearTimeout(focusTimer);focusTimer=setTimeout(revealFocused,180);},{passive:true});
+ window.addEventListener("pagehide",event=>{clearTimeout(surfaceTimer);surfaceTimer=0;cancelAnimationFrame(viewportFrame);viewportFrame=0;clearTimeout(focusTimer);if(!event.persisted)viewportObserver.disconnect();});
+ window.addEventListener("pageshow",event=>{if(event.persisted){if(surfaceRoots.size)queueSurfaces();queueViewport();}});
  window.MaterialLuCI={metrics:enhancementMetrics,setMenus:renderMenus,menuFailed(err){const host=document.getElementById("ml-menu-tree");host.replaceChildren(node("p",{class:"hint",text:t("菜单加载失败，请刷新页面。","Menu could not load. Reload the page.")}));console.error(err);},choose,enhance};
  document.documentElement.dataset.loading="false";
 })();

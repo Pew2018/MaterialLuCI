@@ -4,11 +4,15 @@
  const {MDCRipple,MDCRippleFoundation}=MaterialMDCControls;
  const entries=new Map(),pending=new WeakMap(),reduced=matchMedia("(prefers-reduced-motion: reduce)");
  const disabledWatchers=new Map();
- const disabledObserver=new MutationObserver(records=>{for(const [el,sync] of disabledWatchers)if(records.some(r=>r.target===el||r.target.contains(el)||el.contains(r.target)))sync();});
+ const disabledObserver=new MutationObserver(records=>{
+  const targets=new Set();for(const r of records){const owner=r.target.closest?.(selector);if(owner)targets.add(owner);if(r.target.tagName==="FIELDSET")r.target.querySelectorAll(selector).forEach(n=>targets.add(n));}
+  for(const el of targets)disabledWatchers.get(el)?.();
+ });
  disabledObserver.observe(document.body,{attributes:true,subtree:true,attributeFilter:["disabled","aria-disabled"]});
- const selector="button:not(.mdc-switch),div.btn,a.btn,a.cbi-button,a.text-action,.ml-poll-action,.ml-native-button,.ml-sidebar a,.ml-nav-parent-label,.ml-nav-chevron,.tabs a,.cbi-tabmenu a";
+ const selector="button:not(.mdc-switch),div.btn,a.btn,a.cbi-button,a.text-action,.ml-poll-action,.ml-native-button,.ml-sidebar a,.tabs a,.cbi-tabmenu a";
  function disabled(el){return !!(el.matches(":disabled")||el.disabled||el.hasAttribute("disabled")||el.querySelector("input:disabled")||el.closest('[aria-disabled="true"]'));}
- function scrolls(el){const list=[];for(let n=el.parentElement;n;n=n.parentElement)if(n.scrollHeight>n.clientHeight||n.scrollWidth>n.clientWidth)list.push([n,n.scrollTop,n.scrollLeft]);return list;}
+ let scrollSerial=0;
+ document.addEventListener("scroll",()=>{scrollSerial++;},{capture:true,passive:true});
  // MDC's supported foundation adapter supplies confirmed-tap activation.
  // It suppresses the default pointerdown/compatibility-mouse listeners, so
  // touch scrolling and one physical tap retain the previous theme behavior.
@@ -35,32 +39,8 @@
   if(el.matches("button")&&el.firstElementChild?.tagName==="SPAN"&&!el.firstElementChild.matches(".mdc-button__ripple,.mdc-icon-button__ripple,.ml-radio"))el.firstElementChild.classList.add("mdc-button__label");
  }
  function bind(el){
-  // The title and chevron have separate state layers; a parent ripple joins them.
-  if(el.matches("button.ml-nav-parent"))return;
-  if(el.closest(".mdc-switch,.ml-mdc-selection"))return;
+  if(el.closest(".mdc-switch,.ml-mdc-selection,.ml-m3-selection"))return;
   if(el.matches("button")&&el.closest(".ml-native-button"))return;
-  if(el.matches(".ml-nav-parent-label,.ml-nav-chevron")&&!MaterialComponents.isM3()){
-   if(entries.has(el))return;
-   const ink=document.createElement("span");ink.className="ml-nav-region-ink mdc-ripple-surface";ink.setAttribute("aria-hidden","true");el.prepend(ink);
-   const instance=new ConfirmedRipple(ink),abort=new AbortController(),options={passive:true,signal:abort.signal};
-   el._mlMdcRipple=instance;
-   el.addEventListener("pointerdown",event=>{if(event.isPrimary&&event.button===0)pending.set(el,{id:event.pointerId,x:event.clientX,y:event.clientY,event,scrolls:scrolls(el)});},options);
-   el.addEventListener("pointercancel",()=>pending.delete(el),options);
-   el.addEventListener("pointerup",event=>{
-    const p=pending.get(el);pending.delete(el);
-    if(!p||p.id!==event.pointerId||reduced.matches)return;
-    if(Math.hypot(event.clientX-p.x,event.clientY-p.y)>(event.pointerType==="mouse"?8:10)||p.scrolls.some(([n,y,x])=>Math.abs(n.scrollTop-y)>2||Math.abs(n.scrollLeft-x)>2))return;
-    const rect=el.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)return;
-    instance.confirmed(p.event);
-   },options);
-   if(el.matches(".ml-nav-parent-label")){
-    const button=el.closest("button");
-    button?.addEventListener("keydown",event=>{if((event.key==="Enter"||event.key===" ")&&!event.repeat&&!reduced.matches)instance.activate();},{signal:abort.signal});
-    button?.addEventListener("keyup",event=>{if(event.key==="Enter"||event.key===" ")instance.deactivate();},{signal:abort.signal});
-   }
-   entries.set(el,{destroy(){abort.abort();instance.destroy();ink.remove();pending.delete(el);el._mlMdcRipple=null;entries.delete(el);}});
-   return;
-  }
   if(!entries.has(el)&&window.__mlControlAudit&&el.isConnected){const s=getComputedStyle(el),r=el.getBoundingClientRect();el._mlBeforeMDC={width:r.width,height:r.height,fontFamily:s.fontFamily,fontSize:s.fontSize,fontWeight:s.fontWeight,color:s.color,radius:s.borderRadius,firstChild:el.firstChild};}
   if(entries.has(el))return;
   if(MaterialComponents.isM3()&&customElements.get("md-ripple")){
@@ -82,31 +62,28 @@
   const abort=new AbortController(),options={passive:true,signal:abort.signal};
   el.addEventListener("pointerdown",event=>{
    if(!event.isPrimary||event.button!==0||disabled(el))return;
-   pending.set(el,{id:event.pointerId,x:event.clientX,y:event.clientY,event,scrolls:scrolls(el)});
+   pending.set(el,{id:event.pointerId,x:event.clientX,y:event.clientY,event,scroll:scrollSerial});
   },options);
   el.addEventListener("pointercancel",()=>pending.delete(el),options);
+  el.addEventListener("pointerleave",()=>pending.delete(el),options);
+  el.addEventListener("pointermove",event=>{const p=pending.get(el);if(p&&Math.hypot(event.clientX-p.x,event.clientY-p.y)>10)pending.delete(el);},options);
   el.addEventListener("pointerup",event=>{
    const p=pending.get(el);pending.delete(el);
    if(!p||p.id!==event.pointerId||disabled(el)||reduced.matches)return;
-   if(Math.hypot(event.clientX-p.x,event.clientY-p.y)>(event.pointerType==="mouse"?8:10)||p.scrolls.some(([n,y,x])=>Math.abs(n.scrollTop-y)>2||Math.abs(n.scrollLeft-x)>2))return;
+   if(Math.hypot(event.clientX-p.x,event.clientY-p.y)>(event.pointerType==="mouse"?8:10)||p.scroll!==scrollSerial)return;
    const rect=el.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)return;
    instance.confirmed(p.event);
   },options);
   el.addEventListener("keydown",event=>{if((event.key==="Enter"||event.key===" ")&&!event.repeat&&!disabled(el)&&!reduced.matches)instance.activate();},{signal:abort.signal});
   el.addEventListener("keyup",event=>{if(event.key==="Enter"||event.key===" ")instance.deactivate();},{signal:abort.signal});
-  const resize=new ResizeObserver(()=>instance.layout());resize.observe(el);
-  entries.set(el,{destroy(){abort.abort();resize.disconnect();instance.destroy();el._mlMdcRipple=null;pending.delete(el);entries.delete(el);}});
+  const unwatch=MaterialRuntime.watchSize(el,()=>MaterialRuntime.position(el,()=>el.isConnected,()=>instance.layout()));
+  entries.set(el,{destroy(){abort.abort();unwatch();MaterialRuntime.dropPosition(el);instance.destroy();el._mlMdcRipple=null;pending.delete(el);entries.delete(el);}});
  }
  function enhance(root=document){
   if(root.matches?.(selector))bind(root);
   root.querySelectorAll?.(selector).forEach(bind);
  }
- let scheduled=false;const roots=new Set();
- new MutationObserver(records=>{
-  for(const record of records){const target=record.target.closest?.(selector);if(target)roots.add(target);for(const n of record.addedNodes)if(n.nodeType===1&&!n.matches(".mdc-button__ripple,.mdc-icon-button__ripple,md-ripple"))roots.add(n);}
-  if(records.some(r=>r.removedNodes.length))for(const [el,entry] of entries)if(!el.isConnected)entry.destroy();
-  if(roots.size&&!scheduled){scheduled=true;requestAnimationFrame(()=>{scheduled=false;for(const n of roots)if(n.isConnected)enhance(n);roots.clear();});}
- }).observe(document.body,{childList:true,subtree:true});
- window.addEventListener("pagehide",event=>{if(!event.persisted)for(const entry of [...entries.values()])entry.destroy();});
- window.MaterialFeedback={bind:enhance,counts:()=>({instances:entries.size,disabledWatchers:disabledWatchers.size})};enhance();
+ MaterialRuntime.register({selector,enhance,cleanup(root){MaterialRuntime.cleanup(root,entries,"button,div.btn,a,.ml-poll-action,.ml-native-button");}});
+ window.addEventListener("pagehide",event=>{if(!event.persisted){disabledObserver.disconnect();for(const entry of [...entries.values()])entry.destroy();}});
+ window.MaterialFeedback={bind:enhance,counts:()=>({instances:entries.size,disabledWatchers:disabledWatchers.size})};
 })();

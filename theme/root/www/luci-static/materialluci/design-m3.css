@@ -94,3 +94,7 @@ body .ml-design-options button[aria-pressed=true]{background:var(--action-tonal)
 :root[data-design=m3e] body .cbi-value-field :is(button.cbi-button,input.cbi-button):not(.ml-text-field *):not(.cbi-button-add):not(.cbi-button-up):not(.cbi-button-down){border-radius:24px}
 :root[data-design=m3e] body .cbi-value-field .control-group:not(.ml-text-field){display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 :root[data-design=m3e] body .cbi-dynlist{border:0}
+
+/* Drawer feedback is bounded by the entire rectangular toggle. */
+:root[data-design=m3e] body button.ml-nav-parent>md-ripple{border-radius:0;--md-ripple-hover-opacity:0}
+:root[data-design=m3e] [data-ml-progress-engine=m3e][hidden] .ml-wave-active{animation:none}

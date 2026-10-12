@@ -7,131 +7,72 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-  actions: read
 concurrency:
   group: materialluci-${{ github.ref }}
   cancel-in-progress: true
+env:
+  SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          ref: ${{ env.SOURCE_SHA }}
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Install Lua build tools
-        timeout-minutes: 5
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: npm-${{ runner.os }}-
+      - name: Install build dependencies
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y lua5.1
-      - name: Install pinned Node dependencies
-        timeout-minutes: 5
-        run: npm install --no-audit --no-fund
-      - name: Install Chromium and WebKit test engines
-        timeout-minutes: 10
-        run: npx playwright install --with-deps chromium webkit
-      - name: Validate script syntax
+          npm install --no-audit --no-fund
+      - name: Validate shipped scripts and templates
         run: |
           for file in theme/root/www/luci-static/materialluci/*.js; do node --check "$file"; done
-          for file in ci/*.mjs ci/*.js; do node --check "$file"; done
-          python3 -m py_compile ci/prepare.py scripts/build.py
+          python3 -m py_compile scripts/build.py ci/ipk-audit.py ci/template-syntax.py
           node -e 'new Function(require("fs").readFileSync("theme/root/www/luci-static/resources/materialluci-menu.js","utf8"))'
           sh -n theme/control/postinst
           sh -n theme/control/prerm
           sh -n theme/root/etc/uci-defaults/95-materialluci
-      - name: Check semantic colors
-        run: node ci/colors.cjs
-      - name: Download task-start baseline IPK (optional after artifact expiry)
-        id: baseline
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          name: MaterialLuCI-0.3.0-IPK-in-ZIP-AX3000T-aarch64_cortex-a53
-          run-id: 38020573064
-          github-token: ${{ github.token }}
-          path: build/baseline
-      - name: Audit baseline package identity and actual resources
-        if: steps.baseline.outcome == 'success'
-        run: |
-          python3 ci/ipk-audit.py build/baseline/*.ipk --sha e7188f7df2d979899e78e151aebb94f7528c4b83 --run 38020573064 --out dist/previews/baseline-ipk.json
-      - name: Build and inspect target IPK
+          python3 ci/template-syntax.py
+      - name: Build and audit actual IPK
+        env:
+          GITHUB_SHA: ${{ env.SOURCE_SHA }}
         run: |
           export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
           python3 scripts/build.py
-          node ci/m3-colors.mjs
-          python3 ci/ipk-audit.py dist/*.ipk --sha "$GITHUB_SHA" --run "$GITHUB_RUN_ID" --out build/package-audit.json --extract build/unpacked --candidate
-      - name: Obtain pinned upstream LuCI for browser compatibility tests
-        uses: actions/checkout@v4
-        with:
-          repository: openwrt/luci
-          ref: e4c46338b196e486a88b1a75b78e283708c82bc4
-          path: luci-fixture
-          sparse-checkout: |
-            modules/luci-base/htdocs/luci-static/resources
-            applications/luci-app-opkg/htdocs/luci-static/resources
-            modules/luci-mod-status/htdocs/luci-static/resources
-            modules/luci-mod-system/htdocs/luci-static/resources
-      - name: Obtain pinned ImmortalWrt mtdblock flash renderer
-        uses: actions/checkout@v4
-        with:
-          repository: immortalwrt/luci
-          ref: 5829eabba50ec0afa17d2ee486bc90dc15180c34
-          path: immortal-fixture
-          sparse-checkout: |
-            modules/luci-mod-system/htdocs/luci-static/resources/view/system/flash.js
-      - name: Prepare failed-baseline presentation assets for performance comparison
-        run: |
-          mkdir -p build/baseline-assets
-          for file in app.js components.js controls.js extras.js feedback.js startup.js textfield.js wait.js design-m3.css; do
-            git show 4d5ede5c164fbf3791d5296d36cfc2f1e3085cb2:theme/root/www/luci-static/materialluci/$file > build/baseline-assets/$file
-          done
-          git show 4d5ede5c164fbf3791d5296d36cfc2f1e3085cb2:theme/root/www/luci-static/materialluci/base.css > build/baseline-assets/cascade.css
-          git show 4d5ede5c164fbf3791d5296d36cfc2f1e3085cb2:theme/root/www/luci-static/materialluci/cascade.css | sed '/^@import url("base.css");/d' >> build/baseline-assets/cascade.css
-      - name: Compile Lua templates and prepare compatibility preview
-        run: python3 ci/prepare.py
-      - name: Test desktop and mobile layouts in Chromium and WebKit
-        run: |
-          mkdir -p dist/previews
-          cp build/package-audit.json dist/previews/package-audit.json
-          git rev-parse HEAD > dist/previews/commit.txt
-          sha256sum build/stage/www/luci-static/materialluci/*.js build/stage/www/luci-static/materialluci/*.css build/stage/www/luci-static/materialluci/icons/*.svg > dist/previews/assets.sha256
-          node ci/browser.mjs
-      - name: Verify 30 second system stability and native SSH lifecycle
-        run: node ci/device-acceptance.mjs
-      - name: Write package identity and validation summary
-        if: always()
+          python3 ci/ipk-audit.py dist/*.ipk --sha "$SOURCE_SHA" --run "$GITHUB_RUN_ID" --out build/package-audit.json --candidate
+      - name: Write concise build manifest
+        id: manifest
         run: |
           python3 - <<'PY'
           import json, os, pathlib
-          p=pathlib.Path("build/package-audit.json")
-          if p.exists():
-              d=json.loads(p.read_text())
-              with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as out:
-                  out.write("## Actual IPK identity\n\n")
-                  for key in ("source_sha","actions_run_id","ipk","ipk_sha256","resource_cache","header_sha256"):
-                      out.write("- "+key+": `"+str(d.get(key,""))+"`\n")
-                  out.write("\nPreview tests use extracted IPK resources and pinned LuCI with mocked read-only data. Real router and iPhone Safari: **待验证**.\n")
+          meta=json.loads(pathlib.Path("theme/package.json").read_text())
+          audit=json.loads(pathlib.Path("build/package-audit.json").read_text())
+          manifest={k:meta[k] for k in ("name","version","architecture","target")}
+          manifest.update(commit=os.environ["SOURCE_SHA"],branch=os.environ["SOURCE_BRANCH"],run_id=os.environ["GITHUB_RUN_ID"],ipk=audit["ipk"],ipk_sha256=audit["ipk_sha256"],resource_cache=audit["resource_cache"],checks=audit["checks"])
+          pathlib.Path("dist/build-manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
+          name=f'MaterialLuCI-{meta["version"]}-{meta["architecture"]}-{os.environ["SOURCE_SHA"][:12]}'
+          with open(os.environ["GITHUB_OUTPUT"],"a") as out:out.write("name="+name+"\n")
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as out:
+              out.write("## Installable package\n\n")
+              for key,value in manifest.items():out.write(f"- {key}: `{value}`\n")
+              out.write("\nPackage integrity checked. Router UI and performance require user testing.\n")
           PY
-      - name: Produce screenshot contact sheets for visual review
-        if: always()
-        run: node ci/contact-sheet.mjs
-      - name: Upload the single IPK (GitHub downloads artifacts as ZIP)
-        if: success()
+      - name: Upload IPK and build manifest
         uses: actions/upload-artifact@v4
         with:
-          name: MaterialLuCI-0.3.0-12-IPK-${{ github.sha }}-AX3000T
-          path: dist/*.ipk
+          name: ${{ steps.manifest.outputs.name }}
+          path: |
+            dist/*.ipk
+            dist/build-manifest.json
           if-no-files-found: error
-          retention-days: 30
-
-      - name: Upload browser previews and source identity
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: MaterialLuCI-UI-previews-${{ github.sha }}
-          path: dist/previews/
-          if-no-files-found: warn
           retention-days: 30

@@ -5,7 +5,8 @@
  const selections=new Map(),dialogs=new Map();
  function element(tag,cls){const el=document.createElement(tag);el.className=cls;el.setAttribute("aria-hidden","true");return el;}
  function selection(input){
-  if(selections.has(input)||input.closest(".ml-switch-hit,.cbi-dropdown,.cbi-dynlist"))return;
+  if(selections.has(input)){window.MaterialComponents?.syncSelections(input);return;}
+  if(input.closest(".ml-switch-hit,.cbi-dropdown,.cbi-dynlist"))return;
   const booleanField=input.closest(".cbi-value-field");
   if(input.type==="checkbox"&&(input.classList.contains("ml-switch")||(booleanField&&booleanField.querySelectorAll('input[type="checkbox"]').length===1&&!input.closest('[role="group"]'))))return;
   // Reuse LuCI's existing frame: its input/label/description sibling sequence
@@ -31,13 +32,13 @@
   let formField=null;
   const label=root.querySelector("label");
   if(label){root.classList.add("mdc-form-field");formField=new MDCFormField(root);formField.input=instance;}
-  function geometry(){if(!input.isConnected)return;root.style.setProperty("--ml-selection-left",input.offsetLeft+"px");root.style.setProperty("--ml-selection-top",input.offsetTop+"px");}
-  const resize=new ResizeObserver(geometry);resize.observe(root);geometry();
-  const sync=()=>{if(radio){if(root.classList.contains("mdc-radio--disabled")!==input.disabled)instance.disabled=input.disabled;}else{instance.checked=input.checked;instance.indeterminate=input.indeterminate;}geometry();};
+  function geometry(){MaterialRuntime.position(input,()=>input.isConnected?[input.offsetLeft,input.offsetTop]:null,([x,y])=>{MaterialRuntime.setStyle(root,"--ml-selection-left",x+"px");MaterialRuntime.setStyle(root,"--ml-selection-top",y+"px");});}
+  const unwatch=MaterialRuntime.watchSize(root,geometry);geometry();
+  const sync=()=>{if(radio){if(root.classList.contains("mdc-radio--disabled")!==input.disabled)instance.disabled=input.disabled;}else{if(instance.checked!==input.checked)instance.checked=input.checked;if(instance.indeterminate!==input.indeterminate)instance.indeterminate=input.indeterminate;}};
   const attrs=new MutationObserver(sync);attrs.observe(input,{attributes:true,attributeFilter:["checked","disabled"]});
   const reset=()=>setTimeout(sync,0);document.addEventListener("reset",reset,true);
   selections.set(input,{destroy(){
-   attrs.disconnect();resize.disconnect();document.removeEventListener("reset",reset,true);formField?.destroy();instance.destroy();
+   attrs.disconnect();unwatch();MaterialRuntime.dropPosition(input);document.removeEventListener("reset",reset,true);formField?.destroy();instance.destroy();
    root._mlMdcSelection=null;input._mlMdcSelection=null;input.classList.remove(prefix+"__native-control");root.classList.remove(prefix,"ml-mdc-selection","mdc-form-field");background.remove();ripple.remove();focus.remove();selections.delete(input);
   }});
  }
@@ -81,17 +82,20 @@
   if(!active){current?.destroy();return;}
   for(const cls of ["mdc-dialog__container","mdc-dialog__surface","mdc-dialog__content"])if(!panel.classList.contains(cls))panel.classList.add(cls);
   const title=panel.querySelector(":scope > h4,:scope > h3");
-  if(title){if(!title.id)title.id="ml-luci-modal-title";panel.setAttribute("aria-labelledby",title.id);}
-  if(!current)dialog(root,panel,true);
+  if(title){if(!title.id)title.id="ml-luci-modal-title";MaterialRuntime.setAttr(panel,"aria-labelledby",title.id);}
+  if(current&&current.panel!==panel)current.destroy();
+  if(!dialogs.has(root))dialog(root,panel,true);
  }
- let scheduled=false;
- new MutationObserver(records=>{
-  for(const record of records)for(const n of record.addedNodes)if(n.nodeType===1)enhance(n);
-  for(const [input,entry] of selections)if(!input.isConnected)entry.destroy();
-  for(const [root,entry] of dialogs)if(!root.isConnected)entry.destroy();
+ let scheduled=false,modalActive=document.body.classList.contains("modal-overlay-active");
+ const modalObserver=new MutationObserver(records=>{
+  const active=document.body.classList.contains("modal-overlay-active");
+  const changed=active!==modalActive;modalActive=active;
+  if(!changed&&!records.some(r=>r.type==="childList"&&(r.target.id==="modal_overlay"||[...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&(n.id==="modal_overlay"||n.matches?.(".modal,h3,h4"))))))return;
   if(!scheduled){scheduled=true;queueMicrotask(()=>{scheduled=false;syncLuCI();});}
- }).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["class"]});
- window.addEventListener("pagehide",event=>{if(!event.persisted){for(const entry of [...dialogs.values()])entry.destroy();for(const entry of [...selections.values()])entry.destroy();}});
+ });
+ modalObserver.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["class"]});
+ MaterialRuntime.register({selector:'input[type="checkbox"],input[type="radio"]',enhance,cleanup(root){MaterialRuntime.cleanup(root,selections,'input');MaterialRuntime.cleanup(root,dialogs,'#modal_overlay,.ml-backdrop');}});
+ window.addEventListener("pagehide",event=>{if(!event.persisted){modalObserver.disconnect();for(const entry of [...dialogs.values()])entry.destroy();for(const entry of [...selections.values()])entry.destroy();}});
  window.MaterialControls={enhance,dialog,closeDialog(root){dialogs.get(root)?.destroy();},count(){return {selections:selections.size,dialogs:dialogs.size};}};
- enhance();syncLuCI();
+ syncLuCI();
 })();

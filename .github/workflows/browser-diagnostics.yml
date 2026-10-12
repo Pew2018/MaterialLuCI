@@ -1,0 +1,83 @@
+name: Manual browser diagnostics
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: Exact source commit SHA (40 hex characters)
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: materialluci-manual-diagnostics
+  cancel-in-progress: false
+jobs:
+  diagnostics:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GITHUB_SHA: ${{ inputs.commit }}
+    steps:
+      - name: Validate source input
+        env:
+          TARGET_SHA: ${{ inputs.commit }}
+        run: |
+          python3 - <<'PY'
+          import os,re
+          assert re.fullmatch("[0-9a-fA-F]{40}",os.environ["TARGET_SHA"])
+          PY
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: npm-${{ runner.os }}-
+      - name: Install diagnostic dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y lua5.1
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium webkit
+      - name: Build and extract selected IPK
+        run: |
+          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          python3 scripts/build.py
+          python3 ci/ipk-audit.py dist/*.ipk --sha "$GITHUB_SHA" --run "$GITHUB_RUN_ID" --out build/package-audit.json --extract build/unpacked --candidate
+      - uses: actions/checkout@v4
+        with:
+          repository: openwrt/luci
+          ref: e4c46338b196e486a88b1a75b78e283708c82bc4
+          path: luci-fixture
+          sparse-checkout: |
+            modules/luci-base/htdocs/luci-static/resources
+            applications/luci-app-opkg/htdocs/luci-static/resources
+            modules/luci-mod-status/htdocs/luci-static/resources
+            modules/luci-mod-system/htdocs/luci-static/resources
+      - uses: actions/checkout@v4
+        with:
+          repository: immortalwrt/luci
+          ref: 5829eabba50ec0afa17d2ee486bc90dc15180c34
+          path: immortal-fixture
+          sparse-checkout: modules/luci-mod-system/htdocs/luci-static/resources/view/system/flash.js
+      - name: Prepare diagnostic scenario
+        run: |
+          python3 ci/prepare.py
+          mkdir -p dist/previews
+          cp build/package-audit.json dist/previews/
+          git rev-parse HEAD > dist/previews/commit.txt
+      - name: Run optional browser diagnostics
+        run: node ci/browser.mjs
+      - name: Upload diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MaterialLuCI-manual-diagnostics-${{ inputs.commit }}
+          path: dist/previews/
+          if-no-files-found: warn
+      - name: Diagnostic boundary
+        if: always()
+        run: echo "These mocked browser scenarios are diagnostic only and do not establish real-device acceptance." >> "$GITHUB_STEP_SUMMARY"

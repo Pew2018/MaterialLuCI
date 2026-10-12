@@ -52,7 +52,8 @@
      // Do not write input.disabled for an inherited fieldset state: that
      // would leave the original input disabled after its fieldset is enabled.
      root.classList.toggle("mdc-text-field--disabled",input.matches(":disabled"));
-     instance.valid=input.getAttribute("aria-invalid")!=="true"&&!input.classList.contains("cbi-input-invalid")&&!input.closest(".cbi-value-error");
+     const valid=input.getAttribute("aria-invalid")!=="true"&&!input.classList.contains("cbi-input-invalid")&&!input.closest(".cbi-value-error");
+     if(instance.valid!==valid)instance.valid=valid;
      if(input===document.activeElement&&!root.classList.contains("mdc-text-field--focused"))instance.foundation.activateFocus();
     }finally{syncing=false;}
    };
@@ -66,7 +67,7 @@
    const observer=new MutationObserver(sync);
    observer.observe(input,{attributes:true,attributeFilter:["disabled","readonly","class","aria-invalid"]});
    input.addEventListener("input",sync);input.addEventListener("change",sync);input.addEventListener("blur",sync);
-   const reset=()=>setTimeout(sync,0);document.addEventListener("reset",reset,true);
+   const reset=event=>{if(input.form===event.target)setTimeout(sync,0);};document.addEventListener("reset",reset,true);
    fields.set(input,{root,sync,destroy(){
     observer.disconnect();instance.destroy();root._mlMdcTextField=null;
     input.removeEventListener("input",sync);input.removeEventListener("change",sync);input.removeEventListener("blur",sync);
@@ -79,8 +80,8 @@
    sync();
   }
  }
- new MutationObserver(records=>{for(const r of records)if(r.type==="attributes"&&r.target.tagName==="FIELDSET")for(const [input,entry] of fields)if(r.target.contains(input))entry.sync();}).observe(document.body,{attributes:true,subtree:true,attributeFilter:["disabled"]});
- new MutationObserver(()=>{for(const [input,entry] of fields)if(!input.isConnected||!entry.root.contains(input))entry.destroy();}).observe(document.body,{childList:true,subtree:true});
- window.addEventListener("pagehide",event=>{if(!event.persisted)for(const entry of [...fields.values()])entry.destroy();});
+ const fieldsetObserver=new MutationObserver(records=>{for(const r of records)if(r.type==="attributes"&&r.target.tagName==="FIELDSET")for(const input of r.target.querySelectorAll("input,textarea"))fields.get(input)?.sync();});fieldsetObserver.observe(document.body,{attributes:true,subtree:true,attributeFilter:["disabled"]});
+ MaterialRuntime.register({selector:"input,textarea",enhance,cleanup(root){MaterialRuntime.cleanup(root,fields,"input,textarea");}});
+ window.addEventListener("pagehide",event=>{if(!event.persisted){fieldsetObserver.disconnect();for(const entry of [...fields.values()])entry.destroy();}});
  window.MaterialTextFields={enhance};
 })();

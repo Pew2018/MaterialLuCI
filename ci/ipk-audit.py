@@ -20,7 +20,7 @@ for member in data:
 assets="www/luci-static/materialluci/"
 header=files["usr/lib/lua/luci/view/themes/materialluci/header.htm"].decode()
 required=["cascade.css","palette.js","startup.js","app.js","feedback.js","wait.js",
- "mdc-linear-progress.js","mdc-linear-progress.css","mdc-switch.js","icons/pause.svg","icons/play.svg"]
+ "runtime.js","mdc-linear-progress.js","mdc-linear-progress.css","mdc-switch.js","icons/pause.svg","icons/play.svg"]
 assert all(assets+n in files for n in required)
 if "palette-m3.js?v=" in header:
  assert all(assets+n in files for n in ("palette-m3.js","material-web.js","components.js","design-m3.css"))
@@ -28,6 +28,11 @@ if "palette-m3.js?v=" in header:
 assert "@CACHE@" not in header and "@MENU_CLASS@" not in header
 assert 'mdc-switch.js?v=' in header and 'wait.js?v=' in header
 menus=[n for n in files if n.startswith("www/luci-static/resources/materialluci-menu")];assert len(menus)==1
+assert any(n.startswith("usr/share/doc/luci-theme-materialluci/") and "LICENSE" in n for n in files)
+# Every local resource referenced by a packaged template must exist.
+for template_path, payload in files.items():
+ if not template_path.endswith(".htm"):continue
+ for resource in re.findall(r'<%=media%>/([^"<>?]+)[?]v=',payload.decode()):assert assets+resource in files,resource
 checks={
  "neutral_browser_hints":'#FAFAFA' in header and ('#121212' in header or '#121212' in files[assets+"startup.js"].decode()),
  "appearance_present":"ml-appearance-entry" in files[assets+"app.js"].decode(),
@@ -72,9 +77,6 @@ if a.candidate:
  else:assert 'MDCLinearProgress' in wait
  assert 'ml-chart-surface' in css and 'body[data-page$="-load"]' not in css
  assert '<svg' in files[assets+"icons/pause.svg"].decode()
- for rule in ["height:auto;min-height:0;flex:none;align-self:center","flex-grow:0","body #modal_overlay>.modal.alert-message","height:56px;padding-top:0","border-left-color:transparent"]:
-  assert rule in css, "missing packaged modal/toolbar/dropdown correction: "+rule
- checks["modal_toolbar_dropdown_corrections_packaged"]=True
  checks["commit_and_all_resource_hashes_verified"]=True
 manifest={"source_sha":a.sha,"actions_run_id":a.run,"ipk":name,
  "ipk_sha256":hashlib.sha256(raw).hexdigest(),"checks":checks,

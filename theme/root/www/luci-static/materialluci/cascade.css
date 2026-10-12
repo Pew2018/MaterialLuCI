@@ -97,7 +97,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--control-accent);width:
 .ml-switch-hit{width:48px;height:48px;flex:none;display:inline-grid;place-items:center;vertical-align:middle;border:0;padding:0;position:relative}
 input.ml-switch-source{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;opacity:0!important;pointer-events:none!important;clip:rect(0 0 0 0)!important}
 
-body :is(.btn,.cbi-button,button),body input:where([type=button],[type=submit],[type=reset]){
+body :is(.btn,.cbi-button,button):not(:where(.mdc-switch,.ml-nav-parent)),body input:where([type=button],[type=submit],[type=reset]){
  --button-bg:var(--action-tonal);--button-hover-bg:var(--tonal-pressed);--button-pressed-bg:var(--tonal-pressed);--button-ink:var(--on-action-tonal);
  border-radius:2px;margin:0;padding:8px 14px;min-height:36px;width:auto;height:auto;background:var(--button-bg);color:var(--button-ink);border:1px solid transparent;box-shadow:none;font-weight:500;font-size:14px;line-height:1.3;text-shadow:none;white-space:normal;vertical-align:middle}
 body :is(.cbi-button-apply,.cbi-input-apply,.action-primary),body .btn.primary,body .cbi-button-positive.important,body .cbi-button-action.important{
@@ -106,9 +106,9 @@ body :is(.cbi-button-apply,.cbi-input-apply,.action-primary),body .btn.primary,b
 body :is(.cbi-button-remove,.cbi-input-remove,.cbi-button-negative){
  --button-bg:var(--surface);--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed);--button-ink:var(--danger);
  background:var(--button-bg);color:var(--button-ink);border-color:var(--danger)}
-@media(hover:hover){body :is(.btn,.cbi-button,button,input:where([type=button],[type=submit],[type=reset])):not(:disabled):not([aria-disabled=true]):hover{background:var(--button-hover-bg);color:var(--button-ink)}}
-body :is(.btn,.cbi-button,button,input:where([type=button],[type=submit],[type=reset])):not(:disabled):not([aria-disabled=true]):active{background:var(--button-pressed-bg);color:var(--button-ink);box-shadow:none}
-body :is(button,input[type=button],input[type=submit],input[type=reset],.btn,.cbi-button):disabled,body :is(.btn,.cbi-button)[aria-disabled=true]{background:var(--pressed);color:var(--disabled);border-color:transparent;box-shadow:none;cursor:default;opacity:1}
+@media(hover:hover){body :is(.btn,.cbi-button,button,input:where([type=button],[type=submit],[type=reset])):not(:where(.mdc-switch,.ml-nav-parent)):not(:disabled):not([aria-disabled=true]):hover{background:var(--button-hover-bg);color:var(--button-ink)}}
+body :is(.btn,.cbi-button,button,input:where([type=button],[type=submit],[type=reset])):not(:where(.mdc-switch,.ml-nav-parent)):not(:disabled):not([aria-disabled=true]):active{background:var(--button-pressed-bg);color:var(--button-ink);box-shadow:none}
+body :is(button,input[type=button],input[type=submit],input[type=reset],.btn,.cbi-button):not(:where(.mdc-switch,.ml-nav-parent)):disabled,body :is(.btn,.cbi-button)[aria-disabled=true]{background:var(--pressed);color:var(--disabled);border-color:transparent;box-shadow:none;cursor:default;opacity:1}
 .cbi-page-actions{display:flex;flex-wrap:wrap;justify-content:flex-start;align-items:center;gap:12px;padding:16px 0;margin:0}
 /* LuCI firewall/iptables uses a legacy float for the top action cluster. */
 #maincontent>h2+.right{float:none;clear:both;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:8px;width:100%;margin:0 0 16px!important}
@@ -202,7 +202,7 @@ button>span:not(.tap-ripple),button>svg{position:relative;z-index:2}
  .ml-footer{margin-left:24px;margin-right:24px}
 }
 @media(max-width:599px),(pointer:coarse){
- body :is(.btn,.cbi-button,button){min-height:48px}
+ body :is(.btn,.cbi-button,button):not(:where(.mdc-switch,.ml-nav-parent)){min-height:48px}
  body .ml-sidebar a,body .ml-sidebar .ml-nav-toggle{min-height:48px}
  input:where(:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=reset]):not([type=file])),textarea,select{font-size:16px;min-height:48px}
 }
@@ -298,7 +298,6 @@ body.modal-overlay-active #modal_overlay>.modal.ml-has-progress{padding-bottom:3
 body .ml-sidebar button.ml-nav-parent{margin:0;min-height:48px;padding:10px 20px;border:0;border-radius:0;background:transparent;box-shadow:none;--button-ink:var(--ink);--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed)}
 body .ml-sidebar button.ml-nav-parent[aria-expanded=true]{--button-ink:var(--accent-ink);color:var(--accent-ink)}
 body .ml-sidebar button.ml-nav-parent:active{background:var(--pressed)}
-body .ml-sidebar button.ml-nav-parent:hover{background:var(--hover)}
 .ml-nav-parent-label,.ml-nav-chevron{pointer-events:none;background:transparent;border:0;box-shadow:none}
 .ml-nav-row-action{cursor:default}
 
@@ -732,10 +731,10 @@ body select:not(.ml-mdc-native-select),body select:not(.ml-mdc-native-select) op
 body select:disabled:not(.ml-mdc-native-select),body select:disabled:not(.ml-mdc-native-select) option{color:var(--disabled)}
 
 /* Button content stays centered while the ripple remains an absolute overlay. */
-body :is(button,.btn,.cbi-button,a.btn,a.cbi-button){
+body :is(button,.btn,.cbi-button,a.btn,a.cbi-button):not(:where(.mdc-switch,.ml-nav-parent)){
  box-sizing:border-box;text-align:center;vertical-align:middle
 }
-body :is(button,.btn,.cbi-button,a.btn,a.cbi-button).mdc-button:not(.ml-option):not(.ml-swatch-item),
+body :is(button,.btn,.cbi-button,a.btn,a.cbi-button):not(:where(.mdc-switch,.ml-nav-parent)).mdc-button:not(.ml-option):not(.ml-swatch-item),
 body .ml-mdc-feedback.mdc-button:not(.ml-option):not(.ml-swatch-item){
  display:inline-flex;align-items:center;justify-content:center;position:relative;text-align:center
 }
@@ -745,10 +744,10 @@ body .ml-mdc-feedback.mdc-icon-button>.mdc-icon-button__ripple{pointer-events:no
 body input:is([type="button"],[type="submit"],[type="reset"]){
  text-align:center;vertical-align:middle;white-space:normal
 }
-body :is(button,.btn,.cbi-button,a.btn,a.cbi-button):focus{
+body :is(button,.btn,.cbi-button,a.btn,a.cbi-button):not(:where(.mdc-switch,.ml-nav-parent)):focus{
  border-color:transparent;box-shadow:none
 }
-body :is(button,.btn,.cbi-button,a.btn,a.cbi-button):focus-visible{
+body :is(button,.btn,.cbi-button,a.btn,a.cbi-button):not(:where(.mdc-switch,.ml-nav-parent)):focus-visible{
  outline:2px solid var(--control-strong);outline-offset:2px
 }
 body input:is([type="button"],[type="submit"],[type="reset"]):focus{
@@ -757,7 +756,7 @@ body input:is([type="button"],[type="submit"],[type="reset"]):focus{
 body input:is([type="button"],[type="submit"],[type="reset"]):focus-visible{
  outline:2px solid var(--control-strong);outline-offset:2px
 }
-body :is(button,.btn,.cbi-button,a.btn,a.cbi-button):disabled,
+body :is(button,.btn,.cbi-button,a.btn,a.cbi-button):not(:where(.mdc-switch,.ml-nav-parent)):disabled,
 body input:is([type="button"],[type="submit"],[type="reset"]):disabled{
  border-color:transparent;box-shadow:none
 }
@@ -975,34 +974,18 @@ body .cbi-dynlist>.add-item>button{flex:0 0 auto;height:auto;min-height:48px;min
 body .cbi-dynlist>.item[data-key]{min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere}
 body .cbi-dynlist>.item[data-key] :is(strong,small,code){white-space:normal;overflow-wrap:anywhere;word-break:break-word}
 
-/* Remove switch hover state layers in both bundled switch implementations. */
-body .ml-switch-hit .mdc-switch{--mdc-switch-selected-hover-state-layer-opacity:0;--mdc-switch-unselected-hover-state-layer-opacity:0;--mdc-switch-selected-hover-state-layer-color:transparent;--mdc-switch-unselected-hover-state-layer-color:transparent}
-body .ml-switch-hit .mdc-switch:hover .mdc-switch__ripple::before{opacity:0!important}
-body .ml-switch-hit md-switch{--md-ripple-hover-color:transparent;--md-ripple-hover-opacity:0}
-/* Separate title and chevron feedback while keeping one accessible toggle. */
-body .ml-sidebar button.ml-nav-parent:hover,body .ml-sidebar button.ml-nav-parent:active{background:transparent}
-body .ml-sidebar button.ml-nav-parent>.ml-nav-parent-label,body .ml-sidebar button.ml-nav-parent>.ml-nav-chevron{position:relative;pointer-events:auto;border-radius:24px;transition:background-color 120ms ease}
-@media(hover:hover){body .ml-sidebar button.ml-nav-parent>.ml-nav-chevron:hover{background:var(--hover)}}
-body .ml-sidebar .ml-nav-parent-label,body .ml-sidebar .ml-nav-chevron{--md-ripple-hover-color:transparent;--md-ripple-hover-opacity:0}
-body .ml-sidebar button.ml-nav-parent .ml-nav-region-ink{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;--mdc-ripple-color:currentColor;--mdc-ripple-fg-opacity:var(--ripple-opacity)}
 
-/* Switch state layers are decoration; retain the thumb, track and focus ring.
-   Material Web maps its own switch tokens onto its shadow md-ripple. */
-body .ml-switch-hit .mdc-switch .mdc-switch__ripple{display:none!important}
+/* Dedicated adapters own switch and drawer states; generic buttons exclude them. */
+body .ml-switch-hit .mdc-switch .mdc-switch__ripple{display:none}
+body .ml-switch-hit .mdc-switch::before,body .ml-switch-hit .mdc-switch::after{background:transparent}
 body .ml-switch-hit md-switch{
- --md-switch-hover-state-layer-opacity:0;
- --md-switch-pressed-state-layer-opacity:0;
- --md-switch-selected-hover-state-layer-opacity:0;
- --md-switch-selected-pressed-state-layer-opacity:0;
- --md-switch-hover-state-layer-color:transparent;
- --md-switch-pressed-state-layer-color:transparent;
- --md-switch-selected-hover-state-layer-color:transparent;
- --md-switch-selected-pressed-state-layer-color:transparent;
+ --md-switch-hover-state-layer-opacity:0;--md-switch-pressed-state-layer-opacity:0;
+ --md-switch-selected-hover-state-layer-opacity:0;--md-switch-selected-pressed-state-layer-opacity:0;
+ --md-switch-hover-state-layer-color:transparent;--md-switch-pressed-state-layer-color:transparent;
+ --md-switch-selected-hover-state-layer-color:transparent;--md-switch-selected-pressed-state-layer-color:transparent;
 }
-/* Set tokens on the ripple itself: its local color overrides inherited tokens. */
-:root[data-design=m3e] body .ml-sidebar .ml-nav-parent-label>md-ripple,
-:root[data-design=m3e] body .ml-sidebar .ml-nav-chevron>md-ripple{
- --md-ripple-hover-color:transparent;--md-ripple-hover-opacity:0
-}
-body .ml-sidebar .ml-nav-parent-label>.ml-nav-region-ink::before,
-body .ml-sidebar .ml-nav-chevron>.ml-nav-region-ink::before{opacity:0!important}
+body .ml-sidebar button.ml-nav-parent{overflow:hidden;isolation:isolate;position:relative}
+body .ml-sidebar button.ml-nav-parent>.ml-nav-parent-label,
+body .ml-sidebar button.ml-nav-parent>.ml-nav-chevron{pointer-events:none;border-radius:0;background:transparent}
+body .ml-sidebar button.ml-nav-parent:focus-visible{outline:2px solid var(--control-accent);outline-offset:-2px}
+body .ml-switch-hit .mdc-switch:focus-visible{outline:2px solid var(--control-accent);outline-offset:0}
