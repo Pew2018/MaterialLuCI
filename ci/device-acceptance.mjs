@@ -22,6 +22,7 @@ function audit(){
 }
 async function verifyRipple(browser,engine){
  const page=await browser.newPage({viewport:{width:390,height:900},hasTouch:true});
+ await page.addInitScript(audit);
  await page.goto(base);await page.waitForFunction(()=>document.body.dataset.mlMenus==="ready");
  await page.waitForTimeout(500);
  const initial=await page.evaluate(()=>MaterialFeedback.counts());
@@ -45,10 +46,17 @@ async function verifyRipple(browser,engine){
  if(engine==="chromium"){
   await page.evaluate(()=>scrollTo(0,0));const box=await button.boundingBox(),x=box.x+box.width/2,y=box.y+box.height/2;
   const session=await page.context().newCDPSession(page),before=await page.evaluate(()=>scrollY);
+  await page.evaluate(()=>{const a=acceptance;a.frames=[];a.longTasks=[];a.rootStyleMutations=0;a.scrollEvents=0;a.scrollDismissalsBefore=MaterialExtras.counts().scrollDismissals;});
   await session.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{x,y}]});
-  for(const dy of [25,50,75]){await session.send("Input.dispatchTouchEvent",{type:"touchMove",touchPoints:[{x,y:y-dy}]});await page.waitForTimeout(20);}
+  for(const dy of [20,40,60,80,100,120,140,160,180,200]){await session.send("Input.dispatchTouchEvent",{type:"touchMove",touchPoints:[{x,y:y-dy}]});await page.waitForTimeout(16);}
   await session.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});await session.detach();await page.waitForTimeout(250);
   actualScroll={before,after:await page.evaluate(()=>scrollY)};assert(actualScroll.after>actualScroll.before,"native touch gesture did not scroll");
+  const scrollPerformance=await page.evaluate(()=>{
+   const a=acceptance,f=a.frames.slice().sort((x,y)=>x-y),dismissals=MaterialExtras.counts().scrollDismissals-a.scrollDismissalsBefore;
+   return {scrollEvents:a.scrollEvents,rootStyleMutations:a.rootStyleMutations,longTasks:a.longTasks,p95FrameMs:f[Math.floor(f.length*.95)],maxFrameMs:Math.max(...f),scrollDismissals:dismissals};
+  });
+  assert.equal(scrollPerformance.rootStyleMutations,0,"ordinary touch scroll must not write viewport vars to the document root");
+  assert.equal(scrollPerformance.scrollDismissals,1,"popup close work should run once for a continuous touch gesture");
   assert.equal(await page.evaluate(()=>rippleProbe.starts),3,"scroll started a ripple");assert.equal(await page.evaluate(()=>rippleProbe.events.length),3,"scroll invoked native action");
  }
  await button.scrollIntoViewIfNeeded();const rect=await button.boundingBox();await page.touchscreen.tap(rect.x+rect.width/2,rect.y+rect.height/2);
@@ -58,7 +66,7 @@ async function verifyRipple(browser,engine){
  await page.waitForTimeout(200);assert.equal(await page.evaluate(()=>rippleProbe.starts),4);assert.equal(await page.evaluate(()=>rippleProbe.events.length),4);
  const metrics=await page.evaluate(()=>rippleProbe);await button.evaluate(el=>el.remove());
  await page.waitForFunction(initial=>MaterialFeedback.counts().instances===initial.instances&&MaterialFeedback.counts().disabledWatchers===initial.disabledWatchers,initial);
- const report={engine,initial,after:await page.evaluate(()=>MaterialFeedback.counts()),actualScroll,metrics,webkitTouchScroll:engine==="webkit"?"synthetic pointer cancellation only; physical scroll pending":"CDP native touch gesture"};
+ const report={engine,initial,after:await page.evaluate(()=>MaterialFeedback.counts()),actualScroll,scrollPerformance:engine==="chromium"?scrollPerformance:null,metrics,webkitTouchScroll:engine==="webkit"?"synthetic pointer cancellation only; physical scroll pending":"CDP native touch gesture"};
  fs.writeFileSync(out+"/"+version+"-"+engine+"-ripple.json",JSON.stringify(report,null,2));await page.close();
  console.log(engine+": native mouse/touch/keyboard callbacks once, cancellation, disabled state, ripple instance cleanup passed");
 }
