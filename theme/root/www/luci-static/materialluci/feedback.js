@@ -35,6 +35,8 @@
   if(el.matches("button")&&el.firstElementChild?.tagName==="SPAN"&&!el.firstElementChild.matches(".mdc-button__ripple,.mdc-icon-button__ripple,.ml-radio"))el.firstElementChild.classList.add("mdc-button__label");
  }
  function bind(el){
+  // The title and chevron have separate state layers; a parent ripple joins them.
+  if(el.matches("button.ml-nav-parent"))return;
   if(el.closest(".mdc-switch,.ml-mdc-selection"))return;
   if(el.matches("button")&&el.closest(".ml-native-button"))return;
   if(!entries.has(el)&&window.__mlControlAudit&&el.isConnected){const s=getComputedStyle(el),r=el.getBoundingClientRect();el._mlBeforeMDC={width:r.width,height:r.height,fontFamily:s.fontFamily,fontSize:s.fontSize,fontWeight:s.fontWeight,color:s.color,radius:s.borderRadius,firstChild:el.firstChild};}

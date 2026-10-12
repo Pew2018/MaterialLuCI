@@ -974,3 +974,11 @@ body .cbi-dynlist>.add-item>button{flex:0 0 auto;height:auto;min-height:48px;min
 /* SSH key items contain unbroken base64; keep their native delete hit target. */
 body .cbi-dynlist>.item[data-key]{min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere}
 body .cbi-dynlist>.item[data-key] :is(strong,small,code){white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+
+/* Classic switch hover must not paint the MDC square over the track. */
+:root[data-design=classic] body .ml-switch-hit .mdc-switch:hover .mdc-switch__ripple::before{opacity:0!important}
+/* Separate title and chevron feedback while keeping one accessible toggle. */
+body .ml-sidebar button.ml-nav-parent:hover,body .ml-sidebar button.ml-nav-parent:active{background:transparent}
+body .ml-sidebar button.ml-nav-parent>.ml-nav-parent-label,body .ml-sidebar button.ml-nav-parent>.ml-nav-chevron{position:relative;border-radius:24px;transition:background-color 120ms ease}
+@media(hover:hover){body .ml-sidebar button.ml-nav-parent>.ml-nav-parent-label:hover,body .ml-sidebar button.ml-nav-parent>.ml-nav-chevron:hover{background:var(--hover)}}
+body .ml-sidebar button.ml-nav-parent>.ml-nav-parent-label:active,body .ml-sidebar button.ml-nav-parent>.ml-nav-chevron:active{background:var(--pressed)}

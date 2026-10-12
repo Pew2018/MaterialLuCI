@@ -35,7 +35,17 @@ export async function verifySidebar(browser,engine,base){
    await first.click({position:{x:label.x-rect.x+8,y:label.y-rect.y+label.height/2}});assert.equal(await first.getAttribute("aria-expanded"),"false");
    await first.click({position:{x:arrow.x-rect.x+arrow.width/2,y:arrow.y-rect.y+arrow.height/2}});assert.equal(await first.getAttribute("aria-expanded"),"true");
    assert.equal(page.url(),url,"heading and chevron expand without navigation");
-   assert.equal(await first.locator(design==="m3e"?":scope > md-ripple":":scope > .mdc-button__ripple").count(),1,"one ripple owns the whole heading");
+   assert.equal(await first.locator(":scope > md-ripple,:scope > .mdc-button__ripple").count(),0,"parent feedback must not merge title and chevron");
+   if(width===1440){
+    await first.locator(".ml-nav-parent-label").hover();await page.waitForTimeout(160);
+    const labelColor=await first.locator(".ml-nav-parent-label").evaluate(el=>getComputedStyle(el).backgroundColor);
+    const arrowColor=await first.locator(".ml-nav-chevron").evaluate(el=>getComputedStyle(el).backgroundColor);
+    assert.notEqual(labelColor,arrowColor,"title hover also shades chevron");
+    await first.locator(".ml-nav-chevron").hover();await page.waitForTimeout(160);
+    const labelAfter=await first.locator(".ml-nav-parent-label").evaluate(el=>getComputedStyle(el).backgroundColor);
+    const arrowAfter=await first.locator(".ml-nav-chevron").evaluate(el=>getComputedStyle(el).backgroundColor);
+    assert.notEqual(labelAfter,arrowAfter,"chevron hover also shades title");
+   }
    if(engine==="chromium")await page.screenshot({path:"dist/previews/sidebar-"+design+"-"+width+"-"+mode+".png"});
    if(width<1024)await page.locator("#ml-drawer-close").click();
   }

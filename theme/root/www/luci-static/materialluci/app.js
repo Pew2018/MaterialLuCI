@@ -423,6 +423,6 @@
  document.addEventListener("focusin",()=>{queueViewport();clearTimeout(focusTimer);focusTimer=setTimeout(revealFocused,280);});
  document.addEventListener("focusout",queueViewport);
  if(vv)vv.addEventListener("resize",()=>{clearTimeout(focusTimer);focusTimer=setTimeout(revealFocused,180);},{passive:true});
- window.MaterialLuCI={setMenus:renderMenus,menuFailed(err){const host=document.getElementById("ml-menu-tree");host.replaceChildren(node("p",{class:"hint",text:t("菜单加载失败，请刷新页面。","Menu could not load. Reload the page.")}));console.error(err);},choose,enhance};
+ window.MaterialLuCI={metrics:enhancementMetrics,setMenus:renderMenus,menuFailed(err){const host=document.getElementById("ml-menu-tree");host.replaceChildren(node("p",{class:"hint",text:t("菜单加载失败，请刷新页面。","Menu could not load. Reload the page.")}));console.error(err);},choose,enhance};
  document.documentElement.dataset.loading="false";
 })();
