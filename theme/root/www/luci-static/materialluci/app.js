@@ -406,8 +406,13 @@
   viewportFrame=0;
   const editing=document.activeElement?.matches(editorSelector);
   const drawerOpen=document.body.classList.contains("ml-drawer-open"),modalOpen=document.body.classList.contains("modal-overlay-active");
-  const oldKeyboard=root.style.getPropertyValue("--ml-keyboard-space");
-  if(!drawerOpen&&!modalOpen&&!editing&&(!oldKeyboard||oldKeyboard==="0px"))return;
+ 
+  if(!drawerOpen&&!modalOpen&&!editing){
+   let cleared=false;
+   for(const name of ["--ml-vv-height","--ml-vv-width","--ml-vv-top","--ml-vv-left","--ml-keyboard-space"])if(root.style.getPropertyValue(name)){root.style.removeProperty(name);cleared=true;}
+   if(cleared)window.dispatchEvent(new Event("materialluci:viewport"));
+   return;
+  }
   // Write overlay geometry only while an overlay or editor needs it. This
   // avoids invalidating document-wide inherited styles during ordinary scroll.
   const h=vv?.height||innerHeight,w=vv?.width||innerWidth,top=vv?.offsetTop||0,left=vv?.offsetLeft||0;
@@ -426,6 +431,9 @@
   if(editing||document.body.classList.contains("ml-drawer-open")||document.body.classList.contains("modal-overlay-active"))queueViewport();
  }
  if(vv){vv.addEventListener("resize",queueViewport,{passive:true});vv.addEventListener("scroll",queueViewportOnScroll,{passive:true});}
+ // Reused LuCI modals may reopen after a viewport resize. Update their
+ // geometry immediately when visibility changes, before the first paint.
+ new MutationObserver(()=>viewport()).observe(document.body,{attributes:true,attributeFilter:["class"]});
  window.addEventListener("resize",queueViewport,{passive:true});viewport();
  // A one-time focus correction after keyboard resize; avoid scroll-event feedback loops.
  let focusTimer;
