@@ -5,6 +5,17 @@ export async function verifySidebar(browser,engine,base){
  await page.goto(base);await page.waitForFunction(()=>document.body.dataset.mlMenus==="ready");
  for(const design of ["classic","m3e"]){
  await page.evaluate(design=>MaterialAppearance.set("design",design),design);await page.reload();await page.waitForFunction(()=>document.body.dataset.mlMenus==="ready");
+ await page.evaluate(()=>{
+  const host=document.createElement("div");host.className="cbi-value-field";
+  const input=document.createElement("input");input.type="checkbox";input.id="switch-hover-probe";host.append(input);
+  document.getElementById("maincontent").append(host);
+ });
+ const switchSelector=design==="classic"?"#switch-hover-probe + .mdc-switch":"#switch-hover-probe + md-switch";
+ await page.waitForSelector(switchSelector);
+ const switchProbe=page.locator(switchSelector);await switchProbe.hover();
+ const switchHover=await switchProbe.evaluate(el=>({mdc:getComputedStyle(el).getPropertyValue("--mdc-switch-unselected-hover-state-layer-opacity").trim(),mdRipple:getComputedStyle(el).getPropertyValue("--md-ripple-hover-opacity").trim(),pseudo:el.querySelector(".mdc-switch__ripple")?getComputedStyle(el.querySelector(".mdc-switch__ripple"),"::before").opacity:null}));
+ if(design==="classic"){assert.equal(switchHover.mdc,"0");assert.equal(switchHover.pseudo,"0","classic switch hover layer must be transparent");}
+ else assert.equal(switchHover.mdRipple,"0","M3 switch hover layer must be transparent");
  for(const mode of ["light","dark"]){
   await page.evaluate(mode=>MaterialAppearance.set("mode",mode),mode);
   await page.waitForFunction(mode=>document.documentElement.dataset.theme===mode,mode);
@@ -41,11 +52,13 @@ export async function verifySidebar(browser,engine,base){
     await first.locator(".ml-nav-parent-label").hover();await page.waitForTimeout(160);
     const labelColor=await first.locator(".ml-nav-parent-label").evaluate(el=>getComputedStyle(el).backgroundColor);
     const arrowColor=await first.locator(".ml-nav-chevron").evaluate(el=>getComputedStyle(el).backgroundColor);
-    assert.notEqual(labelColor,arrowColor,"title hover also shades chevron");
+    assert.equal(labelColor,"rgba(0, 0, 0, 0)","sidebar title hover must not paint a capsule");
+    assert.equal(await first.locator(".ml-nav-parent-label").evaluate(el=>getComputedStyle(el).getPropertyValue("--md-ripple-hover-opacity").trim()),"0","sidebar ripple hover layer must stay clear");
     await first.locator(".ml-nav-chevron").hover();await page.waitForTimeout(160);
     const labelAfter=await first.locator(".ml-nav-parent-label").evaluate(el=>getComputedStyle(el).backgroundColor);
     const arrowAfter=await first.locator(".ml-nav-chevron").evaluate(el=>getComputedStyle(el).backgroundColor);
-    assert.notEqual(labelAfter,arrowAfter,"chevron hover also shades title");
+    assert.equal(labelAfter,"rgba(0, 0, 0, 0)","chevron hover must not paint the title capsule");
+    assert.notEqual(labelAfter,arrowAfter,"chevron hover feedback should remain isolated");
    }
    if(engine==="chromium")await page.screenshot({path:"dist/previews/sidebar-"+design+"-"+width+"-"+mode+".png"});
    if(width<1024)await page.locator("#ml-drawer-close").click();
