@@ -70,10 +70,10 @@ async function measure(browser,baseline){
  });
  await page.goto(base+"/system.html");await page.waitForSelector("#localtime");
  await page.waitForTimeout(1000);
- await page.evaluate(()=>{const a=acceptance;a.callbacks=a.mutations=a.scans=a.scanMs=a.elementScans=a.elementScanMs=0;MaterialLuCI.metrics.fullScans=MaterialLuCI.metrics.fastPaths=0;a.longTasks=[];a.frames=[];const clock=document.getElementById("localtime");window.testTick=setInterval(()=>{clock.value=new Date().toISOString();const span=document.createElement("span");span.textContent="tick";clock.parentElement.append(span);span.remove();},100);});
+ await page.evaluate(()=>{const a=acceptance;a.callbacks=a.mutations=a.scans=a.scanMs=a.elementScans=a.elementScanMs=0;if(MaterialLuCI.metrics)MaterialLuCI.metrics.fullScans=MaterialLuCI.metrics.fastPaths=0;a.longTasks=[];a.frames=[];const clock=document.getElementById("localtime");window.testTick=setInterval(()=>{clock.value=new Date().toISOString();const span=document.createElement("span");span.textContent="tick";clock.parentElement.append(span);span.remove();},100);});
  for(let i=0;i<10;i++){await page.mouse.wheel(0,60);await page.waitForTimeout(100);}
  await page.waitForTimeout(2000);
- const metrics=await page.evaluate(()=>{clearInterval(testTick);const a=acceptance,f=a.frames.slice().sort((a,b)=>a-b);return {...a,frames:undefined,p95FrameMs:f[Math.floor(f.length*.95)],maxFrameMs:Math.max(...f),counts:MaterialFeedback.counts?.(),enhancement:{...MaterialLuCI.metrics},extras:MaterialExtras.counts(),controls:MaterialControls.count()};});
+ const metrics=await page.evaluate(()=>{clearInterval(testTick);const a=acceptance,f=a.frames.slice().sort((a,b)=>a-b);return {...a,frames:undefined,p95FrameMs:f[Math.floor(f.length*.95)],maxFrameMs:Math.max(...f),counts:MaterialFeedback.counts?.(),enhancement:MaterialLuCI.metrics?{...MaterialLuCI.metrics}:null,extras:MaterialExtras.counts(),controls:MaterialControls.count()};});
  reports.push({version,engine:"chromium",baseline,metrics});await page.close();
 }
 async function verify(browser,engine,width,mode,design){
