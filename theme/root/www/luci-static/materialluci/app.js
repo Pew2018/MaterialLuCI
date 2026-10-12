@@ -270,7 +270,15 @@
   if(desktop.addEventListener)desktop.addEventListener("change",syncDisclosure);else desktop.addListener(syncDisclosure);
   syncDisclosure();if(details.open)openAppearance(details);
  }
+ const enhancementMetrics={fullScans:0,fastPaths:0};
+ const layoutSelectors="div.btn,.cbi-checkbox>input[type=checkbox],input.cbi-input-checkbox,.cbi-value-field input[type=checkbox],.cbi-page-actions>input,table,.table,.cbi-section,fieldset,section,.cbi-map,#view,svg,.ifacebox-head[style]";
  function enhance(root){
+  if(root!==main&&!root.matches?.(layoutSelectors)&&!root.querySelector?.(layoutSelectors)){
+   enhancementMetrics.fastPaths++;
+   MaterialComponents.enhance(root);
+   return;
+  }
+  enhancementMetrics.fullScans++;
   identifyPage();
   const all=selector=>[...(root.matches&&root.matches(selector)?[root]:[]),...root.querySelectorAll(selector)];
   // Older opkg views use div.btn. Preserve their click handlers and make
