@@ -102,10 +102,12 @@
    // Direct view replacement and genuine section/table structure matter;
    // polling text, table cells, clocks and SVG path updates do not.
    const table=r.target.closest?.("table,.table");
-   const firstRows=table&&!table.closest(".ml-table-scroll,[data-chain]")&&elements.some(n=>n.matches("tr,.tr,td,th,.td,.th"));
+   const firstRow=table?.querySelector("tr,.tr");
+   const firstRows=table&&!table.closest(".ml-table-scroll,[data-chain]")&&firstRow&&
+    (r.target===firstRow||elements.includes(firstRow))&&[...firstRow.children].filter(n=>n.matches("td,th,.td,.th")).length>=3;
    const svg=r.target.closest?.("svg");
    const firstPlot=svg&&!svg.parentElement?.classList.contains("ml-chart-surface")&&isPlot(svg);
-   const newPlot=elements.some(n=>n.matches("svg")&&isPlot(n));
+   const newPlot=elements.some(n=>[...(n.matches("svg")?[n]:[]),...n.querySelectorAll("svg")].some(plot=>!plot.parentElement?.classList.contains("ml-chart-surface")&&isPlot(plot)));
    if(r.target.id==="view"||r.target===main||firstRows||firstPlot||newPlot||elements.some(changed)){
     const root=owner(r.target);if(root)roots.add(root);
    }

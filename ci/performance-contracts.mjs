@@ -179,6 +179,10 @@ function fixture(){
  const tablePasses=f.window.MaterialSurfaces.count();row.append(f.document.createElement("td"));f.drain();
  assert.equal(f.window.MaterialSurfaces.count(),tablePasses,"polling table cells must not reclassify cards");
 
+ // Small tables remain native and polling their additional rows does not scan layout.
+ const small=f.document.createElement("table"),smallFirst=f.document.createElement("tr");smallFirst.append(f.document.createElement("td"),f.document.createElement("td"));small.append(smallFirst);view.replaceChildren(small);f.drain();
+ const smallPasses=f.window.MaterialSurfaces.count(),smallNext=f.document.createElement("tr");smallNext.append(f.document.createElement("td"),f.document.createElement("td"));small.append(smallNext);f.drain();
+ assert.equal(f.window.MaterialSurfaces.count(),smallPasses);
  // An empty table can populate later; only its first effective row needs layout.
  const lateTable=f.document.createElement("table");view.replaceChildren(lateTable);f.drain();
  const lateRow=f.document.createElement("tr");for(let i=0;i<4;i++)lateRow.append(f.document.createElement("td"));lateTable.append(lateRow);f.drainMicro();
