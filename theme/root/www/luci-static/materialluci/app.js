@@ -327,7 +327,14 @@
  const enhancementMetrics={fullScans:0,fastPaths:0,surfacePasses:0};
  const layoutSelectors="div.btn,.cbi-checkbox>input[type=checkbox],input.cbi-input-checkbox,.cbi-value-field input[type=checkbox],.cbi-page-actions>input,table,.table,.cbi-section,.cbi-section-node,fieldset,section,.cbi-map,[data-tab],[data-table],.network-status-table,.ml-chart-surface,.ml-table-scroll,#view,.ifacebox-head[style]";
  function enhance(root){
-  if(root.matches?.("svg")&&root.querySelector("polyline,polygon")&&root.querySelector("line,text")&&!root.closest("[data-ml-component],.ml-icon-button,.ml-sidebar")){root.parentElement?.classList.add("ml-chart-surface");queueSurfaces();}
+  let newPlot=false;
+  for(const svg of root.matches?.("svg")?[root]:root.querySelectorAll("svg")){
+   if(svg.querySelector("polyline,polygon")&&svg.querySelector("line,text")&&!svg.closest("[data-ml-component],.ml-icon-button,.ml-sidebar")){
+    const plot=svg.parentElement;
+    if(plot&&!plot.classList.contains("ml-chart-surface")){plot.classList.add("ml-chart-surface");newPlot=true;}
+   }
+  }
+  if(newPlot)queueSurfaces();
   const viewHost=root.closest?.("#view");
   const needsFirstSurface=viewHost&&viewHost.children.length&&!viewHost.classList.contains("ml-card-surface")&&!viewHost.querySelector(".cbi-map,.cbi-section,fieldset,.ml-card-surface");
   if(root!==main&&!needsFirstSurface&&!root.matches?.(layoutSelectors)&&!root.querySelector?.(layoutSelectors)){
