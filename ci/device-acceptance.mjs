@@ -7,12 +7,15 @@ const server=spawn("python3",["ci/server.py"],{stdio:"inherit"});
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const reports=[];
 function audit(){
- const counts={mutations:0,callbacks:0,scans:0,scanMs:0,longTasks:[],frames:[],scrollEvents:0};
+ const counts={mutations:0,callbacks:0,scans:0,scanMs:0,elementScans:0,elementScanMs:0,rootStyleMutations:0,longTasks:[],frames:[],scrollEvents:0};
  window.acceptance=counts;
  const original=window.MutationObserver;
  window.MutationObserver=class extends original{constructor(fn){super((records,obs)=>{counts.callbacks++;counts.mutations+=records.length;fn(records,obs);});}};
  const query=Document.prototype.querySelectorAll;
  Document.prototype.querySelectorAll=function(...args){const t=performance.now();try{return query.apply(this,args);}finally{counts.scans++;counts.scanMs+=performance.now()-t;}};
+ const elementQuery=Element.prototype.querySelectorAll;
+ Element.prototype.querySelectorAll=function(...args){const t=performance.now();try{return elementQuery.apply(this,args);}finally{counts.elementScans++;counts.elementScanMs+=performance.now()-t;}};
+ new original(records=>{counts.rootStyleMutations+=records.length;}).observe(document.documentElement,{attributes:true,attributeFilter:["style"]});
  if(PerformanceObserver.supportedEntryTypes.includes("longtask"))new PerformanceObserver(list=>counts.longTasks.push(...list.getEntries().map(e=>e.duration))).observe({type:"longtask",buffered:true});
  addEventListener("scroll",()=>counts.scrollEvents++,{passive:true});
  let last=0;function frame(t){if(last)counts.frames.push(t-last);last=t;if(counts.frames.length<5000)requestAnimationFrame(frame);}requestAnimationFrame(frame);
@@ -70,10 +73,11 @@ async function measure(browser,baseline){
  });
  await page.goto(base+"/system.html");await page.waitForSelector("#localtime");
  await page.waitForTimeout(1000);
- await page.evaluate(()=>{const a=acceptance;a.callbacks=a.mutations=a.scans=a.scanMs=a.elementScans=a.elementScanMs=0;if(MaterialLuCI.metrics)MaterialLuCI.metrics.fullScans=MaterialLuCI.metrics.fastPaths=0;a.longTasks=[];a.frames=[];const clock=document.getElementById("localtime");window.testTick=setInterval(()=>{clock.value=new Date().toISOString();const span=document.createElement("span");span.textContent="tick";clock.parentElement.append(span);span.remove();},100);});
- for(let i=0;i<10;i++){await page.mouse.wheel(0,60);await page.waitForTimeout(100);}
- await page.waitForTimeout(2000);
- const metrics=await page.evaluate(()=>{clearInterval(testTick);const a=acceptance,f=a.frames.slice().sort((a,b)=>a-b);return {...a,frames:undefined,p95FrameMs:f[Math.floor(f.length*.95)],maxFrameMs:Math.max(...f),counts:MaterialFeedback.counts?.(),enhancement:MaterialLuCI.metrics?{...MaterialLuCI.metrics}:null,extras:MaterialExtras.counts(),controls:MaterialControls.count()};});
+ await page.evaluate(()=>{const a=acceptance;a.callbacks=a.mutations=a.scans=a.scanMs=a.elementScans=a.elementScanMs=a.rootStyleMutations=0;if(MaterialLuCI.metrics)MaterialLuCI.metrics.fullScans=MaterialLuCI.metrics.fastPaths=0;a.scrollDismissalsBefore=MaterialExtras.counts().scrollDismissals??null;a.longTasks=[];a.frames=[];const clock=document.getElementById("localtime");window.testTick=setInterval(()=>{clock.value=new Date().toISOString();const span=document.createElement("span");span.textContent="tick";clock.parentElement.append(span);span.remove();},100);});
+ for(let i=0;i<10;i++){await page.mouse.wheel(0,60);await page.evaluate(()=>visualViewport?.dispatchEvent(new Event("scroll")));await page.waitForTimeout(100);}
+ await page.waitForTimeout(220);
+ const metrics=await page.evaluate(()=>{clearInterval(testTick);const a=acceptance,f=a.frames.slice().sort((a,b)=>a-b),extras=MaterialExtras.counts();return {...a,frames:undefined,p95FrameMs:f[Math.floor(f.length*.95)],maxFrameMs:Math.max(...f),counts:MaterialFeedback.counts?.(),enhancement:MaterialLuCI.metrics?{...MaterialLuCI.metrics}:null,extras,scrollDismissals:extras.scrollDismissals===undefined?null:extras.scrollDismissals-a.scrollDismissalsBefore,controls:MaterialControls.count()};});
+ if(!baseline){assert.equal(metrics.rootStyleMutations,0,"ordinary scroll must not write viewport vars to the document root");assert.equal(metrics.scrollDismissals,1,"popup close work should run once for a continuous wheel gesture");}
  reports.push({version,engine:"chromium",baseline,metrics});await page.close();
 }
 async function verify(browser,engine,width,mode,design){
