@@ -3,7 +3,7 @@
 :root{--page:#fafafa;--surface:#fff;--card:#fff;--ink:#212121;--muted:#707070;--disabled:#bdbdbd;--divider:rgba(0,0,0,.06);--log:#f5f5f5;--danger:#b3261e;--overlay:rgba(0,0,0,.38);--ripple-opacity:.14;--inset-bottom:env(safe-area-inset-bottom,0px);--inset-top:env(safe-area-inset-top,0px);--seed:#42a5f5;--accent-ink:#006db8;--control-accent:#078ae7;--control-strong:#006db8;--primary-surface:#1976d2;--on-primary:#fff;--action-fill:#1976d2;--on-accent:#fff;--action-tonal:#e4f2fe;--on-action-tonal:#006ab3;--nav-icon:#078ae7;--nav-label:#006db8;--switch-thumb:#078ae7;--switch-track:rgba(7,138,231,.5)}
 :root[data-theme=dark]{--page:#121212;--surface:#212121;--card:#212121;--ink:rgba(255,255,255,.87);--muted:rgba(255,255,255,.60);--disabled:rgba(255,255,255,.38);--divider:rgba(255,255,255,.12);--log:#1e1e1e;--danger:#ffb4ab;--overlay:rgba(0,0,0,.48);--ripple-opacity:.18}
 
-:root{--sidebar-width:248px;--toolbar-height:56px;--hover:rgba(0,0,0,.045);--pressed:rgba(0,0,0,.09);--ml-vv-height:100dvh;--ml-vv-width:100vw;--ml-vv-top:0px;--ml-vv-left:0px}
+:root{--sidebar-width:248px;--toolbar-height:56px;--hover:rgba(0,0,0,.045);--pressed:rgba(0,0,0,.09);--ml-vv-height:100dvh;--ml-vv-width:100vw;--ml-vv-top:0px;--ml-vv-left:0px;--ml-keyboard-space:0px}
 :root[data-theme=dark]{--hover:rgba(255,255,255,.06);--pressed:rgba(255,255,255,.10)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{min-height:100%;scroll-padding-top:80px}
@@ -975,10 +975,13 @@ body .cbi-dynlist>.add-item>button{flex:0 0 auto;height:auto;min-height:48px;min
 body .cbi-dynlist>.item[data-key]{min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere}
 body .cbi-dynlist>.item[data-key] :is(strong,small,code){white-space:normal;overflow-wrap:anywhere;word-break:break-word}
 
-/* Classic switch hover must not paint the MDC square over the track. */
-:root[data-design=classic] body .ml-switch-hit .mdc-switch:hover .mdc-switch__ripple::before{opacity:0!important}
+/* Remove switch hover state layers in both bundled switch implementations. */
+body .ml-switch-hit .mdc-switch{--mdc-switch-selected-hover-state-layer-opacity:0;--mdc-switch-unselected-hover-state-layer-opacity:0;--mdc-switch-selected-hover-state-layer-color:transparent;--mdc-switch-unselected-hover-state-layer-color:transparent}
+body .ml-switch-hit .mdc-switch:hover .mdc-switch__ripple::before{opacity:0!important}
+body .ml-switch-hit md-switch{--md-ripple-hover-color:transparent;--md-ripple-hover-opacity:0}
 /* Separate title and chevron feedback while keeping one accessible toggle. */
 body .ml-sidebar button.ml-nav-parent:hover,body .ml-sidebar button.ml-nav-parent:active{background:transparent}
 body .ml-sidebar button.ml-nav-parent>.ml-nav-parent-label,body .ml-sidebar button.ml-nav-parent>.ml-nav-chevron{position:relative;pointer-events:auto;border-radius:24px;transition:background-color 120ms ease}
-@media(hover:hover){body .ml-sidebar button.ml-nav-parent>.ml-nav-parent-label:hover,body .ml-sidebar button.ml-nav-parent>.ml-nav-chevron:hover{background:var(--hover)}}
+@media(hover:hover){body .ml-sidebar button.ml-nav-parent>.ml-nav-chevron:hover{background:var(--hover)}}
+body .ml-sidebar .ml-nav-parent-label,body .ml-sidebar .ml-nav-chevron{--md-ripple-hover-color:transparent;--md-ripple-hover-opacity:0}
 body .ml-sidebar button.ml-nav-parent .ml-nav-region-ink{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;--mdc-ripple-color:currentColor;--mdc-ripple-fg-opacity:var(--ripple-opacity)}
