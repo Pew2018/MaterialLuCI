@@ -101,6 +101,7 @@
   menuButton.setAttribute("aria-expanded",String(open));sidebar.inert=narrow.matches&&!open;
   if(open){drawerFocus=document.activeElement;drawerInert=[main,toolbar].map(el=>[el,el.inert]);drawerInert.forEach(([el])=>el.inert=true);sidebar.setAttribute("role","dialog");sidebar.setAttribute("aria-modal","true");(sidebar.querySelector('[aria-current="page"]')||focusables(sidebar)[0])?.focus({preventScroll:true});}
   else{drawerInert.forEach(([el,value])=>el.inert=value);drawerInert=[];sidebar.removeAttribute("role");sidebar.removeAttribute("aria-modal");if(restore&&drawerFocus?.isConnected)drawerFocus.focus({preventScroll:true});}
+  queueViewport();
  }
  function renderMenus(entries){
   if(!Array.isArray(entries))throw new TypeError("Incompatible menu adapter. Reload the updated theme resources.");
@@ -396,21 +397,31 @@
  watchModal(document.getElementById("modal_overlay"));
  new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&n.id==="modal_overlay")watchModal(n);}).observe(document.body,{childList:true});
  const vv=window.visualViewport,root=document.documentElement;let viewportFrame=0;
+ const editorSelector='input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),textarea';
  function viewport(){
   viewportFrame=0;
-  // Restrict viewport geometry to overlays. Do not resize the document or disable zoom.
+  const editing=document.activeElement?.matches(editorSelector);
+  const drawerOpen=document.body.classList.contains("ml-drawer-open"),modalOpen=document.body.classList.contains("modal-overlay-active");
+  const oldKeyboard=root.style.getPropertyValue("--ml-keyboard-space");
+  if(!drawerOpen&&!modalOpen&&!editing&&(!oldKeyboard||oldKeyboard==="0px"))return;
+  // Write overlay geometry only while an overlay or editor needs it. This
+  // avoids invalidating document-wide inherited styles during ordinary scroll.
   const h=vv?.height||innerHeight,w=vv?.width||innerWidth,top=vv?.offsetTop||0,left=vv?.offsetLeft||0;
-  root.style.setProperty("--ml-vv-height",h+"px");root.style.setProperty("--ml-vv-width",w+"px");
-  root.style.setProperty("--ml-vv-top",top+"px");root.style.setProperty("--ml-vv-left",left+"px");
-  const editing=document.activeElement?.matches('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),textarea');
+  let changed=false;
+  const set=(name,value)=>{if(root.style.getPropertyValue(name)!==value){root.style.setProperty(name,value);changed=true;}};
+  set("--ml-vv-height",h+"px");set("--ml-vv-width",w+"px");
+  set("--ml-vv-top",top+"px");set("--ml-vv-left",left+"px");
   const inset=narrow.matches&&editing&&(!vv||Math.abs(vv.scale-1)<.05)?Math.max(0,innerHeight-h-top):0;
   // Add scroll room for the final form field only while an editor is focused.
-  root.style.setProperty("--ml-keyboard-space",inset>100?inset+"px":"0px");
-  window.dispatchEvent(new Event("materialluci:viewport"));
-
+  set("--ml-keyboard-space",inset>100?inset+"px":"0px");
+  if(changed)window.dispatchEvent(new Event("materialluci:viewport"));
  }
  function queueViewport(){if(!viewportFrame)viewportFrame=requestAnimationFrame(viewport);}
- if(vv){vv.addEventListener("resize",queueViewport,{passive:true});vv.addEventListener("scroll",queueViewport,{passive:true});}
+ function queueViewportOnScroll(){
+  const editing=narrow.matches&&document.activeElement?.matches(editorSelector);
+  if(editing||document.body.classList.contains("ml-drawer-open")||document.body.classList.contains("modal-overlay-active"))queueViewport();
+ }
+ if(vv){vv.addEventListener("resize",queueViewport,{passive:true});vv.addEventListener("scroll",queueViewportOnScroll,{passive:true});}
  window.addEventListener("resize",queueViewport,{passive:true});viewport();
  // A one-time focus correction after keyboard resize; avoid scroll-event feedback loops.
  let focusTimer;
