@@ -8,6 +8,7 @@
  const statusLabel=()=>t("正在处理，请稍候","Processing, please wait");
  function position(){if(!root||!modal||!overlay)return;const box=modal.getBoundingClientRect(),outer=overlay.getBoundingClientRect(),padding=innerWidth<600?18:24;root.style.left=(box.left-outer.left+padding)+"px";root.style.top=(box.bottom-outer.top-(MaterialComponents.isM3()?28:16))+"px";root.style.width=Math.max(0,box.width-padding*2)+"px";}
  function queuePosition(){
+  if(!root||!modal||!overlay)return;
   position();settleUntil=performance.now()+350;
   if(!frame)frame=requestAnimationFrame(followPosition);
  }
