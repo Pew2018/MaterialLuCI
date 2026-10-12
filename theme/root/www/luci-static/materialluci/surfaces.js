@@ -115,5 +115,5 @@
   for(const root of roots)if(root.isConnected&&![...roots].some(p=>p!==root&&p.contains(root)))prepare(root);
  }
  MaterialRuntime.registerLayout(prepareRecords);
- window.MaterialSurfaces={prepare,ensure(scope){MaterialRuntime.preparePending();if(scope?.isConnected&&!prepared.has(scope))prepare(scope);},count:()=>surfacePasses};
+ window.MaterialSurfaces={prepare,ensure(scope){MaterialRuntime.preparePending();if(scope?.isConnected&&!prepared.has(scope))try{prepare(scope);}catch(error){console.error("MaterialLuCI layout preparation failed",error);return false;}return true;},count:()=>surfacePasses};
 })();
