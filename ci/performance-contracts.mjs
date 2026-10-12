@@ -43,6 +43,7 @@ function fixture(){
   querySelectorAll(selector){if(selector.startsWith(":scope"))return this.children.filter(n=>n.matches(selector.replace(/^:scope\s*>\s*/,"")));const out=[];for(const child of this.children){if(child.matches(selector))out.push(child);out.push(...child.querySelectorAll(selector));}return out;}
   querySelector(selector){return this.querySelectorAll(selector)[0]||null;}
   append(...nodes){for(const n of nodes){n.remove();n.parentElement=this;this.children.push(n);notify({type:"childList",target:this,addedNodes:[n],removedNodes:[]});}}
+  replaceChildren(...nodes){for(const n of [...this.children])n.remove();this.append(...nodes);}
   prepend(n){this.append(n);this.children.splice(this.children.indexOf(n),1);this.children.unshift(n);}
   before(n){const parent=this.parentElement,index=parent.children.indexOf(this);parent.append(n);parent.children.splice(parent.children.indexOf(n),1);parent.children.splice(index,0,n);}
   after(n){const parent=this.parentElement,index=parent.children.indexOf(this);parent.append(n);parent.children.splice(parent.children.indexOf(n),1);parent.children.splice(index+1,0,n);}
@@ -65,7 +66,7 @@ function fixture(){
  const context=vm.createContext({window,document,MutationObserver:Observer,ResizeObserver:class{observe(){}unobserve(){}disconnect(){}},HTMLInputElement:Input,AbortController,console,innerWidth:800,performance:{now:()=>clock++},queueMicrotask:queue,setTimeout:fn=>{const id=++sequence;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),requestAnimationFrame:fn=>{const id=++sequence;frames.set(id,fn);return id;},cancelAnimationFrame:id=>frames.delete(id)});
  function load(name){vm.runInContext(fs.readFileSync(base+name,"utf8"),context,{filename:name});Object.assign(context,window);}
  function drain(){for(let i=0;i<3000;i++){if(micro.length){micro.shift()();continue;}const map=timers.size?timers:frames;if(!map.size)return;const [id,fn]=map.entries().next().value;map.delete(id);fn();}throw Error("Scheduler did not settle");}
- return {context,window,document,Element,Input,observers,load,drain};
+ return {context,window,document,Element,Input,observers,load,drain,notify};
 }
 {
  const f=fixture();f.load("runtime.js");const root=f.document.createElement("div"),input=f.document.createElement("input");root.append(input);f.document.body.append(root);
@@ -78,7 +79,7 @@ function fixture(){
  f.window.dispatchEvent({type:"pagehide",persisted:true});f.drain();f.window.dispatchEvent({type:"pageshow",persisted:true});f.drain();assert.equal(enhanced,2);
 }
 {
- const f=fixture();f.context.MaterialAppearance={activeDesign:"m3e"};f.context.customElements={get:()=>true};f.load("runtime.js");f.load("components.js");
+ const f=fixture();f.context.MaterialAppearance={activeDesign:"m3e"};f.context.customElements=f.window.customElements={get:()=>true};f.load("runtime.js");f.load("components.js");
  const fieldset=f.document.createElement("fieldset");f.document.body.append(fieldset);const inputs=Array.from({length:8},()=>f.document.createElement("input"));inputs.forEach(n=>fieldset.append(n));
  const entries=inputs.map(n=>f.window.MaterialComponents.selectionControl(n,"Choice"));f.drain();inputs.forEach(n=>n.reads=0);
  inputs.forEach(n=>f.window.MaterialComponents.syncSelections(n));f.drain();assert.ok(inputs.reduce((sum,n)=>sum+n.reads,0)<=inputs.length*3,"one batch must sync a group once");
@@ -103,5 +104,37 @@ function fixture(){
  f.window.dispatchEvent({type:"pagehide",persisted:true});f.window.dispatchEvent({type:"pageshow",persisted:true});f.drain();assert.equal(f.window.MaterialWait.isActive(),true,"bfcache restore must retain active feedback");
  modal.classList.remove("spinning");f.drain();assert.equal(f.window.MaterialWait.isActive(),false);
  f.window.dispatchEvent({type:"pagehide",persisted:false});f.drain();assert.equal(f.window.MaterialWait.activeCount(),0);
+}
+{
+ const f=fixture();
+ class Select extends f.Element{
+  constructor(){super("select");this.index=0;this.optionReads=0;this.multiple=false;this.size=0;this.required=false;this.validity={valid:true};this.labels=[];this.name="choice";}
+  get options(){this.optionReads++;return this.children;}
+  get selectedIndex(){return this.index;}set selectedIndex(value){this.index=value;}
+  get value(){return this.children[this.index]?.value||"";}set value(value){this.index=this.children.findIndex(n=>n.value===value);}
+ }
+ class Option extends f.Element{
+  constructor(value){super("option");this.value=value;this.textContent=value;}
+  get selected(){return this.parentElement?.selectedIndex===this.parentElement?.children.indexOf(this);}
+  set selected(value){if(value)this.parentElement.selectedIndex=this.parentElement.children.indexOf(this);}
+ }
+ class Menu{
+  constructor(root){this.root=root;this.state=false;}get open(){return this.state;}set open(value){this.state=value;}
+  get items(){return this.root.querySelectorAll("li");}
+  setIsHoisted(){}setFixedPosition(){}setDefaultFocusState(){}setEnabled(){}setAnchorElement(){}layout(){}destroy(){}
+ }
+ class SelectAdapter{
+  constructor(root,a,b,c,d,factory){this.selectedIndex=-1;this.disabled=false;this.required=false;this.valid=true;this.layouts=0;this.menu=factory(root.querySelector(".mdc-select__menu"));}
+  setSelectedIndex(value){this.selectedIndex=value;}layoutOptions(){this.layouts++;}destroy(){}
+ }
+ f.context.MaterialMDCControls={MDCMenu:Menu,MDCSelect:SelectAdapter,MDCList:class{},MDCRipple:class{destroy(){}},MDCTooltip:class{},MDCSnackbar:class{},DefaultFocusState:{NONE:0}};
+ f.load("runtime.js");f.load("extras.js");
+ const select=new Select(),a=new Option("a"),b=new Option("b");select.append(a,b);f.document.body.append(select);f.window.MaterialExtras.enhance(select);f.drain();
+ const adapter=select._mlMdcSelect;assert.ok(adapter);
+ select.value="b";select.optionReads=0;f.drain();assert.equal(adapter.selectedIndex,1);assert.equal(select.optionReads,0,"value-only changes must not rebuild options");
+ select.disabled=true;select.optionReads=0;f.drain();assert.equal(adapter.disabled,true);assert.equal(select.optionReads,0,"disabled-only changes must not rebuild options");
+ b.disabled=true;select.optionReads=0;f.drain();assert.equal(select.optionReads,1,"option state changes must invalidate the cached options");
+ const before=adapter.layouts;b.textContent="Updated";f.notify({type:"characterData",target:b,addedNodes:[],removedNodes:[]});f.drain();assert.ok(adapter.layouts>before,"option text changes must refresh the menu");
+ const c=new Option("c");select.append(c);f.drain();select.value="c";f.drain();assert.equal(adapter.selectedIndex,2,"new native options must remain selectable");
 }
 console.log("Runtime lifecycle, radio-group batching and loading-state contracts passed (no browser rendering).");
