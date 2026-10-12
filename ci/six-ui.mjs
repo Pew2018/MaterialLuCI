@@ -26,26 +26,27 @@ export async function verifySixUI(browser,name,base){
  await page.waitForFunction(()=>document.querySelector(".ml-poll-action").getAttribute("aria-label")==="恢复自动刷新");
  if(name==="chromium")await page.screenshot({path:"dist/previews/refresh-paused.png"});
  if(name==="chromium"){await poll.focus();assert.equal(await poll.evaluate(el=>document.activeElement===el),true,"poll action must be keyboard focusable");await poll.click();await page.waitForFunction(()=>pollStarts>=2);assert(await page.evaluate(()=>pollStarts)>=2);}
- // Same hit area and exactly one ripple, on text and chevron.
+ // One business toggle, with independent feedback on title and chevron.
  await page.locator("#ml-menu-button").click();
  const parent=page.locator(".ml-nav-parent[aria-controls]").filter({hasText:"网络"});
+ assert.equal(await parent.locator(":scope > .mdc-button__ripple").count(),0);
  for(const child of [".ml-nav-parent-label",".ml-nav-chevron"]){
+  const region=parent.locator(child),other=parent.locator(child===".ml-nav-chevron"?".ml-nav-parent-label":".ml-nav-chevron");
   await page.waitForTimeout(550);const before=await parent.getAttribute("aria-expanded");
-  await parent.locator(child).click();
+  await region.click();
   assert.notEqual(await parent.getAttribute("aria-expanded"),before);
-  assert.equal(await parent.locator(":scope > .mdc-button__ripple").count(),1);
-  assert(await parent.evaluate(el=>!!el._mlMdcRipple&&el.classList.contains("mdc-ripple-upgraded--foreground-activation")));
-  assert(await parent.locator(":scope > .mdc-button__ripple").evaluate(el=>getComputedStyle(el,"::after").animationName.includes("mdc-ripple-fg-radius-in")),"official ripple CSS is not animating");
-  assert.equal(await parent.locator("..").evaluate(el=>!!el._mlMdcRipple),false);
+  assert.equal(await region.locator(":scope > .ml-nav-region-ink").count(),1);
+  assert(await region.evaluate(el=>!!el._mlMdcRipple));
+  assert.equal(await other.locator(".ml-nav-region-ink.mdc-ripple-upgraded--foreground-activation").count(),0,"one tap activated both regions");
  }
- assert.equal(await parent.getAttribute("data-ripple"),"control");
- assert.equal(await parent.locator(".ml-nav-chevron").evaluate(el=>getComputedStyle(el).backgroundColor),"rgba(0, 0, 0, 0)");
+ assert.equal(await parent.evaluate(el=>!!el._mlMdcRipple),false);
  await page.waitForTimeout(550);
  // A moved/cancelled pointer must leave no wave.
- await parent.dispatchEvent("pointerdown",{pointerId:8,isPrimary:true,button:0,clientX:40,clientY:200,pointerType:"touch"});
- await parent.dispatchEvent("pointercancel",{pointerId:8,isPrimary:true});
- await parent.dispatchEvent("pointerup",{pointerId:8,isPrimary:true,button:0,clientX:40,clientY:250,pointerType:"touch"});
- assert.equal(await parent.evaluate(el=>el.classList.contains("mdc-ripple-upgraded--foreground-activation")),false);
+ const label=parent.locator(".ml-nav-parent-label");
+ await label.dispatchEvent("pointerdown",{pointerId:8,isPrimary:true,button:0,clientX:40,clientY:200,pointerType:"touch"});
+ await label.dispatchEvent("pointercancel",{pointerId:8,isPrimary:true});
+ await label.dispatchEvent("pointerup",{pointerId:8,isPrimary:true,button:0,clientX:40,clientY:250,pointerType:"touch"});
+ assert.equal(await label.locator(".ml-nav-region-ink.mdc-ripple-upgraded--foreground-activation").count(),0);
  await page.keyboard.press("Escape");
  // Appearance settings open by default; desktop reflows and remains expanded.
  const appearance=page.locator("#ml-appearance-entry");

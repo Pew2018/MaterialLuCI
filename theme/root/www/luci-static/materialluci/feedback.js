@@ -6,7 +6,7 @@
  const disabledWatchers=new Map();
  const disabledObserver=new MutationObserver(records=>{for(const [el,sync] of disabledWatchers)if(records.some(r=>r.target===el||r.target.contains(el)||el.contains(r.target)))sync();});
  disabledObserver.observe(document.body,{attributes:true,subtree:true,attributeFilter:["disabled","aria-disabled"]});
- const selector="button:not(.mdc-switch),div.btn,a.btn,a.cbi-button,a.text-action,.ml-poll-action,.ml-native-button,.ml-sidebar a,.tabs a,.cbi-tabmenu a";
+ const selector="button:not(.mdc-switch),div.btn,a.btn,a.cbi-button,a.text-action,.ml-poll-action,.ml-native-button,.ml-sidebar a,.ml-nav-parent-label,.ml-nav-chevron,.tabs a,.cbi-tabmenu a";
  function disabled(el){return !!(el.matches(":disabled")||el.disabled||el.hasAttribute("disabled")||el.querySelector("input:disabled")||el.closest('[aria-disabled="true"]'));}
  function scrolls(el){const list=[];for(let n=el.parentElement;n;n=n.parentElement)if(n.scrollHeight>n.clientHeight||n.scrollWidth>n.clientWidth)list.push([n,n.scrollTop,n.scrollLeft]);return list;}
  // MDC's supported foundation adapter supplies confirmed-tap activation.
@@ -39,6 +39,28 @@
   if(el.matches("button.ml-nav-parent"))return;
   if(el.closest(".mdc-switch,.ml-mdc-selection"))return;
   if(el.matches("button")&&el.closest(".ml-native-button"))return;
+  if(el.matches(".ml-nav-parent-label,.ml-nav-chevron")&&!MaterialComponents.isM3()){
+   if(entries.has(el))return;
+   const ink=document.createElement("span");ink.className="ml-nav-region-ink mdc-ripple-surface";ink.setAttribute("aria-hidden","true");el.prepend(ink);
+   const instance=new ConfirmedRipple(ink),abort=new AbortController(),options={passive:true,signal:abort.signal};
+   el._mlMdcRipple=instance;
+   el.addEventListener("pointerdown",event=>{if(event.isPrimary&&event.button===0)pending.set(el,{id:event.pointerId,x:event.clientX,y:event.clientY,event,scrolls:scrolls(el)});},options);
+   el.addEventListener("pointercancel",()=>pending.delete(el),options);
+   el.addEventListener("pointerup",event=>{
+    const p=pending.get(el);pending.delete(el);
+    if(!p||p.id!==event.pointerId||reduced.matches)return;
+    if(Math.hypot(event.clientX-p.x,event.clientY-p.y)>(event.pointerType==="mouse"?8:10)||p.scrolls.some(([n,y,x])=>Math.abs(n.scrollTop-y)>2||Math.abs(n.scrollLeft-x)>2))return;
+    const rect=el.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)return;
+    instance.confirmed(p.event);
+   },options);
+   if(el.matches(".ml-nav-parent-label")){
+    const button=el.closest("button");
+    button?.addEventListener("keydown",event=>{if((event.key==="Enter"||event.key===" ")&&!event.repeat&&!reduced.matches)instance.activate();},{signal:abort.signal});
+    button?.addEventListener("keyup",event=>{if(event.key==="Enter"||event.key===" ")instance.deactivate();},{signal:abort.signal});
+   }
+   entries.set(el,{destroy(){abort.abort();instance.destroy();ink.remove();pending.delete(el);el._mlMdcRipple=null;entries.delete(el);}});
+   return;
+  }
   if(!entries.has(el)&&window.__mlControlAudit&&el.isConnected){const s=getComputedStyle(el),r=el.getBoundingClientRect();el._mlBeforeMDC={width:r.width,height:r.height,fontFamily:s.fontFamily,fontSize:s.fontSize,fontWeight:s.fontWeight,color:s.color,radius:s.borderRadius,firstChild:el.firstChild};}
   if(entries.has(el))return;
   if(MaterialComponents.isM3()&&customElements.get("md-ripple")){
