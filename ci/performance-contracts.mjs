@@ -25,8 +25,8 @@ function fixture(){
   get parentNode(){return this.parentElement;}
   getAttribute(key){if(key.startsWith("data-"))return this.dataset[key.slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]??null;return this.attrs.get(key)??null;}
   hasAttribute(key){return this.getAttribute(key)!==null;}
-  setAttribute(key,value){this.attributeWrites++;const oldValue=this.getAttribute(key);this.attrs.set(key,String(value));notify({type:"attributes",target:this,attributeName:key,oldValue,addedNodes:[],removedNodes:[]});}
-  removeAttribute(key){if(this.attrs.has(key)){this.attributeWrites++;const oldValue=this.getAttribute(key);this.attrs.delete(key);notify({type:"attributes",target:this,attributeName:key,oldValue,addedNodes:[],removedNodes:[]});}}
+  setAttribute(key,value){this.attributeWrites++;const oldValue=this.getAttribute(key);this.attrs.set(key,String(value));if(key.startsWith("data-"))this.dataset[key.slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]=String(value);notify({type:"attributes",target:this,attributeName:key,oldValue,addedNodes:[],removedNodes:[]});}
+  removeAttribute(key){if(this.attrs.has(key)){this.attributeWrites++;const oldValue=this.getAttribute(key);this.attrs.delete(key);if(key.startsWith("data-"))delete this.dataset[key.slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())];notify({type:"attributes",target:this,attributeName:key,oldValue,addedNodes:[],removedNodes:[]});}}
   get disabled(){return this.hasAttribute("disabled");}set disabled(value){value?this.setAttribute("disabled",""):this.removeAttribute("disabled");}
   matches(selector){return selector.split(/,(?![^()]*\))/).some(part=>{
    part=part.trim();if(part===":disabled"){this.reads++;return this.disabled||!!this.closest("fieldset")?.disabled;}
@@ -207,6 +207,25 @@ function fixture(){
  checkbox.reads=0;for(let i=0;i<12;i++)f.window.MaterialComponents.syncSelections(checkbox);f.drain();
  assert.equal(checkbox.reads,1,"a checkbox must use one stable group and one state read per batch");
  choice.destroy();f.drain();
+}
+
+
+{
+ const f=fixture();f.context.MaterialMDCControls={MDCRipple:class{},MDCRippleFoundation:class{}};
+ f.context.MaterialComponents={isM3:()=>true};f.context.customElements={get:()=>true};
+ const reduced=new f.Element("media");reduced.matches=false;f.context.matchMedia=()=>reduced;
+ f.Element.prototype.attach=function(){this.attached=true;};f.Element.prototype.detach=function(){this.attached=false;};
+ f.load("runtime.js");f.load("feedback.js");f.window.MaterialRuntime.start(f.document.body);
+ const button=f.document.createElement("button");f.document.body.append(button);f.drain();
+ const ripple=button.querySelector("md-ripple");assert.ok(ripple?.attached);
+ f.window.MaterialFeedback.bind(button);f.drain();assert.equal(button.querySelectorAll("md-ripple").length,1,"one native button must have one feedback owner");
+ button.disabled=true;f.drain();const writes=ripple.attributeWrites;
+ f.notify({type:"attributes",target:button,attributeName:"disabled",addedNodes:[],removedNodes:[]});f.drain();
+ assert.equal(ripple.attributeWrites,writes,"unchanged ripple state must not be written again");
+ const decorated=f.document.createElement("div"),internal=f.document.createElement("button");decorated.dataset.mlComponent="button";decorated.append(internal);f.document.body.append(decorated);
+ f.window.MaterialFeedback.bind(decorated);f.drain();assert.equal(internal.querySelectorAll("md-ripple").length,0,"component-owned children must not acquire generic feedback");
+ button.remove();f.document.body.append(button);f.drain();assert.equal(f.window.MaterialFeedback.counts().instances,1);
+ button.remove();f.drain();assert.equal(f.window.MaterialFeedback.counts().instances,0);assert.ok(!ripple.attached);
 }
 
 {
