@@ -27,7 +27,7 @@ export async function verifyBranding(browser,engine,base){
  await title.fill("<img src=x onerror=window.brandXss=1>");assert.equal(await page.locator("#ml-title").textContent(),"<img src=x onerror=window.brandXss=1>");assert.equal(await page.locator("#ml-title img").count(),0);assert.equal(await page.evaluate(()=>window.brandXss||0),0);
  await title.fill("   ");assert.equal(await page.locator("#ml-title").textContent(),"MaterialLuCI");
  assert.equal(await page.locator("#fixture-name").inputValue(),"Unapplied draft","appearance preferences preserve an unsaved page draft");
- await title.fill("中文 composition 测试");await page.reload();await page.waitForSelector("#ml-brand-toolbar-title");assert.equal(await page.locator("#ml-title").textContent(),"中文 composition 测试");
+ await title.fill("中文 composition 测试");await page.waitForFunction(()=>document.body.dataset.mlMenus==="ready");await page.reload();await page.waitForSelector("#ml-brand-toolbar-title");assert.equal(await page.locator("#ml-title").textContent(),"中文 composition 测试");
  await page.locator("#fixture-name").fill("Unapplied draft");
  await page.locator("#ml-brand-toolbar-title").evaluate(el=>{el.focus();el.value="";el.dispatchEvent(new CompositionEvent("compositionstart",{bubbles:true}));el.value="拼音输入中";el.dispatchEvent(new InputEvent("input",{bubbles:true,inputType:"insertCompositionText",data:"拼音输入中",isComposing:true}));});
  assert.equal(await page.locator("#ml-brand-toolbar-title").inputValue(),"拼音输入中");assert.equal(await page.locator("#ml-title").textContent(),"中文 composition 测试");
@@ -35,7 +35,7 @@ export async function verifyBranding(browser,engine,base){
  assert.equal(await page.locator("#fixture-name").inputValue(),"Unapplied draft","appearance preferences preserve an unsaved page draft");await page.locator("#ml-brand-toolbar-title").press("Enter");assert.equal(await page.evaluate(()=>window.fixtureSubmissions||0),0,"Enter does not submit the LuCI form");
  const name=page.locator("#ml-brand-sidebar-name");await name.fill("旅行路由器 🏠");assert.equal(await page.locator("#ml-sidebar-name").textContent(),"旅行路由器 🏠");
  await name.fill("  ");assert.equal(await page.locator("#ml-sidebar-name").textContent(),hostname);
- await name.fill("Patrick Home");await page.reload();await page.waitForSelector("#ml-brand-sidebar-name");assert.equal(await page.locator("#ml-sidebar-name").textContent(),"Patrick Home");
+ await name.fill("Patrick Home");await page.waitForFunction(()=>document.body.dataset.mlMenus==="ready");await page.reload();await page.waitForSelector("#ml-brand-sidebar-name");assert.equal(await page.locator("#ml-sidebar-name").textContent(),"Patrick Home");
  const visible=page.locator("#ml-brand-sidebar-visible"),visibleControl=visible.locator("xpath=..").locator(".mdc-switch,md-switch").first();
  const sidebarName=page.locator("#ml-sidebar-name"),firstNav=page.locator(".ml-nav-parent").first();
  const navTop=()=>firstNav.evaluate(el=>el.getBoundingClientRect().top);
@@ -46,7 +46,7 @@ export async function verifyBranding(browser,engine,base){
  assert.equal(await page.locator("#ml-sidebar-heading").getAttribute("data-name-hidden"),"true");assert.equal(await name.isDisabled(),true);
  assert.equal(await sidebarName.isVisible(),false);assert.equal(await page.locator("#ml-sidebar-heading").isVisible(),false);
  assert.ok(await navTop()<desktopNameTop-20,"desktop menu reclaims device-name space");
- await page.reload();await page.waitForSelector("#ml-brand-toolbar-title");
+ await page.waitForFunction(()=>document.body.dataset.mlMenus==="ready");await page.reload();await page.waitForSelector("#ml-brand-toolbar-title");
  assert.equal(await sidebarName.isVisible(),false);assert.equal(await visible.isChecked(),false);
  if(engine==="chromium")await page.screenshot({path:"dist/previews/branding-desktop-hidden-device-name.png"});
  await page.setViewportSize({width:390,height:844});await page.locator("#ml-menu-button").click();await page.locator("#ml-drawer-close").waitFor({state:"visible"});
@@ -67,14 +67,14 @@ export async function verifyBranding(browser,engine,base){
  await page.locator("#ml-brand-sidebar-name").fill("旅行设备");await page.locator("#ml-brand-title-color-text").fill("#12");
  if(engine==="chromium")await page.screenshot({path:"dist/previews/branding-dark-custom-name-invalid-color.png",fullPage:true});
  if(await page.evaluate(()=>Object.hasOwn(MaterialAppearance.prefs,"design"))){
-  await page.evaluate(()=>MaterialAppearance.set("design","classic"));await page.reload();await page.waitForSelector("#ml-brand-toolbar-title");assert.equal(await page.locator("html").getAttribute("data-design"),"classic");
+  await page.evaluate(()=>MaterialAppearance.set("design","classic"));await page.waitForFunction(()=>document.body.dataset.mlMenus==="ready");await page.reload();await page.waitForSelector("#ml-brand-toolbar-title");assert.equal(await page.locator("html").getAttribute("data-design"),"classic");
   if(engine==="chromium")await page.screenshot({path:"dist/previews/branding-m3e-branch-classic-style.png",fullPage:true});
-  await page.evaluate(()=>MaterialAppearance.set("design","m3e"));await page.reload();await page.waitForSelector("#ml-brand-toolbar-title");assert.equal(await page.locator("html").getAttribute("data-design"),"m3e");
+  await page.evaluate(()=>MaterialAppearance.set("design","m3e"));await page.waitForFunction(()=>document.body.dataset.mlMenus==="ready");await page.reload();await page.waitForSelector("#ml-brand-toolbar-title");assert.equal(await page.locator("html").getAttribute("data-design"),"m3e");
   assert.equal(await page.locator("#ml-title").textContent(),"这是一个很长的中文顶栏标题，用来确认单行省略不会挤压菜单和状态指示器 🚀");
   if(engine==="chromium")await page.screenshot({path:"dist/previews/branding-m3e-branch-m3e-style.png",fullPage:true});
  }
  const canCorrupt=await page.evaluate(()=>{try{localStorage.setItem("materialluci-toolbar-title","<bad");localStorage.setItem("materialluci-toolbar-title-color","custom");localStorage.setItem("materialluci-toolbar-title-color-value","bad");localStorage.setItem("materialluci-sidebar-name-visible","invalid");localStorage.setItem("materialluci-sidebar-name","\ud800");return true;}catch(_){return false;}});
- if(canCorrupt){await page.reload();await page.waitForSelector("#ml-brand-toolbar-title");assert.equal(await page.locator("#ml-title").textContent(),"<bad","stored titles remain literal text");assert.equal(await page.locator("#ml-title").locator("*").count(),0);assert.equal(await page.locator("#ml-brand-title-color-mode").inputValue(),"auto");assert.equal(await page.locator("#ml-sidebar-heading").getAttribute("data-name-hidden"),"false");}
+ if(canCorrupt){await page.waitForFunction(()=>document.body.dataset.mlMenus==="ready");await page.reload();await page.waitForSelector("#ml-brand-toolbar-title");assert.equal(await page.locator("#ml-title").textContent(),"<bad","stored titles remain literal text");assert.equal(await page.locator("#ml-title").locator("*").count(),0);assert.equal(await page.locator("#ml-brand-title-color-mode").inputValue(),"auto");assert.equal(await page.locator("#ml-sidebar-heading").getAttribute("data-name-hidden"),"false");}
  const storageUnavailable=await page.evaluate(()=>{try{Object.defineProperty(window,"localStorage",{configurable:true,get(){throw Error("blocked");}});return MaterialBranding.set("toolbarTitle","Memory only");}catch(_){return false;}});assert.equal(storageUnavailable,true,"localStorage failures are tolerated");
  assert.equal(errors.length,0,"browser errors: "+errors.join("\n"));await page.close();
 }
