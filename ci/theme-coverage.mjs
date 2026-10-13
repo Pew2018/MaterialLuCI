@@ -67,8 +67,8 @@ try{
   assert.ok(await page.locator("#modal_overlay .right button").last().isVisible());
   // Reused modal short tasks: genuine official instance construction/destruction.
   await page.evaluate(()=>{
-   window.progressCounts={created:0,destroyed:0};const C=MaterialMDC.MDCLinearProgress;
-   MaterialMDC.MDCLinearProgress=class extends C{constructor(...args){super(...args);progressCounts.created++;}destroy(){progressCounts.destroyed++;super.destroy();}};
+   window.progressCounts={created:0,destroyed:0};const original=MaterialComponents.progress;
+   MaterialComponents.progress=function(...args){const instance=original(...args);if(args[1]?.scene==="modal"){if(!(instance instanceof MaterialMDC.MDCLinearProgress))throw Error("modal must create official MDC instance");progressCounts.created++;const destroy=instance.destroy.bind(instance);instance.destroy=()=>{progressCounts.destroyed++;destroy();};}return instance;};
   });
   for(let i=0;i<3;i++){
    await page.evaluate(()=>{modal_overlay.firstElementChild.innerHTML='<h4>Working</h4><p class="spinning">Applying</p>';MaterialWait.sync();});
