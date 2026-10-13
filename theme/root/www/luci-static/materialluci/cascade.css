@@ -60,8 +60,10 @@ fieldset{border:0;padding:0;margin:0 0 16px;min-width:0}
 .cbi-map>.cbi-section+.cbi-section,.cbi-map>fieldset+fieldset{margin-top:16px;border-top:1px solid var(--divider)}
 :root[data-cards=true]{--page:#fafafa}
 :root[data-theme=dark][data-cards=true]{--page:#121212}
-:root[data-cards=true] .ml-card-surface{background:var(--card);padding:0 18px 16px;margin:0 0 16px;border:1px solid var(--divider);border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
-:root[data-theme=dark][data-cards=true] .ml-card-surface{box-shadow:none}
+:root{--ml-card-radius:2px;--ml-card-padding:18px;--ml-card-gap:16px;--ml-card-shadow:0 1px 3px rgba(0,0,0,.16)}
+:root[data-theme=dark]{--ml-card-shadow:0 1px 3px rgba(0,0,0,.3)}
+@media(max-width:599px){:root{--ml-card-padding:16px}}
+:root[data-cards=true] .ml-card-surface{background:var(--card);padding:16px var(--ml-card-padding);margin:0 0 var(--ml-card-gap);border:0;border-radius:var(--ml-card-radius);box-shadow:var(--ml-card-shadow)}
 :root[data-cards=true] .ml-card-surface>.right{margin-left:0}
 .cbi-value{display:flex;align-items:flex-start;gap:24px;min-height:56px;padding:10px 0;margin:0;clear:both}
 .cbi-value-title{display:block;float:none;width:240px;max-width:35%;flex:none;min-width:0;margin:0;padding:8px 0 0;text-align:left;font-size:14px;font-weight:400;line-height:1.4;color:var(--ink);overflow-wrap:anywhere}
@@ -307,7 +309,6 @@ body .ml-sidebar button.ml-nav-parent:active{background:var(--pressed)}
 #maincontent .ifacebox .ifacebox-body{border:0}
 #maincontent .ifacebadge{background:transparent;border-color:var(--divider)}
 #maincontent .network-status-table{background:transparent}
-:root[data-cards=false] .ml-card-surface{background:transparent;box-shadow:none}
 
 /* Browser owns top safe-area geometry (viewport-fit=auto).
    Do not extend the accented toolbar into a synthetic system status strip. */
@@ -389,7 +390,7 @@ body::after{content:"";position:fixed;bottom:0;left:0;right:0;height:env(safe-ar
 :root[data-theme=dark] #maincontent .ifacebadge img{background:#e0e0e0;border-radius:2px;padding:1px}
 #maincontent :is(table,.table,tr,.tr,td,.td,th,.th){background-color:transparent}
 #maincontent :is(.cbi-map-descr,.cbi-section-descr){background:transparent}
-#maincontent .ml-chart-surface{background:var(--surface)!important;border:1px solid var(--divider)!important;color:var(--ink);min-width:0;max-width:100%;overflow:hidden}
+#maincontent .ml-chart-surface{color:var(--ink);min-width:0;max-width:100%;overflow:hidden}
 #maincontent .ml-chart-surface svg{display:block;max-width:100%;background:transparent}
 #maincontent .ml-chart-surface svg line{stroke:var(--divider)!important}
 #maincontent .ml-chart-surface svg text{fill:var(--muted)!important;text-shadow:none!important}
@@ -566,11 +567,8 @@ body .cbi-dropdown:is(.btn,.cbi-button)>.open{border-left-color:transparent;back
 :root{--raised-surface:#fff;--inset-surface:#f5f5f5;--sidebar-surface:#fafafa;--card:#fff;--mdc-theme-primary:var(--control-accent);--mdc-theme-surface:var(--raised-surface);--mdc-theme-on-surface:var(--ink)}
 :root[data-theme=dark]{--surface:#1e1e1e;--card:#1e1e1e;--raised-surface:#2d2d2d;--inset-surface:#181818;--sidebar-surface:#181818;--log:#181818;--status-surface:#262626}
 body .ml-sidebar{background:var(--sidebar-surface)}
-:root[data-cards=true] .ml-card-surface{padding-top:16px;border:0;box-shadow:0 1px 3px rgba(0,0,0,.16)}
 :root[data-cards=true] .ml-card-surface>:is(h3,h4,legend){padding-top:0}
-:root[data-theme=dark][data-cards=true] .ml-card-surface{box-shadow:0 1px 3px rgba(0,0,0,.3)}
-:root[data-cards=false] .ml-card-surface{padding:0;margin-bottom:16px;border:0;background:transparent;box-shadow:none}
-:root[data-cards=true] #maincontent .ml-chart-surface.ml-card-surface{background:var(--card)!important;border:0!important}
+:root[data-cards=false] .ml-card-surface{padding:0;margin-bottom:var(--ml-card-gap);border:0;border-radius:0;background:transparent;box-shadow:none}
 body #modal_overlay>.modal.mdc-dialog__surface,body #modal_overlay>.modal.alert-message,
 body .ml-dialog.mdc-dialog__surface{background:var(--raised-surface)}
 body #modal_overlay .modal>:is(h3,h4,.right){background:var(--raised-surface)}
@@ -833,8 +831,7 @@ body .ml-text-field.mdc-text-field--filled:not(.mdc-text-field--disabled) .mdc-t
 
 /* Flat Lua content uses maincontent itself as its surface. The ID-level
    shell rule otherwise overrides the shared card class with transparency. */
-:root[data-cards=true] #maincontent.container.ml-card-surface{width:calc(100% - 64px);margin:16px 32px;padding:16px 18px;background:var(--card);border:0;border-radius:2px;box-shadow:0 1px 3px rgba(0,0,0,.16)}
-:root[data-theme=dark][data-cards=true] #maincontent.container.ml-card-surface{box-shadow:0 1px 3px rgba(0,0,0,.3)}
+:root[data-cards=true] #maincontent.container.ml-card-surface{width:calc(100% - 64px);margin:16px 32px;padding:16px var(--ml-card-padding);background:var(--card);border:0;border-radius:var(--ml-card-radius);box-shadow:var(--ml-card-shadow)}
 @media(max-width:599px){:root[data-cards=true] #maincontent.container.ml-card-surface{width:calc(100% - 32px);margin:16px;padding:16px}}
 
 /* State parity for native widgets: their basic ink must not depend on MDC.
@@ -882,16 +879,16 @@ body #maincontent[data-ml-page=flashops] form.inline{display:block;margin:0}
 /* Legacy Backup/Restore share one outer section. Paint each existing group
    in contiguous segments instead of reparenting forms or creating nested cards. */
 body .ml-legacy-flash-section{padding:0;margin:0 0 16px;background:transparent;box-shadow:none}
-body .ml-legacy-flash-section>.ml-legacy-card-start{margin:16px 0 0;padding:16px 18px 8px;border-radius:2px 2px 0 0}
-body .ml-legacy-flash-section>.ml-legacy-card-body{margin:0;padding:0 18px 12px}
-body .ml-legacy-flash-section>.ml-legacy-card-end{margin:0;padding:0 18px 16px;border-radius:0 0 2px 2px}
+body .ml-legacy-flash-section>.ml-legacy-card-start{margin:var(--ml-card-gap) 0 0;padding:16px var(--ml-card-padding) 8px;border-radius:var(--ml-card-radius) var(--ml-card-radius) 0 0}
+body .ml-legacy-flash-section>.ml-legacy-card-body{margin:0;padding:0 var(--ml-card-padding) 12px}
+body .ml-legacy-flash-section>.ml-legacy-card-end{margin:0;padding:0 var(--ml-card-padding) 16px;border-radius:0 0 var(--ml-card-radius) var(--ml-card-radius)}
 :root[data-cards=true] #maincontent .ml-legacy-flash-section>:is(.ml-legacy-card-start,.ml-legacy-card-body,.ml-legacy-card-end){background:var(--card)}
+:root[data-cards=false] .ml-legacy-flash-section>:is(.ml-legacy-card-start,.ml-legacy-card-body,.ml-legacy-card-end){background:transparent;border:0;border-radius:0;padding-left:0;padding-right:0}
+#view.ml-view-loading{background:transparent;border:0;border-radius:0;box-shadow:none;padding:0;margin:0}
+#view.ml-view-loading>.spinning{margin:0 0 var(--ml-card-gap);padding:0;color:var(--muted);font:inherit;line-height:20px}
 @media(max-width:599px){
  body .cbi-value-field>input[type=file]{flex-basis:100%;width:100%}
  body .cbi-value-field:has(>input[type=file])>input:is([type=submit],[type=button]){width:100%;min-width:0}
- body .ml-legacy-flash-section>.ml-legacy-card-start{padding:16px 16px 8px}
- body .ml-legacy-flash-section>.ml-legacy-card-body{padding:0 16px 12px}
- body .ml-legacy-flash-section>.ml-legacy-card-end{padding:0 16px 16px}
 }
 
 /* Links/div buttons do not match :disabled; respect their native LuCI marker. */
