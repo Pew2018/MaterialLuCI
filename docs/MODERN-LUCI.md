@@ -27,7 +27,7 @@ The initial main/feature runtime trees were identical; main added release docume
 | Package | Templates | Runtime dependencies | Scope |
 | --- | --- | --- | --- |
 | Legacy IPK | `/usr/lib/lua/luci/view/themes/materialluci/*.htm` | existing Lua LuCI + luci-base | Existing AX3000T / aarch64_cortex-a53 Lua LuCI target; original architecture restriction retained |
-| Modern SDK APK | `/usr/share/ucode/luci/template/themes/materialluci/*.ut` | luci-base and its native ucode dependencies | Fixed OpenWrt 25.12.5 / fixed LuCI above; architecture eligibility noarch, hardware behavior pending |
+| Modern SDK APK | `/usr/share/ucode/luci/template/themes/materialluci/*.ut` | SDK default libc + luci-base and its native ucode dependencies | Fixed OpenWrt 25.12.5 / fixed LuCI above; architecture eligibility noarch, hardware behavior pending |
 
 Both use the same package name and media URL. They are **alternative installations for different firmware/package managers**, not packages to install together. The modern package intentionally excludes Lua templates, avoiding a fallback that silently requires luci-lua-runtime. The repository retains all Lua templates; `theme/ucode` is outside the legacy `theme/root` payload. The duplicate top-level `root` is preserved and is not a packaging source.
 
@@ -69,9 +69,10 @@ The shared source files are left byte-for-byte unchanged from the tested feature
 The default modern branch build runs:
 1. Existing script/Lua template syntax, performance contracts and actual legacy IPK audit.
 2. Verified release SDK + feed, SDK APK build, official apk extraction and metadata inspection.
-3. Exact actual APK file allowlist, dependency/license/architecture checks, source SHA, run ID, cache and every shipped resource digest.
-4. Matching ucode engine rendering with fixed official core header/footer and actual packaged templates: normal, login failure, blank, restricted menu/password context, no-password and initramfs warnings, hostname escaping and balanced shell.
-5. A small Chromium contract run using fixed real LuCI frontend and actual form/view/ui widgets. OS/ubus/HTTP responses are mocked and config writes are rejected. It covers drawer/menu ACL, route tabs, load completion, validation, one Flag event, DynamicList/ListValue, native reset, fieldset state restoration, nested SectionValue, modal wait feedback, both styles and modes, moved/disconnected nodes, desktop overflow and a persisted pageshow event. One representative screenshot, no large matrix.
+3. Offline install/upgrade/uninstall with test-only libc/luci-base stubs and scripts disabled, plus actual lifecycle-script shell syntax. This tests package transactions, not router UCI execution.
+4. Exact actual APK file allowlist, dependency/license/architecture checks, source SHA, run ID, cache and every shipped resource digest.
+5. Matching ucode engine rendering with fixed official core header/footer and actual packaged templates: normal, login failure, blank, restricted menu/password context, no-password and initramfs warnings, hostname escaping and balanced shell.
+6. A small Chromium contract run using fixed real LuCI frontend and actual form/view/ui widgets. OS/ubus/HTTP responses are mocked and config writes are rejected. It covers drawer/menu ACL, route tabs, load completion, validation, one Flag event, DynamicList/ListValue, native reset, fieldset state restoration, nested SectionValue, modal wait feedback, both styles and modes, moved/disconnected nodes, desktop overflow and a persisted pageshow event. One representative screenshot, no large matrix.
 
 A simulated persisted pageshow is not proof of browser bfcache navigation. Existing lifecycle regression remains distinct. Neither the harness nor package inspection proves real router saving, rollback, flashing, hardware status or third-party plugin operation.
 

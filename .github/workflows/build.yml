@@ -1,4 +1,4 @@
-name: Build AX3000T dual styles
+name: Build Lua IPK and pinned ucode APK
 on:
   push:
     branches: [main, "feature/**", "fix/**"]

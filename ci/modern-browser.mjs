@@ -101,6 +101,7 @@ try {
  assert.equal(await page.locator('input[name=luci_password]').getAttribute('autocomplete'),'current-password');
  await page.goto(base+'/blank.html');
  await page.waitForSelector('#blank-marker');
+ await page.waitForFunction(()=>window.L?.loaded);
  assert.equal(await page.locator('#maincontent').count(),0);
  assert.equal(await page.locator('.ml-toolbar').count(),0);
  checks.push('login skips menu, blank page has no shell');

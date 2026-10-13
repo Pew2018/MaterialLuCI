@@ -14,7 +14,7 @@ Lua 入口为 `/usr/lib/lua/luci/view/themes/materialluci/`。其他旧版架构
 
 ## OpenWrt 25.12.5：ucode APK
 
-本轮固定官方 OpenWrt 25.12.5，与该发布版本固定的 LuCI 提交配套。新版入口为 `/usr/share/ucode/luci/template/themes/materialluci/`。APK 仅依赖 luci-base 及其原生 ucode 依赖，不安装 Lua 模板、不额外要求 luci-lua-runtime。
+本轮固定官方 OpenWrt 25.12.5，与该发布版本固定的 LuCI 提交配套。新版入口为 `/usr/share/ucode/luci/template/themes/materialluci/`。APK 依赖 SDK 默认的 libc、luci-base 及其原生 ucode 依赖，不安装 Lua 模板、不额外要求 luci-lua-runtime。
 
 把 Actions 的真实 APK 上传到 /tmp：
 

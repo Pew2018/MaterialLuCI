@@ -4,7 +4,9 @@ import json,pathlib,shutil,subprocess,os
 root=pathlib.Path(__file__).resolve().parents[1]
 target=json.loads((root/'ci/modern-target.json').read_text())
 sdk=pathlib.Path((root/'build/sdk-path').read_text())
-subprocess.run(['make','package/ucode/host/compile','-j2','V=s'],cwd=sdk,check=True)
+ucode_packages=list(sdk.glob('package/feeds/*/ucode/Makefile'));assert len(ucode_packages)==1
+host_target=str(ucode_packages[0].parent.relative_to(sdk))+'/host/compile'
+subprocess.run(['make',host_target,'-j2','V=s'],cwd=sdk,check=True)
 ucode=sdk/'staging_dir/hostpkg/bin/ucode';assert ucode.exists()
 up=sdk/'feeds/luci/modules/luci-base'
 assert subprocess.check_output(['git','rev-parse','HEAD'],cwd=sdk/'feeds/luci',text=True).strip()==target['luci']

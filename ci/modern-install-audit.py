@@ -2,7 +2,9 @@
 """Offline APK transaction test; native LuCI dependency is a test-only stub."""
 import hashlib,json,os,pathlib,subprocess
 r=pathlib.Path(__file__).resolve().parents[1]
-apk=(r/'build/apk-tool').read_text();pkg=next((r/'dist/modern').glob('*.apk'))
+apk=(r/'build/apk-tool').read_text();
+sdk=pathlib.Path((r/'build/sdk-path').read_text());fakeroot=sdk/'staging_dir/host/bin/fakeroot'
+pkg=next((r/'dist/modern').glob('*.apk'))
 area=r/'build/apk-transaction';area.mkdir(parents=True,exist_ok=True)
 empty=area/'empty';empty.mkdir()
 old=area/'old';(old/'www/luci-static/materialluci').mkdir(parents=True)
@@ -16,7 +18,7 @@ libc=make('libc','999.0-r1',empty)
 previous=make('luci-theme-materialluci','1.0.0-r1',old)
 inst=area/'root'
 def transaction(*args):
- subprocess.run([apk,'--usermode','--root',str(inst),'--allow-untrusted','--no-network','--no-scripts',*args],check=True)
+ subprocess.run([str(fakeroot),apk,'--root',str(inst),'--allow-untrusted','--no-network','--no-scripts',*args],check=True)
 transaction('--initdb','add',str(dep),str(libc),str(previous))
 sentinel=inst/'www/luci-static/resources/core-test-sentinel.js'
 sentinel.parent.mkdir(parents=True,exist_ok=True);sentinel.write_text('preserve core')
