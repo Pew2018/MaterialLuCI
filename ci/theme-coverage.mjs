@@ -26,7 +26,7 @@ async function setup(page,design,theme,width){
   window.MaterialAppearance={activeDesign:design};root.style.setProperty("--md-sys-color-surface-container-highest",theme==="dark"?"#333333":"#eeeeee");
   root.style.setProperty("--md-sys-color-surface-container-high",theme==="dark"?"#292929":"#fafafa");
  },{design,theme});
- for(const file of ["material-web.js","mdc-linear-progress.js","mdc-controls.js","runtime.js","components.js","surfaces.js","feedback.js","controls.js","wait.js"])await page.addScriptTag({path:base+file});
+ for(const file of ["material-web.js","mdc-linear-progress.js","mdc-controls.js","mdc-textfield.js","runtime.js","components.js","surfaces.js","feedback.js","controls.js","wait.js"])await page.addScriptTag({path:base+file});
  await page.evaluate(()=>MaterialRuntime.start(document.body));
 }
 try{
