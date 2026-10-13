@@ -22,7 +22,8 @@ return view.extend({
    var f=E('form',{id:'contract-native-form'},[fieldset,E('input',{type:'reset',id:'contract-reset',value:'Reset'})]);
    var select=E('select',{id:'contract-native-select',name:'select'},[E('option',{value:'a'},'Alpha'),E('option',{value:'b'},'Beta')]);
    var radio=E('input',{id:'contract-radio',type:'radio',name:'native_radio',value:'native'});
-   f.append(select,radio);
+   window.contractDropdown=new ui.Dropdown('a',{a:'Alpha',b:'Beta'},{id:'contract-dropdown',optional:true});
+   f.append(select,radio,contractDropdown.render());
    window.contractResetCount=0;f.addEventListener('reset',()=>contractResetCount++);
    var table=E('table',{id:'contract-table',class:'table'},E('tr',{class:'tr'},E('td',{class:'td'},'Sample')));
    return E('div',{},[node,f,E('div',{class:'cbi-section',id:'contract-table-owner'},table)]);

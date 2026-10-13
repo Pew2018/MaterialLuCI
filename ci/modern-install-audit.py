@@ -3,7 +3,6 @@
 import hashlib,json,os,pathlib,subprocess,shutil
 r=pathlib.Path(__file__).resolve().parents[1]
 apk=(r/'build/apk-tool').read_text();
-fakeroot=shutil.which('fakeroot');assert fakeroot
 pkg=next((r/'dist/modern').glob('*.apk'))
 area=r/'build/apk-transaction';area.mkdir(parents=True,exist_ok=True)
 empty=area/'empty';empty.mkdir()
@@ -18,7 +17,8 @@ libc=make('libc','999.0-r1',empty)
 previous=make('luci-theme-materialluci','1.0.0-r1',old)
 inst=area/'root'
 def transaction(*args):
- subprocess.run([str(fakeroot),apk,'--root',str(inst),'--allow-untrusted','--no-network','--no-scripts',*args],check=True)
+ subprocess.run(['sudo',apk,'--root',str(inst),'--allow-untrusted','--no-network','--no-scripts',*args],check=True)
+ subprocess.run(['sudo','chown','-R',str(os.getuid())+':'+str(os.getgid()),str(inst)],check=True)
 transaction('--initdb','add',str(dep),str(libc),str(previous))
 sentinel=inst/'www/luci-static/resources/core-test-sentinel.js'
 sentinel.parent.mkdir(parents=True,exist_ok=True);sentinel.write_text('preserve core')

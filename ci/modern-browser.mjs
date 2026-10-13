@@ -49,7 +49,23 @@ try {
  assert.equal(await page.evaluate(()=>contractSelect.formvalue('theme')),'a');
  await page.evaluate(()=>contractSelect.getUIElement('theme').setValue('b'));
  assert.equal(await page.evaluate(()=>contractSelect.formvalue('theme')),'b');
- checks.push('actual form.Value validation, Flag one change, DynamicList and ListValue');
+ const dropdown=page.locator('#contract-dropdown');
+ await dropdown.click();
+ await page.waitForFunction(()=>document.getElementById('contract-dropdown').hasAttribute('open'));
+ await dropdown.evaluate(el=>{window.dropdownEvents=0;el.addEventListener('cbi-dropdown-change',()=>dropdownEvents++);});
+ await page.locator('#contract-dropdown > ul.dropdown li[data-value="b"]').click();
+ assert.equal(await page.evaluate(()=>contractDropdown.getValue()),'b');
+ const nativeDropdownEvents=await page.evaluate(async()=>{
+  const ui=await L.require('ui');
+  const widget=new ui.Dropdown('a',{a:'Alpha',b:'Beta'},{optional:true}),root=widget.render();
+  widget.openDropdown(root);
+  let count=0;root.addEventListener('cbi-dropdown-change',()=>count++);
+  widget.toggleItem(root,root.querySelector('li[data-value="b"]'));
+  return count;
+ });
+ assert.equal(await page.evaluate(()=>dropdownEvents),nativeDropdownEvents);
+ assert.equal(await dropdown.locator('.ml-mdc-select').count(),0);
+ checks.push('actual form.Value validation, Flag one change, DynamicList, ListValue and native Dropdown');
  await page.evaluate(()=>document.getElementById('contract-fieldset').disabled=true);
  await page.waitForFunction(()=>document.getElementById('contract-field').matches(':disabled')&&document.getElementById('contract-field').closest('.ml-text-field').classList.contains('mdc-text-field--disabled'));
  await page.evaluate(()=>document.getElementById('contract-fieldset').disabled=false);
