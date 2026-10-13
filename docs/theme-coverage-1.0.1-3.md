@@ -16,7 +16,7 @@ Baseline: 111ca308ec56f1f0aaa6ce7761d16843a70a2a81. Source: theme/root. Duplicat
 | Tabs/cards/SectionValue | Existing native tabs, surface preparation and scroll wrappers retained | Existing UI and lifecycle contracts |
 | Modal dimensions | Configuration-specific width and bounded minimum height; intrinsic short dialogs unchanged; original scroll surface retained | Two-tab/long dependent content shapes, real dimensions; no layout measuring loop |
 | Progress | View + modal bypass wavy adapter, official MDC 4px; modal 16px bottom inset with reserved 36px; general tasks retain wavy | Real bundled constructors/animation/destruction, repeated waits; existing failure/bfcache checks |
-| Sorting | Native handle/above/below/flash/temporary preview CSS only; no replacement drag listeners | Pinned native desktop methods call map.data.move and preserve actual DOM order; physical touch performance unverified |
+| Sorting | Native handle/above/below/flash/temporary preview CSS; inert cloned preview excluded from feedback construction; no replacement drag listeners | Pinned native desktop methods call map.data.move and preserve actual DOM order; synthetic native touch preview/removal with unchanged ripple instance count; physical touch performance unverified |
 | Typography/icons | System/CJK fallbacks, removal of more white halo, local path close glyph; native selection marks retain roles | CSS/font-stack record at fixed DPR/scale; no claim of actual Roboto availability or uniform OS rasterization |
 | Tooltip/errors/log/notifications/native progress | Existing role-specific tokens and adapters kept | Existing scoped tests; unknown third-party views not exhaustively validated |
 
