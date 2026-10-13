@@ -77,9 +77,9 @@
  }
  function syncLuCI(){
   const root=document.getElementById("modal_overlay"),panel=root?.querySelector(":scope > .modal");
-  if(!root||!panel){if(root)dialogs.get(root)?.destroy();return;}
+  if(!root||!panel){if(root){root.classList.remove("ml-changes-overlay");dialogs.get(root)?.destroy();}return;}
   const active=document.body.classList.contains("modal-overlay-active"),current=dialogs.get(root);
-  if(!active){current?.destroy();return;}
+  if(!active){panel.classList.remove("ml-changes-dialog");root.classList.remove("ml-changes-overlay");current?.destroy();return;}
   for(const cls of ["mdc-dialog__container","mdc-dialog__surface","mdc-dialog__content"])if(!panel.classList.contains(cls))panel.classList.add(cls);
   const changeReview=panel.matches(".uci-dialog")&&!!panel.querySelector(".uci-change-list,.uci-change-legend");
   panel.classList.toggle("ml-changes-dialog",changeReview);root.classList.toggle("ml-changes-overlay",changeReview);
