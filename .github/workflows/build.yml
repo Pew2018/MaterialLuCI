@@ -61,7 +61,7 @@ jobs:
           manifest={k:meta[k] for k in ("name","version","architecture","target")}
           manifest.update(commit=os.environ["SOURCE_SHA"],branch=os.environ["SOURCE_BRANCH"],run_id=os.environ["GITHUB_RUN_ID"],ipk=audit["ipk"],ipk_sha256=audit["ipk_sha256"],resource_cache=audit["resource_cache"],checks=audit["checks"])
           pathlib.Path("dist/build-manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
-          name=f'MaterialLuCI-{meta["version"]}-{meta["architecture"]}-{os.environ["SOURCE_SHA"][:12]}'
+          name=f'MaterialLuCI-lua-{meta["version"]}-{meta["architecture"]}-{os.environ["SOURCE_SHA"][:12]}'
           with open(os.environ["GITHUB_OUTPUT"],"a") as out:out.write("name="+name+"\n")
           with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as out:
               out.write("## Installable package\n\n")
@@ -87,7 +87,16 @@ jobs:
           python3 ci/modern-sdk.py
       - name: Audit real modern APK
         if: github.ref_name == 'feature/modern-luci'
-        run: python3 ci/modern-apk-audit.py
+        id: modern
+        run: |
+          python3 ci/modern-apk-audit.py
+          python3 ci/modern-install-audit.py
+          python3 - <<'PY'
+          import json,os,pathlib
+          m=json.loads(pathlib.Path("dist/modern/build-manifest.json").read_text())
+          name=f'MaterialLuCI-ucode-{m["version"]}-OpenWrt-{m["target"]["openwrt"]}-{m["architecture"]}-{m["commit"][:12]}'
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f:f.write("name="+name+"\n")
+          PY
       - name: Validate modern templates and representative native contracts
         if: github.ref_name == 'feature/modern-luci'
         run: |
@@ -101,7 +110,7 @@ jobs:
         if: github.ref_name == 'feature/modern-luci'
         uses: actions/upload-artifact@v4
         with:
-          name: MaterialLuCI-ucode-OpenWrt-25.12.5-${{ env.SOURCE_SHA }}
+          name: ${{ steps.modern.outputs.name }}
           path: dist/modern/*
           if-no-files-found: error
           retention-days: 30

@@ -9,7 +9,8 @@ LUCI_MINIFY_CSS:=0
 LUCI_MINIFY_LUA:=0
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
-PKG_MAINTAINER:=Patrick <Pew2018@users.noreply.github.com>
+LUCI_URL:=https://github.com/Pew2018/MaterialLuCI
+LUCI_MAINTAINER:=Patrick <Pew2018@users.noreply.github.com>
 
 define Package/luci-theme-materialluci/postinst
 #!/bin/sh

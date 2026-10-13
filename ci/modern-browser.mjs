@@ -5,6 +5,7 @@ const browser=await chromium.launch({headless:true});
 const base='http://127.0.0.1:8766',checks=[],errors=[];
 try {
  const page=await browser.newPage({viewport:{width:390,height:844}});
+ await page.addInitScript(()=>{if(!localStorage.getItem('materialluci-design'))localStorage.setItem('materialluci-design','classic');});
  page.on('pageerror',e=>{errors.push(e.message);console.error(e);});
  let release;
  await page.route('**/contract-ready',r=>{release=()=>r.fulfill({status:200,body:'ready'});});
