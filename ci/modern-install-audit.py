@@ -16,7 +16,7 @@ libc=make('libc','999.0-r1',empty)
 previous=make('luci-theme-materialluci','1.0.0-r1',old)
 inst=area/'root'
 def transaction(*args):
- subprocess.run([apk,'--root',str(inst),'--allow-untrusted','--no-network','--no-scripts',*args],check=True)
+ subprocess.run([apk,'--usermode','--root',str(inst),'--allow-untrusted','--no-network','--no-scripts',*args],check=True)
 transaction('--initdb','add',str(dep),str(libc),str(previous))
 sentinel=inst/'www/luci-static/resources/core-test-sentinel.js'
 sentinel.parent.mkdir(parents=True,exist_ok=True);sentinel.write_text('preserve core')
