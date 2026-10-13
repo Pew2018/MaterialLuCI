@@ -65,7 +65,7 @@ body .ml-design-options button[aria-pressed=true]{background:var(--action-tonal)
 }
 :root[data-design=m3e] body .ml-native-button{border-radius:24px}
 :root[data-design=m3e] body :is(#maincontent,#modal_overlay) :is(.cbi-section-table,.table,table,.cbi-dynlist) :is(button.cbi-button,a.cbi-button,a.btn,input.cbi-button):not(.cbi-dropdown){
- min-width:36px;width:auto;min-height:36px;padding:8px 12px;border-radius:18px
+ min-width:36px;width:auto;min-height:36px;padding:8px 12px;border:0;border-radius:18px
 }
 :root[data-design=m3e] body :is(.cbi-button-add,.cbi-button-up,.cbi-button-down,.ml-icon-button,.ml-text-field button){border-radius:50%;min-width:36px;min-height:36px;padding:8px}
 :root[data-design=m3e] body :is(#maincontent,#modal_overlay) .text-action{border-radius:20px;min-height:40px;padding:10px 12px}

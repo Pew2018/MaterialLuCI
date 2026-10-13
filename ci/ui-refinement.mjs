@@ -121,7 +121,7 @@ try{
   if(design==="m3e"){
    for(const sel of ["#plain","#link","#submit","#reset"])assert.equal(await page.locator(sel).evaluate(n=>getComputedStyle(n).borderRadius),"24px");
    assert.ok(await page.locator("#remove").evaluate(n=>n.getBoundingClientRect().width)<112,"table deletion remains compact");
-   assert.equal(await page.locator("#remove").evaluate(n=>n.getBoundingClientRect().height),36,"compact rule must outrank ordinary 48px geometry");
+   assert.equal(await page.locator("#remove").evaluate(n=>n.getBoundingClientRect().height),36,"compact borderless rule must outrank ordinary 48px geometry");
    await page.evaluate(()=>document.getElementById("fieldset").disabled=true);
    await page.waitForFunction(()=>document.querySelector("#plain md-ripple").disabled);
    await page.evaluate(()=>document.getElementById("fieldset").disabled=false);
