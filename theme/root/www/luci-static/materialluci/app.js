@@ -199,7 +199,7 @@
   const design=node("div",{class:"ml-mode-options ml-design-options",role:"group","aria-label":t("界面风格","Interface style")});
   const pending=node("small",{class:"ml-design-notice",role:"status"});
   const syncDesign=()=>{design.querySelectorAll("[data-design-option]").forEach(el=>el.setAttribute("aria-pressed",String(el.dataset.designOption===appearance.prefs.design)));pending.textContent=appearance.prefs.design!==appearance.activeDesign?t("已保存。下次打开页面时生效；当前未保存的设置会保留。","Saved. Applies on the next page load; unsaved settings remain on this page."):t("仅在此浏览器生效。","Applies in this browser only.");};
-  for(const [key,label] of [["classic","MaterialLuCI Classic"],["m3e",t("M3E（实验）","M3E (experimental)")]]){const option=MaterialComponents.button(label,()=>{appearance.set("design",key);syncDesign();},"ml-mode-option");option.dataset.designOption=key;design.append(option);}
+  for(const [key,label] of [["classic","Classic"],["m3e","M3E"]]){const option=MaterialComponents.button(label,()=>{appearance.set("design",key);syncDesign();},"ml-mode-option");option.dataset.designOption=key;design.append(option);}
   general.append(row(t("界面风格","Interface style"),t("选择控件与表面的设计风格。","Choose the design of controls and surfaces."),design),pending);syncDesign();
   const modeLabels={system:t("跟随系统","System"),light:t("浅色","Light"),dark:t("深色","Dark")};
   const mode=node("div",{class:"ml-mode-options",role:"radiogroup","aria-label":t("显示模式","Display mode")});

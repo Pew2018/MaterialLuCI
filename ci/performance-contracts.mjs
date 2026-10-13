@@ -280,7 +280,18 @@ function fixture(){
  f.window.dispatchEvent({type:"pageshow",persisted:true});f.drain();assert.equal(replacement.style.getPropertyValue("color"),"","bfcache must restore natural theme ink");
 }
 {
- const f=fixture();f.load("runtime.js");let fields=0,buttons=0,ranges=0;
+ {
+ const f=fixture();f.load("runtime.js");let fields=0;
+ f.window.MaterialRuntime.register({selector:"input,select,button",enhance(){fields++;}});
+ f.window.MaterialRuntime.start(f.document.body);f.drain();
+ const leaf=f.document.createElement("span");let leafQueries=0;const query=leaf.querySelectorAll.bind(leaf);
+ leaf.querySelectorAll=selector=>{leafQueries++;return query(selector);};
+ f.document.body.append(leaf);f.drain();assert.equal(leafQueries,0,"empty leaf updates should skip descendant selector scans");
+ f.document.body.append(f.document.createElement("input"));f.drain();assert.equal(fields,1,"direct dynamic controls are still discovered");
+ const wrapper=f.document.createElement("div");wrapper.append(f.document.createElement("button"));f.document.body.append(wrapper);f.drain();
+ assert.equal(fields,2,"nested dynamic controls are still discovered");
+}
+const f=fixture();f.load("runtime.js");let fields=0,buttons=0,ranges=0;
  f.window.MaterialRuntime.register({selector:"input,select",enhance(){fields++;}});
  f.window.MaterialRuntime.register({selector:"button",enhance(){buttons++;}});
  f.window.MaterialRuntime.register({range:true,discoverSelector:"#view,.alert-message.danger",enhance(){ranges++;}});

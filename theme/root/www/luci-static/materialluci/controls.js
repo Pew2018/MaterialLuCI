@@ -81,10 +81,16 @@
   const active=document.body.classList.contains("modal-overlay-active"),current=dialogs.get(root);
   if(!active){current?.destroy();return;}
   for(const cls of ["mdc-dialog__container","mdc-dialog__surface","mdc-dialog__content"])if(!panel.classList.contains(cls))panel.classList.add(cls);
-  // Move the existing primary action, keeping its node and native callback.
-  const actions=panel.matches(".uci-dialog")?panel.querySelector(":scope > .cbi-section > .right"):null;
-  const apply=actions?.querySelector("button.cbi-button-positive.important");
-  if(apply&&actions.lastElementChild!==apply)actions.append(apply);
+  const changeReview=panel.matches(".uci-dialog")&&!!panel.querySelector(".uci-change-list,.uci-change-legend");
+  panel.classList.toggle("ml-changes-dialog",changeReview);root.classList.toggle("ml-changes-overlay",changeReview);
+  // Reorder existing action groups only; preserve LuCI nodes and combo internals.
+  const actions=changeReview?panel.querySelector(":scope > .cbi-section > .right,:scope > .cbi-section > .button-row,:scope > .button-row"):null;
+  const apply=actions?.querySelector("button.cbi-button-positive.important"),undo=actions?.querySelector("button.cbi-button-reset");
+  if(actions?.classList.contains("button-row")&&apply&&undo){
+   const directChild=node=>{while(node&&node.parentElement!==actions)node=node.parentElement;return node||null;};
+   const applyGroup=directChild(apply),undoGroup=directChild(undo);
+   if(applyGroup&&undoGroup&&applyGroup!==undoGroup&&undoGroup.nextElementSibling!==applyGroup)actions.insertBefore(undoGroup,applyGroup);
+  }else if(actions&&apply&&apply.parentElement===actions&&actions.lastElementChild!==apply)actions.append(apply);
   const title=panel.querySelector(":scope > h4,:scope > h3");
   if(title){if(!title.id)title.id="ml-luci-modal-title";MaterialRuntime.setAttr(panel,"aria-labelledby",title.id);}
   if(current&&current.panel!==panel)current.destroy();
@@ -93,7 +99,7 @@
  let scheduled=false,modalActive=document.body.classList.contains("modal-overlay-active"),observedOverlay=null;
  function scheduleModal(){if(!scheduled){scheduled=true;queueMicrotask(()=>{scheduled=false;syncLuCI();});}}
  const modalObserver=new MutationObserver(records=>{
-  if(records.some(r=>r.target===observedOverlay||[...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&n.matches?.(".modal,h3,h4"))))scheduleModal();
+  if(records.some(r=>r.target===observedOverlay||r.target.matches?.(".modal")||[...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&n.matches?.(".modal,.uci-change-list,.uci-change-legend,h3,h4"))))scheduleModal();
  });
  function observeOverlay(root){
   if(root===observedOverlay)return;

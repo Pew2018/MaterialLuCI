@@ -124,3 +124,9 @@ body .ml-design-options button[aria-pressed=true]{background:var(--action-tonal)
 /* Drawer feedback is bounded by the entire rectangular toggle. */
 :root[data-design=m3e] body button.ml-nav-parent>md-ripple{border-radius:0;--md-ripple-hover-opacity:0}
 :root[data-design=m3e] [data-ml-progress-engine=m3e][hidden] .ml-wave-active{animation:none}
+
+:root[data-design=m3e] body.modal-overlay-active #modal_overlay>.modal.ml-changes-dialog{--ml-changes-surface:var(--md-sys-color-surface-container-high);color:var(--md-sys-color-on-surface);border-radius:28px}
+:root[data-design=m3e] #modal_overlay .ml-changes-dialog>h4,:root[data-design=m3e] #modal_overlay .ml-changes-dialog>h3{font:400 24px/32px var(--md-sys-typescale-headline-small-font,Roboto,"Noto Sans",system-ui,sans-serif);color:var(--md-sys-color-on-surface);background:var(--ml-changes-surface)}
+:root[data-design=m3e] #modal_overlay .ml-changes-dialog>.cbi-section>strong,:root[data-design=m3e] #modal_overlay .ml-changes-dialog .uci-change-list h5{color:var(--md-sys-color-on-surface-variant)}
+:root[data-design=m3e] #modal_overlay .ml-changes-dialog .button-row,:root[data-design=m3e] #modal_overlay .ml-changes-dialog>.cbi-section>.right{background:var(--ml-changes-surface)}
+:root[data-design=m3e] #modal_overlay .ml-changes-dialog .button-row .cbi-button-positive.important,:root[data-design=m3e] #modal_overlay .ml-changes-dialog .right .cbi-button-positive.important{border-radius:24px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary)}

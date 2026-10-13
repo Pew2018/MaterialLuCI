@@ -20,7 +20,13 @@
    const active=adapters.filter(a=>!initial||a.initial!==false);
    const selectors=[...new Set(active.map(a=>a.discoverSelector||a.selector).filter(Boolean))];
    const selector=selectors.join(",");
-   const candidates=selector?[...(root.matches?.(selector)?[root]:[]),...root.querySelectorAll(selector)].filter(n=>!decorative(n)):[];
+   if(!selector)return;
+   const matchesRoot=!!root.matches?.(selector);
+   // Polling often replaces a leaf status node. It cannot contain controls.
+   // Still test the root itself so newly inserted native controls are found.
+   if(!matchesRoot&&!root.children?.length)return;
+   const candidates=(matchesRoot?[root]:[]).concat(root.children?.length?[...root.querySelectorAll(selector)]:[]).filter(n=>!decorative(n));
+   if(!candidates.length)return;
    for(const a of active){
     const gate=a.discoverSelector||a.selector;
     const nodes=gate?candidates.filter(n=>n.matches(gate)):[];
