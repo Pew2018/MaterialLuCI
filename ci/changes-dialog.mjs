@@ -15,7 +15,7 @@ function markup(count,actions){
  const buttons=actions==="right"
   ?'<div class="right"><button class="btn cbi-button" data-action="close">Close</button><button class="btn cbi-button cbi-button-positive important" data-action="apply">Save &amp; Apply</button><button class="btn cbi-button-reset" data-action="undo">Revert</button></div>'
   :'<div class="button-row"><button class="btn cbi-button" data-action="close">Close</button><div class="cbi-combo-button"><button class="btn cbi-button cbi-button-positive important" data-action="apply">Save &amp; Apply</button><button class="btn cbi-button" data-action="menu" aria-label="More apply options">▾</button><div class="dropdown" hidden>Apply unchecked</div></div><button class="btn cbi-button-reset" data-action="undo">Revert</button></div>';
- const groups=count>4?'<h5>/etc/config/network</h5>'+rows.slice(0,4).join("")+'<h5>/etc/config/dhcp</h5>'+rows.slice(4).join(""):'<h5>/etc/config/network</h5>'+rows;
+ const groups=count>4?'<h5>/etc/config/network</h5>'+rows.slice(0,4).join("")+'<h5>/etc/config/dhcp</h5>'+rows.slice(4).join(""):'<h5>/etc/config/network</h5>'+rows.join("");
  return '<div id="modal_overlay"><div class="modal uci-dialog" role="dialog"><h4>Configuration / Changes</h4><div class="cbi-section"><strong>Legend:</strong><div class="uci-change-legend"><div class="uci-change-legend-label"><ins>&nbsp;</ins> Section added</div><div class="uci-change-legend-label"><del>&nbsp;</del> Section removed</div><div class="uci-change-legend-label"><var><ins>&nbsp;</ins></var> Option changed</div><div class="uci-change-legend-label"><var><del>&nbsp;</del></var> Option removed</div></div><br><div class="uci-change-list">'+groups+'</div><br>'+buttons+'</div></div></div>';
 }
 try{
