@@ -18,8 +18,17 @@ try{
    const s=document.documentElement.style;
    for(const [k,v] of Object.entries({"primary":"#6750a4","primary-container":"#eaddff","surface-container-highest":"#e6e0e9"}))s.setProperty("--md-sys-color-"+k,v);
   },design);
-  for(const file of ["material-web.js","mdc-linear-progress.js","mdc-controls.js","runtime.js","components.js","surfaces.js","feedback.js","wait.js"])await page.addScriptTag({path:base+file});
-  await page.evaluate(()=>MaterialRuntime.start(document.body));
+  for(const file of ["palette-m3.js","palette.js","material-web.js","mdc-linear-progress.js","mdc-controls.js","runtime.js","components.js","surfaces.js","feedback.js","wait.js"])await page.addScriptTag({path:base+file});
+  await page.evaluate(()=>{
+   window.fixtureAppearance=(theme,cards)=>{
+    const root=document.documentElement,dark=theme==="dark",m3=MaterialAppearance.activeDesign==="m3e"?MaterialM3Palette.generate("#42A5F5",dark):null,p=m3?m3.legacy:MaterialPalette.generate("#42A5F5",dark);
+    if(m3){for(const [k,v] of Object.entries(m3.system))root.style.setProperty("--md-sys-color-"+k.replace(/[A-Z]/g,c=>"-"+c.toLowerCase()),v);for(const [k,v] of Object.entries(m3.surfaces))root.style.setProperty("--"+k,v);}
+    const mapping={accentInk:"accent-ink",controlAccent:"control-accent",controlStrong:"control-strong",actionPrimary:"action-fill",onActionPrimary:"on-accent",actionPrimaryPressed:"action-pressed",actionSecondary:"action-tonal",onActionSecondary:"on-action-tonal",actionSecondaryPressed:"tonal-pressed"};
+    for(const [k,v] of Object.entries(mapping))root.style.setProperty("--"+v,p[k]);
+    root.dataset.theme=theme;root.dataset.cards=cards;
+   };
+   fixtureAppearance("light","true");MaterialRuntime.start(document.body);
+  });
   await page.waitForFunction(()=>document.querySelector(".ml-view-progress [data-ml-progress-engine=mdc]"));
   assert.equal(await page.locator(".ml-view-progress").evaluate(n=>getComputedStyle(n).height),"4px");
   assert.equal(await page.locator(".ml-view-progress svg").count(),0);
@@ -70,7 +79,7 @@ try{
   assert.equal(await page.locator("#tab.ml-card-surface").count(),1);
   const radius=design==="m3e"?"16px":"2px";
   for(const theme of ["light","dark"])for(const cards of ["true","false"]){
-   await page.evaluate(({theme,cards})=>{document.documentElement.dataset.theme=theme;document.documentElement.dataset.cards=cards;},{theme,cards});
+   await page.evaluate(({theme,cards})=>fixtureAppearance(theme,cards),{theme,cards});
    for(const sel of ["#ordinary","#plot",".ml-table-scroll","#inner","#tab"]){
     const s=await page.locator(sel).evaluate(n=>{const s=getComputedStyle(n);return {radius:s.borderTopLeftRadius,bg:s.backgroundColor,shadow:s.boxShadow};});
     assert.equal(s.radius,cards==="true"?radius:"0px",sel);
@@ -112,6 +121,7 @@ try{
   if(design==="m3e"){
    for(const sel of ["#plain","#link","#submit","#reset"])assert.equal(await page.locator(sel).evaluate(n=>getComputedStyle(n).borderRadius),"24px");
    assert.ok(await page.locator("#remove").evaluate(n=>n.getBoundingClientRect().width)<112,"table deletion remains compact");
+   assert.equal(await page.locator("#remove").evaluate(n=>n.getBoundingClientRect().height),36,"compact rule must outrank ordinary 48px geometry");
    await page.evaluate(()=>document.getElementById("fieldset").disabled=true);
    await page.waitForFunction(()=>document.querySelector("#plain md-ripple").disabled);
    await page.evaluate(()=>document.getElementById("fieldset").disabled=false);
