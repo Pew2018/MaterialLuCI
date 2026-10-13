@@ -92,7 +92,14 @@ table tr+tr td,.table .tr+.tr .td{border-top:1px solid var(--divider)}
 .cbi-section-table .cbi-value-title{max-width:none}
 .cbi-section-table :is(td,.td) :is(input,select){min-width:96px;max-width:240px}
 .cbi-section-actions{white-space:nowrap}
-.cbi-section-actions .cbi-button{margin:3px}
+.cbi-section-actions .cbi-button{margin:0}
+.cbi-section-actions>div{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px}
+/* DummyValue lease status is a complete data group, not a scalar label/field. */
+body .cbi-value.ml-data-section{display:block;width:100%;min-width:0}
+body .ml-data-section>.cbi-value-title{display:block;float:none;width:auto;max-width:none;text-align:left;margin:0 0 12px;padding:0;font-weight:500;color:var(--ink)}
+body .ml-data-section>.cbi-value-field{display:block;width:100%;min-width:0}
+body .ml-data-section .ml-table-scroll{width:100%;max-width:100%;margin:0}
+
 .cbi-section-table-row[data-title]::before,.cbi-section-table-titles.named::before{color:var(--ink);font-weight:500}
 input:where(:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=reset]):not([type=file])),textarea,select{max-width:100%;width:100%;min-height:40px;padding:8px 4px;color:var(--ink);background:transparent;border:0;border-bottom:1px solid var(--muted);border-radius:0;font-size:14px;line-height:1.4;box-shadow:none;scroll-margin:80px 0 24px}
 textarea{font:13px/1.5 ui-monospace,monospace;background:var(--log);padding:12px;resize:vertical}
@@ -145,7 +152,9 @@ body .cbi-dynlist[disabled]>.item::after,body fieldset:disabled .cbi-dynlist>.it
 @media(forced-colors:active){body .cbi-dynlist>.item::after{background:ButtonText;forced-color-adjust:none}}
 body .cbi-dropdown>.more{font:inherit;color:var(--muted);text-shadow:none}
 body .cbi-dropdown>ul>li[display]:not([display="0"]){border-left-color:var(--divider)}
-body .cbi-dropdown[open]>ul.dropdown{max-width:min(600px,calc(var(--ml-vv-width) - 40px));overflow-x:hidden}
+body .cbi-value-field>.cbi-dropdown:not(.btn):not(.cbi-button){width:100%;max-width:480px}
+body .cbi-dropdown[open]>ul.dropdown{max-width:min(560px,calc(var(--ml-vv-width) - 40px));overflow-x:hidden}
+@media(hover:hover){body .cbi-dropdown[open]>ul.dropdown{width:max-content;min-width:max(100%,min(320px,calc(var(--ml-vv-width) - 40px)))}}
 body .cbi-dropdown[open]>ul.dropdown>li{white-space:normal;overflow-wrap:anywhere;text-overflow:clip;background-image:none}
 body .cbi-dropdown[open]>ul.dropdown>li>label{min-width:0;white-space:normal;overflow-wrap:anywhere}
 body .cbi-dropdown input[type=checkbox],body .cbi-dropdown input[type=radio]{accent-color:var(--control-accent)}
@@ -197,6 +206,7 @@ body .ml-choice{--button-bg:transparent;--button-hover-bg:var(--hover);--button-
 .ml-group+.ml-group{margin-top:12px;border-top:1px solid var(--divider)}
 .ml-swatches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 8px;padding:8px 0}
 body .ml-swatch-item{--button-bg:transparent;--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed);--button-ink:var(--ink);min-height:64px;padding:0;display:flex;flex-direction:column;align-items:center;gap:6px;background:transparent;color:var(--ink);font-weight:400;box-shadow:none;font-size:11px}
+.ml-swatch[data-selected=true]::after{content:"";width:20px;height:20px;background:currentColor;-webkit-mask:url("icons/check.svg") center/20px no-repeat;mask:url("icons/check.svg") center/20px no-repeat}
 .ml-swatch{width:36px;height:36px;border-radius:2px;border:1px solid var(--divider);display:grid;place-items:center;font-size:19px}
 .ml-field-error{min-height:18px;font-size:12px;color:var(--danger);margin-top:4px}
 .ml-footer{max-width:none;margin:24px 32px 0;padding:12px 0;border-top:1px solid var(--divider);color:var(--muted);font-size:12px}
@@ -440,12 +450,12 @@ body :is(#maincontent,#modal_overlay) .ifacebox .ifacebox-body{border-color:var(
 #ml-appearance .ml-group+.ml-group{margin-top:16px;border-top:1px solid var(--divider)}
 #ml-appearance h2{font-size:13px;font-weight:500;line-height:1.25;padding:16px 0 8px;margin:0}
 #ml-appearance .ml-setting-row{min-height:68px;gap:12px;flex-wrap:nowrap;padding:10px 0}
-#ml-appearance .ml-row-copy strong{font-size:16px;font-weight:400;line-height:1.3}
+#ml-appearance .ml-row-copy strong{font-size:14px;font-weight:400;line-height:1.3}
 #ml-appearance .ml-row-copy small{font-size:13.5px;line-height:1.35;margin-top:3px}
 #ml-appearance [data-group=general]>.ml-setting-row:has(>.ml-mode-options){flex-wrap:wrap}
 .ml-mode-options{display:flex;flex:1 1 100%;min-width:0;gap:8px;flex-wrap:wrap}
-body .ml-mode-option{flex:1;min-height:48px;padding:10px 12px;white-space:nowrap;background:transparent;color:var(--ink);box-shadow:none;border:1px solid var(--divider)}
-body .ml-mode-option[aria-checked=true]{background:var(--action-tonal);color:var(--on-action-tonal);border-color:var(--control-accent)}
+body .ml-mode-option{--button-bg:transparent;--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed);--button-ink:var(--ink);flex:1;min-width:0;min-height:48px;padding:10px 12px;border-radius:2px;white-space:normal;background:transparent;color:var(--ink);box-shadow:none;border:1px solid var(--divider);line-height:20px}
+body .ml-mode-option:is([aria-checked=true],[aria-pressed=true]){--button-bg:var(--action-tonal);--button-ink:var(--on-action-tonal);background:var(--action-tonal);color:var(--on-action-tonal);border-color:var(--control-accent)}
 #ml-appearance .ml-swatches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 8px;padding:8px 0}
 #ml-appearance .ml-swatch-item{min-width:0;min-height:68px;line-height:1.4}
 #ml-appearance [data-group=custom]>label{display:block;font-size:14px;line-height:1.4;margin:10px 0 6px}
@@ -453,14 +463,14 @@ body .ml-mode-option[aria-checked=true]{background:var(--action-tonal);color:var
 @media(min-width:1024px){
  #ml-appearance-entry>summary{display:block;list-style:none;pointer-events:none}
  #ml-appearance-entry>summary::-webkit-details-marker{display:none}
- #ml-appearance{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"general ranges" "oneplus material" "custom custom";gap:24px 32px;padding:8px 0 24px}
+ #ml-appearance{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"general ranges" "classic material" "custom custom";gap:24px 32px;padding:8px 0 24px}
  #ml-appearance [data-group=general]{grid-area:general}
  #ml-appearance [data-group=ranges]{grid-area:ranges}
- #ml-appearance [data-group=oneplus]{grid-area:oneplus}
+ #ml-appearance [data-group=classic]{grid-area:classic}
  #ml-appearance [data-group=material]{grid-area:material}
  #ml-appearance [data-group=custom]{grid-area:custom}
  #ml-appearance .ml-group+.ml-group{margin-top:0;border:0}
- #ml-appearance .ml-group[data-group=oneplus],#ml-appearance .ml-group[data-group=material],#ml-appearance .ml-group[data-group=custom]{border-top:1px solid var(--divider)}
+ #ml-appearance .ml-group[data-group=classic],#ml-appearance .ml-group[data-group=material],#ml-appearance .ml-group[data-group=custom]{border-top:1px solid var(--divider)}
  #ml-appearance [data-group=custom]>.ml-text-field{max-width:360px}
 }
 /* Secondary destructive actions use the same MD1 geometry as other actions. */
@@ -584,9 +594,12 @@ body #modal_overlay>.modal.alert-message{
 /* Configuration tables and package logs retain the established wide layout. */
 body #modal_overlay>.modal:is(.cbi-modal,.uci-dialog):not(.alert-message),
 body #modal_overlay>.modal:has(.cbi-map,.cbi-section,.cbi-tblsection,pre):not(.alert-message){max-width:min(900px,100%)}
-/* Stable configuration geometry; short confirmation/status dialogs retain intrinsic size. */
-body.modal-overlay-active #modal_overlay>.modal:is(.cbi-modal,.uci-dialog):not(.alert-message),
-body.modal-overlay-active #modal_overlay>.modal:has(.cbi-map,.cbi-tblsection,[data-tab-title]):not(.alert-message){width:min(760px,100%);min-height:min(420px,calc(var(--ml-vv-height) - 48px));height:auto}
+/* Small forms and change summaries size to content. Only native tab groups
+   reserve bounded space so switching tabs does not collapse the surface. */
+body.modal-overlay-active #modal_overlay>.modal.cbi-modal:not(.alert-message),
+body.modal-overlay-active #modal_overlay>.modal:has(.cbi-map):not(.alert-message){width:min(600px,100%);min-height:0;height:auto}
+body.modal-overlay-active #modal_overlay>.modal.uci-dialog:not(.alert-message){width:min(720px,100%);min-height:0;height:auto}
+body.modal-overlay-active #modal_overlay>.modal:has([data-tab-title]):not(.alert-message){width:min(760px,100%);min-height:min(360px,calc(var(--ml-vv-height) - 48px));height:auto}
 #modal_overlay .uci-dialog>.cbi-section>.right{align-items:center;padding:12px 0 0}
 #modal_overlay .uci-dialog>.cbi-section>.right>button{margin:0;min-height:48px;line-height:20px}
 #modal_overlay .uci-dialog>.cbi-section>.right>button.btn:not(.cbi-button){--button-bg:transparent;--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed);--button-ink:var(--accent-ink);background:transparent;color:var(--accent-ink)}
@@ -963,7 +976,7 @@ body .ml-brand-input:disabled{color:var(--disabled);border-bottom-color:var(--di
 .ml-brand-warning[hidden]{display:none}
 #ml-appearance .ml-group[data-group=identity]{min-width:0}
 @media(min-width:1024px){
- #ml-appearance{grid-template-areas:"general ranges" "oneplus material" "custom custom" "identity identity"}
+ #ml-appearance{grid-template-areas:"general ranges" "classic material" "custom custom" "identity identity"}
  #ml-appearance [data-group=identity]{grid-area:identity}
  #ml-appearance .ml-group[data-group=identity]{border-top:1px solid var(--divider)}
 }
@@ -992,6 +1005,9 @@ body .ml-sidebar button.ml-nav-parent.mdc-button>.ml-nav-chevron{
 
 /* Restore actions keep their intrinsic width before and after MDC attaches. */
 .ml-brand-controls>.text-action{flex:0 0 auto}
+.ml-brand-controls>.ml-mdc-select{flex:1 1 auto;min-width:0}
+#ml-appearance :is(.ml-brand-controls>.ml-text-field,.ml-brand-controls>.ml-mdc-select){min-width:0;max-width:100%}
+
 
 /* LuCI sorting feedback. No drag/drop listeners or row reconstruction. */
 body .drag-handle{cursor:grab;color:var(--muted);touch-action:none}

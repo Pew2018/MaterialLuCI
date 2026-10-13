@@ -81,6 +81,10 @@
   const active=document.body.classList.contains("modal-overlay-active"),current=dialogs.get(root);
   if(!active){current?.destroy();return;}
   for(const cls of ["mdc-dialog__container","mdc-dialog__surface","mdc-dialog__content"])if(!panel.classList.contains(cls))panel.classList.add(cls);
+  // Move the existing primary action, keeping its node and native callback.
+  const actions=panel.matches(".uci-dialog")&&panel.querySelector(":scope > .cbi-section > .right");
+  const apply=actions?.querySelector("button.cbi-button-positive.important");
+  if(apply&&actions.lastElementChild!==apply)actions.append(apply);
   const title=panel.querySelector(":scope > h4,:scope > h3");
   if(title){if(!title.id)title.id="ml-luci-modal-title";MaterialRuntime.setAttr(panel,"aria-labelledby",title.id);}
   if(current&&current.panel!==panel)current.destroy();

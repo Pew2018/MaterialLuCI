@@ -107,7 +107,8 @@ try{
   assert.ok(positions.every(r=>r.h>=48&&r.w>0&&r.x>=0&&r.x+r.w<=width),"buttons inside viewport");
   const ink=await page.locator(".uci-change-list ins").first().evaluate(n=>({bg:getComputedStyle(n).backgroundColor,color:getComputedStyle(n).color,italic:getComputedStyle(n.parentElement).fontStyle}));
   assert.equal(ink.italic,"normal");assert.notEqual(ink.bg,ink.color);
-  await uciButtons.nth(1).click();await page.waitForFunction(()=>!document.querySelector("[data-indicator=uci-changes]"));assert.equal(backend.calls[0].checked,true);
+  await page.waitForFunction(()=>document.querySelector(".uci-dialog>.cbi-section>.right").lastElementChild.classList.contains("cbi-button-positive"));
+  await uciButtons.nth(2).click();await page.waitForFunction(()=>!document.querySelector("[data-indicator=uci-changes]"));assert.equal(backend.calls[0].checked,true);
   await page.evaluate(()=>savePage("dhcp",["add","new","host"]));
   // Browser reload reconstructs native indicator from persistent isolated backend.
   await setup(page,design,theme,width);

@@ -2,7 +2,7 @@ name: Scoped UI refinement regression
 on:
   push:
     branches: [feature/m3e-theme]
-    paths: ["theme/**", "ci/ui-refinement.mjs", "ci/theme-coverage.mjs", "ci/followup*.mjs", "ci/performance-contracts.mjs", ".github/workflows/ui-refinement.yml"]
+    paths: ["theme/**", "ci/ui-refinement.mjs", "ci/theme-coverage.mjs", "ci/user-feedback.mjs", "ci/followup*.mjs", "ci/performance-contracts.mjs", ".github/workflows/ui-refinement.yml"]
 permissions:
   contents: read
 jobs:
@@ -21,6 +21,30 @@ jobs:
       - run: node ci/ui-refinement.mjs
       - run: node ci/followup-regression.mjs
       - run: node ci/theme-coverage.mjs
+        if: ${{ !cancelled() }}
+      - uses: actions/checkout@v4
+        with:
+          repository: openwrt/luci
+          ref: e4c46338b196e486a88b1a75b78e283708c82bc4
+          path: luci-fixture
+          sparse-checkout: |
+            modules/luci-base/htdocs/luci-static/resources
+            applications/luci-app-opkg/htdocs/luci-static/resources
+            modules/luci-mod-status/htdocs/luci-static/resources
+            modules/luci-mod-system/htdocs/luci-static/resources
+      - uses: actions/checkout@v4
+        with:
+          repository: immortalwrt/luci
+          ref: 5829eabba50ec0afa17d2ee486bc90dc15180c34
+          path: immortal-fixture
+          sparse-checkout: modules/luci-mod-system/htdocs/luci-static/resources/view/system/flash.js
+      - name: Prepare actual LuCI widget regression
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y lua5.1
+          python3 ci/ipk-audit.py dist/*.ipk --sha "$GITHUB_SHA" --run "$GITHUB_RUN_ID" --out build/feedback-audit.json --extract build/unpacked --candidate
+          python3 ci/prepare.py
+      - run: node ci/user-feedback.mjs
         if: ${{ !cancelled() }}
       - uses: actions/upload-artifact@v4
         if: always()

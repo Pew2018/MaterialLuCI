@@ -198,9 +198,9 @@
   const general=group(t("界面","Appearance"));general.dataset.group="general";
   const design=node("div",{class:"ml-mode-options ml-design-options",role:"group","aria-label":t("界面风格","Interface style")});
   const pending=node("small",{class:"ml-design-notice",role:"status"});
-  const syncDesign=()=>{design.querySelectorAll("[data-design-option]").forEach(el=>el.setAttribute("aria-pressed",String(el.dataset.designOption===appearance.prefs.design)));pending.textContent=appearance.prefs.design!==appearance.activeDesign?t("已保存。下次打开页面时生效；当前未保存的设置会保留。","Saved. Applies on the next page load; unsaved settings remain on this page."):t("风格选择仅保存于当前浏览器。","Style selection is saved in this browser only.");};
-  for(const [key,label] of [["classic","Classic"],["m3e",t("M3E（实验）","M3E (experimental)")]]){const option=MaterialComponents.button(label,()=>{appearance.set("design",key);syncDesign();},"ml-mode-option");option.dataset.designOption=key;design.append(option);}
-  general.append(row(t("界面风格","Interface style"),t("共享原有导航与页面布局。","Shared navigation and page layout."),design),pending);syncDesign();
+  const syncDesign=()=>{design.querySelectorAll("[data-design-option]").forEach(el=>el.setAttribute("aria-pressed",String(el.dataset.designOption===appearance.prefs.design)));pending.textContent=appearance.prefs.design!==appearance.activeDesign?t("已保存。下次打开页面时生效；当前未保存的设置会保留。","Saved. Applies on the next page load; unsaved settings remain on this page."):t("仅在此浏览器生效。","Applies in this browser only.");};
+  for(const [key,label] of [["classic","MaterialLuCI Classic"],["m3e",t("M3E（实验）","M3E (experimental)")]]){const option=MaterialComponents.button(label,()=>{appearance.set("design",key);syncDesign();},"ml-mode-option");option.dataset.designOption=key;design.append(option);}
+  general.append(row(t("界面风格","Interface style"),t("选择控件与表面的设计风格。","Choose the design of controls and surfaces."),design),pending);syncDesign();
   const modeLabels={system:t("跟随系统","System"),light:t("浅色","Light"),dark:t("深色","Dark")};
   const mode=node("div",{class:"ml-mode-options",role:"radiogroup","aria-label":t("显示模式","Display mode")});
   for(const [key,label] of Object.entries(modeLabels)){
@@ -208,7 +208,7 @@
    if(option.tagName==="BUTTON")option.setAttribute("role","radio");else mode.setAttribute("role","group");option.setAttribute("aria-checked",String(key===appearance.prefs.mode));option.setAttribute("aria-pressed",String(key===appearance.prefs.mode));mode.append(option);
   }
   general.append(row(t("显示模式","Display mode"),t("仅改变当前浏览器的界面外观。","Changes appearance in this browser only."),mode));
-  general.append(prefSwitch("cards",t("分组卡片","Grouped cards"),t("为设置分组添加小圆角表面。","Use small cornered surfaces for groups.")));
+  general.append(prefSwitch("cards",t("分组卡片","Grouped cards"),t("使用卡片区分设置与状态分组。","Separate settings and status into cards.")));
   const identity=group(t("标题与设备名称","Title and device name"));identity.dataset.group="identity";
   identity.append(node("small",{class:"ml-design-notice",text:t("以下偏好仅保存在当前浏览器。","These preferences are stored in this browser only.")}));
   function brandRow(title,description,control){const setting=row(title,description,control);setting.classList.add("ml-brand-row");return setting;}
@@ -235,7 +235,7 @@
   colorMode.addEventListener("change",()=>{window.MaterialBranding.set("toolbarTitleColor",colorMode.value);colorError.textContent="";colorText.setAttribute("aria-invalid","false");updateColorFeedback();});
   colorText.addEventListener("keydown",event=>{if(event.key==="Enter")event.preventDefault();});
   const autoColor=textButton(t("恢复自动","Restore automatic"),()=>{window.MaterialBranding.set("toolbarTitleColor","auto");colorMode.value="auto";colorError.textContent="";colorText.setAttribute("aria-invalid","false");updateColorFeedback();});
-  identity.append(brandRow(t("自定义颜色","Custom color"),t("本地颜色选择器；仅改变标题文字。","Local color picker; changes only the title text."),node("div",{class:"ml-brand-controls ml-brand-color-control"},[colorFields,autoColor])));
+  identity.append(brandRow(t("自定义颜色","Custom color"),t("仅在选择自定义颜色时显示。","Available when custom title color is selected."),node("div",{class:"ml-brand-controls ml-brand-color-control"},[colorFields,autoColor])));
   identity.append(colorError,colorWarning);updateColorFeedback();window.addEventListener("materialluci:appearance",updateColorFeedback);
 
   const visibility=node("input",{id:"ml-brand-sidebar-visible",type:"checkbox",class:"ml-switch","data-ml-owner":"appearance","aria-label":t("显示侧边栏设备名称","Show sidebar device name")});
@@ -244,17 +244,17 @@
   const nameInput=brandTextField("ml-brand-sidebar-name",t("侧边栏显示名称","Sidebar display name"),window.MaterialBranding.prefs.sidebarName,document.getElementById("ml-sidebar-name")?.dataset.defaultName||"");
   nameInput.disabled=!visibility.checked;bindBrandText(nameInput,"sidebarName");
   visibility.addEventListener("change",()=>{window.MaterialBranding.set("sidebarNameVisible",visibility.checked);nameInput.disabled=!visibility.checked;});
-  identity.append(brandRow(t("显示侧边栏设备名称","Show sidebar device name"),t("关闭仅隐藏名称；手机抽屉关闭按钮仍保留。","Hides only the name; the mobile drawer close button remains."),visibilityControl));
+  identity.append(brandRow(t("显示侧边栏设备名称","Show sidebar device name"),t("在侧边栏顶部显示设备名称。","Show the device name above navigation."),visibilityControl));
   const restoreName=textButton(t("恢复设备名称","Restore device name"),()=>{window.MaterialBranding.set("sidebarName","");nameInput.value="";});
-  identity.append(brandRow(t("侧边栏显示名称","Sidebar display name"),t("留空时使用当前真实 hostname。","Blank uses the current router hostname."),node("div",{class:"ml-brand-controls"},[nameInput,restoreName])));
-  const palettes=[["OnePlus Classic",[["OnePlus Blue","#42A5F5"],["Golden","#CC6F4E"],["Lemon Yellow","#E6A545"],["Grass Green","#7DC22F"],["Charm Purple","#9575CD"],["Sky Blue","#26C6DA"],["Vigour Red","#F06292"],["Fashion Pink","#BA68C8"]]],["Material Colors",[["Blue","#2196F3"],["Teal","#009688"],["Green","#4CAF50"],["Red","#F44336"],["Orange","#FF9800"],["Purple","#9C27B0"],["Cyan","#00BCD4"],["Indigo","#3F51B5"],["Pink","#E91E63"],["Blue Grey","#607D8B"],["Deep Orange","#FF5722"],["Light Green","#8BC34A"]]]];
-  function updateSwatches(){host.querySelectorAll(".ml-swatch-item").forEach(b=>{const active=b.dataset.seed===appearance.prefs.seed;b.setAttribute("aria-pressed",String(active));const s=b.querySelector(".ml-swatch");s.textContent=active?"✓":"";s.style.color=MaterialPalette.generate(b.dataset.seed,false).swatchForeground;});}
-  for(const [title,colors] of palettes){const g=group(title);g.dataset.group=title==="OnePlus Classic"?"oneplus":"material";const grid=node("div",{class:"ml-swatches"});for(const [label,color] of colors){const b=textButton(label,()=>{appearance.set("seed",color);hex.value=color;error.textContent="";hex.setAttribute("aria-invalid","false");updateSwatches();},"ml-swatch-item");b.dataset.seed=color;const sw=node("span",{class:"ml-swatch","aria-hidden":"true"});sw.style.background=color;b.prepend(sw);grid.append(b);}g.append(grid);}
+  identity.append(brandRow(t("侧边栏显示名称","Sidebar display name"),t("留空时使用设备主机名。","Leave blank to use the router hostname."),node("div",{class:"ml-brand-controls"},[nameInput,restoreName])));
+  const palettes=[["MaterialLuCI Classic",[[t("经典蓝","Classic Blue"),"#42A5F5"],["Golden","#CC6F4E"],["Lemon Yellow","#E6A545"],["Grass Green","#7DC22F"],["Charm Purple","#9575CD"],["Sky Blue","#26C6DA"],["Vigour Red","#F06292"],["Fashion Pink","#BA68C8"]]],["Material Colors",[["Blue","#2196F3"],["Teal","#009688"],["Green","#4CAF50"],["Red","#F44336"],["Orange","#FF9800"],["Purple","#9C27B0"],["Cyan","#00BCD4"],["Indigo","#3F51B5"],["Pink","#E91E63"],["Blue Grey","#607D8B"],["Deep Orange","#FF5722"],["Light Green","#8BC34A"]]]];
+  function updateSwatches(){host.querySelectorAll(".ml-swatch-item").forEach(b=>{const active=b.dataset.seed===appearance.prefs.seed;b.setAttribute("aria-pressed",String(active));const s=b.querySelector(".ml-swatch");s.textContent="";if(s.getAttribute("data-selected")!==String(active))s.setAttribute("data-selected",String(active));s.style.color=MaterialPalette.generate(b.dataset.seed,false).swatchForeground;});}
+  for(const [title,colors] of palettes){const g=group(title);g.dataset.group=title==="MaterialLuCI Classic"?"classic":"material";const grid=node("div",{class:"ml-swatches"});for(const [label,color] of colors){const b=textButton(label,()=>{appearance.set("seed",color);hex.value=color;error.textContent="";hex.setAttribute("aria-invalid","false");updateSwatches();},"ml-swatch-item");b.dataset.seed=color;const sw=node("span",{class:"ml-swatch","aria-hidden":"true"});sw.style.background=color;b.prepend(sw);grid.append(b);}g.append(grid);}
   const custom=group(t("自定义强调色","Custom accent")),label=node("label",{for:"ml-hex",text:"HEX"}),hex=node("input",{id:"ml-hex",type:"text",maxlength:7,autocomplete:"off",spellcheck:"false","aria-describedby":"ml-hex-error"}),error=node("div",{id:"ml-hex-error",class:"ml-field-error",role:"status"});
   hex.value=appearance.prefs.seed;hex.addEventListener("input",()=>{const pos=hex.selectionStart;hex.value="#"+hex.value.replace(/[^0-9a-f]/gi,"").slice(0,6).toUpperCase();hex.setSelectionRange(Math.min(pos,hex.value.length),Math.min(pos,hex.value.length));const valid=/^#[0-9A-F]{6}$/.test(hex.value);hex.setAttribute("aria-invalid",String(!valid));error.textContent=valid?"":t("请输入 6 位 HEX 颜色值","Enter a 6 digit HEX color");if(valid){appearance.set("seed",hex.value);updateSwatches();}});
   custom.dataset.group="custom";custom.append(label,hex,error);
-  const ranges=group(t("额外着色范围","Additional accent areas"));ranges.dataset.group="ranges";general.after(ranges);host.append(custom);
-  ranges.append(prefSwitch("toolbar",t("顶栏背景","Toolbar background"),t("使用派生主表面和对应文字色。","Use the derived primary surface.")),prefSwitch("categories",t("分组标题","Section headings"),t("使用可读的强调色文字。","Use contrast adjusted accent text.")),prefSwitch("icons",t("导航与返回图标","Navigation and back icons"),t("为中性顶栏图标着色。","Accent icons in the neutral toolbar.")));
+  const ranges=group(t("强调色应用","Accent areas"));ranges.dataset.group="ranges";general.after(ranges);host.append(custom);
+  ranges.append(prefSwitch("toolbar",t("顶栏背景","Toolbar background"),t("将强调色用于顶栏背景。","Use the accent color for the toolbar.")),prefSwitch("categories",t("分组标题","Section headings"),t("将强调色用于分组标题。","Use the accent color for section headings.")),prefSwitch("icons",t("导航与返回图标","Navigation and back icons"),t("为中性顶栏图标着色。","Accent icons in the neutral toolbar.")));
 
   updateSwatches();MaterialFeedback.bind(host);
  }

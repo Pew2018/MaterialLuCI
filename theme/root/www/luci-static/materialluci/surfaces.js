@@ -35,6 +35,10 @@
   }
 
 
+  // DHCP DummyValue hosts retain their native label/field and polling table.
+  for(const table of all("#lease_status_table,#lease6_status_table")){
+   const value=table.closest(".cbi-value");if(value&&!value.classList.contains("ml-data-section"))value.classList.add("ml-data-section");
+  }
   for(const svg of all("#view svg"))if(isPlot(svg))svg.parentElement?.classList.add("ml-chart-surface");
   // Recognize the actual legacy flashops direct-child groups. Add only
   // presentation classes; forms, their children and business events stay put.
@@ -52,15 +56,15 @@
    }
    for(const el of children)for(const cls of ["ml-legacy-card-start","ml-legacy-card-body","ml-legacy-card-end"])if(el.classList.contains(cls)!==(roles.get(el)===cls))el.classList.toggle(cls,roles.get(el)===cls);
   }
-  const candidates=[...all(".cbi-section,.cbi-section-node,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table,#view [data-table],.ml-chart-surface,#view > .ml-table-scroll,.cbi-map > .ml-table-scroll")]
+  const candidates=[...all(".ml-data-section,.cbi-section,.cbi-section-node,fieldset,section:not(.cbi-map):not(.ml-group),.cbi-map > [data-tab],.network-status-table,#view [data-table],.ml-chart-surface,#view > .ml-table-scroll,.cbi-map > .ml-table-scroll")]
    .filter(section=>{
     if(section.closest(".ml-legacy-flash-section"))return false;
     const option=section.closest(".cbi-value");
     return !section.closest("#ml-appearance,.modal,table,.table")&&
-     (!option||option.classList.contains("ml-section-container"))&&
+     (!option||section.classList.contains("ml-data-section")||option.classList.contains("ml-section-container"))&&
      !section.matches(".cbi-section-node:empty")&&section.id!=="view"&&
      // A container of SectionValues has no surface: each complete subsection does.
-     !section.querySelector(".ml-section-container .cbi-section,.ml-section-container fieldset");
+     !section.querySelector(".ml-section-container .cbi-section,.ml-section-container fieldset,.ml-data-section");
    });
   const candidateSet=new Set(candidates);
   const surfaces=new Set(candidates.filter(section=>{for(let p=section.parentElement;p&&p!==scope.parentElement;p=p.parentElement)if(candidateSet.has(p))return false;return true;}));

@@ -12,7 +12,7 @@
  display:inline-flex;flex:1;min-width:0;min-height:48px;padding:0;margin:0;
  border:0;background:transparent;box-shadow:none;font:inherit;color:var(--ink);
  --md-outlined-button-container-height:48px;
- --md-outlined-button-container-shape:8px;
+ --md-outlined-button-container-shape:24px;
  --md-outlined-button-label-text-color:var(--md-sys-color-on-surface);
  --md-outlined-button-outline-color:var(--md-sys-color-outline);
 }
@@ -28,6 +28,9 @@
 /* The shared style selector also needs a visible Classic selection state. */
 body .ml-design-options button[aria-pressed=true]{background:var(--action-tonal);color:var(--on-action-tonal);border-color:var(--control-accent);--button-ink:var(--on-action-tonal)}
 
+:root[data-design=m3e] body .ml-mode-options button.ml-mode-option{border-radius:24px}
+:root[data-design=m3e] body .ml-swatch{border-radius:8px}
+:root[data-design=m3e] body .ml-swatch-item{border-radius:12px}
 /* Official M3 controls own their shadow-tree shapes and animation. */
 :root[data-design=m3e] [data-ml-progress-engine=m3]{
  display:block;min-height:4px;height:4px;padding:0;border:0;background:transparent;
