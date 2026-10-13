@@ -39,12 +39,14 @@ try{
   await page.waitForFunction(()=>document.querySelector(".modal")?.classList.contains("ml-changes-dialog"));
   const layout=await page.evaluate(()=>{const p=document.querySelector(".modal"),title=p.querySelector(":scope > h4"),a=p.querySelector(".right,.button-row"),apply=a.querySelector("button.cbi-button-positive.important");return {w:p.getBoundingClientRect().width,h:p.getBoundingClientRect().height,vw:innerWidth,vh:innerHeight,ch:p.clientHeight,sh:p.scrollHeight,overflowX:p.scrollWidth>p.clientWidth,order:[...a.children].map(n=>n.dataset.action||n.className),font:getComputedStyle(title).fontSize,applyParent:apply.parentElement.className};});
   assert.equal(layout.overflowX,false,design+" "+theme+" "+width+"px horizontal overflow");
+  assert.deepEqual(layout.order.map(item=>item==="cbi-combo-button"?"apply":item),["close","undo","apply"],"visual and keyboard action order");
   assert.ok(layout.w<=Math.min(560,layout.vw-32)+1,JSON.stringify(layout));
   if(count===60){assert.ok(layout.sh>layout.ch,"large summaries must scroll");await page.evaluate(()=>document.querySelector(".modal").scrollTop=99999);const sticky=await page.evaluate(()=>({top:document.querySelector(".modal>h4").getBoundingClientRect().top,bottom:document.querySelector(".modal .right,.modal .button-row").getBoundingClientRect().bottom,vh:innerHeight}));assert.ok(sticky.top>=-1&&sticky.top<100,JSON.stringify(sticky));assert.ok(sticky.bottom<=sticky.vh+1,JSON.stringify(sticky));}
   await page.screenshot({path:"dist/ui-refinement/changes-dialog/"+design+"-"+theme+"-"+width+"px-"+count+".png"});
-  if(count===60&&actions==="button-row"){
-   await page.locator('[data-action="menu"]').click();await page.locator('[data-action="undo"]').click();await page.locator('[data-action="apply"]').click();
-   assert.deepEqual(await page.evaluate(()=>actionCounts),{close:0,undo:1,apply:1,menu:1});
+  if(count===60){
+   if(actions==="button-row")await page.locator('[data-action="menu"]').click();
+   await page.locator('[data-action="undo"]').click();await page.locator('[data-action="apply"]').click();
+   assert.deepEqual(await page.evaluate(()=>actionCounts),{close:0,undo:1,apply:1,menu:actions==="button-row"?1:0});
    await page.locator('[data-action="close"]').click();await page.waitForFunction(()=>!document.querySelector(".modal").classList.contains("ml-changes-dialog"));
    await page.evaluate(()=>{document.querySelector(".modal").innerHTML='<h4>System</h4><div class="cbi-section"><p>Ordinary dialog</p></div>';document.body.classList.add("modal-overlay-active");});
    await page.waitForFunction(()=>document.querySelector("#modal_overlay").classList.contains("mdc-dialog--open"));
