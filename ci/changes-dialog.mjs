@@ -21,7 +21,7 @@ try{
  for(const design of ["classic","m3e"])for(const theme of ["light","dark"])for(const width of [1280,390])for(const count of [2,60]){
   const actions=count===2?"right":"button-row",page=await browser.newPage({viewport:{width,height:width===390?844:900},deviceScaleFactor:1});
   await page.setContent('<html lang="en"><body class="modal-overlay-active"><main id="maincontent"><div id="view"></div></main>'+markup(count,actions)+'</body></html>');
-  for(const file of ["base.css","mdc-linear-progress.css","cascade.css","design-m3.css"])await page.addStyleTag({path:base+file});
+  for(const file of ["mdc-linear-progress.css","cascade.css","design-m3.css"])await page.addStyleTag({path:base+file});
   for(const file of ["palette.js","palette-m3.js"])await page.addScriptTag({path:base+file});
   await page.evaluate(({design,theme})=>{
    const root=document.documentElement;root.dataset.design=design;root.dataset.theme=theme;root.dataset.cards="true";
