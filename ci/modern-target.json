@@ -1,0 +1,14 @@
+{
+  "openwrt": "25.12.5",
+  "openwrt_tag": "v25.12.5",
+  "luci": "128a7812f4be233c5dd7f7466f534fd888785caf",
+  "ucode": "85922056ef7abeace3cca3ab28bc1ac2d88e31b1",
+  "sdk_url": "https://downloads.openwrt.org/releases/25.12.5/targets/x86/64/openwrt-sdk-25.12.5-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst",
+  "sdk_sha256": "0c8df0151a1e88feb7c03d694d61f6a18d51872815b7c811d76e2b77504d5e9c",
+  "feeds_url": "https://downloads.openwrt.org/releases/25.12.5/targets/x86/64/feeds.buildinfo",
+  "feeds_sha256": "e11279b01e7fea7f7d399e25e969d9382be6891071cbc1225804195224b27b52",
+  "package_format": "apk",
+  "architecture": "noarch",
+  "sdk_target": "x86/64",
+  "source_feature": "b23289086d27e0c066a588b990202af582ed10e6"
+}

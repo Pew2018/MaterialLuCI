@@ -1,0 +1,23 @@
+{# Copyright 2026 Patrick (Pew2018). Apache-2.0. #}
+ {% if (!blank_page): %}
+ </main>
+ <footer class="ml-footer">MaterialLuCI @VERSION@ · {{ entityencode(version.distversion ?? '', true) }}</footer>
+ </div>
+ </div>
+ <script>
+ (function() {
+  var started = false;
+  function startMenu() {
+   if (started || document.querySelector('input[name="luci_password"]')) return;
+   started = true;
+   L.require("@MENU_CLASS@").catch(function(error) {
+    if (window.MaterialLuCI) MaterialLuCI.menuFailed(error);
+   });
+  }
+  if (window.L && L.loaded) startMenu();
+  else document.addEventListener("luci-loaded", startMenu, { once: true });
+ })();
+ </script>
+ {% endif %}
+</body>
+</html>

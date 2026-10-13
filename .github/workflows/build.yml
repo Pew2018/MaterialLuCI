@@ -16,7 +16,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -75,5 +75,24 @@ jobs:
           path: |
             dist/*.ipk
             dist/build-manifest.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Stage modern ucode package
+        if: github.ref_name == 'feature/modern-luci'
+        run: python3 scripts/modern-prepare.py
+      - name: Build pinned OpenWrt 25.12.5 APK with SDK
+        if: github.ref_name == 'feature/modern-luci'
+        run: |
+          sudo apt-get install -y build-essential libncurses-dev zlib1g-dev gawk gettext libssl-dev unzip rsync file zstd python3-setuptools
+          python3 ci/modern-sdk.py
+      - name: Audit real modern APK
+        if: github.ref_name == 'feature/modern-luci'
+        run: python3 ci/modern-apk-audit.py
+      - name: Upload modern APK and provenance
+        if: github.ref_name == 'feature/modern-luci'
+        uses: actions/upload-artifact@v4
+        with:
+          name: MaterialLuCI-ucode-OpenWrt-25.12.5-${{ env.SOURCE_SHA }}
+          path: dist/modern/*
           if-no-files-found: error
           retention-days: 30

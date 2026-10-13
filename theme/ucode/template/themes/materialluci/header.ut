@@ -1,0 +1,76 @@
+{#
+ Copyright 2008 Steven Barth; 2008-2022 Jo-Philipp Wich; 2012 David Menting.
+ Copyright 2026 Patrick (Pew2018). Apache-2.0.
+ Based on the fixed OpenWrt 25.12.5 Bootstrap theme and MaterialLuCI shell.
+#}
+{%
+ import { getuid, getspnam } from 'luci.core';
+ const boardinfo = ubus.call('system', 'board') ?? {};
+ http.prepare_content('text/html; charset=UTF-8');
+%}
+<!DOCTYPE html>
+<html lang="{{ entityencode(dispatcher.lang, true) }}" data-loading="{{ blank_page ? 'false' : 'true' }}">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="theme-color" content="#FAFAFA">
+ <meta name="apple-mobile-web-app-status-bar-style" content="default">
+ <meta name="materialluci-build" content="@COMMIT@">
+ <meta name="materialluci-cache" content="@CACHE@">
+ <title>{{ entityencode(striptags(`${boardinfo.hostname ?? '?'}${dispatched?.title ? ` - ${_(dispatched.title)}` : ''}`), true) }} - MaterialLuCI</title>
+ <script src="{{ media }}/palette.js?v=@CACHE@"></script>
+ <script src="{{ media }}/palette-m3.js?v=@CACHE@"></script>
+ <script src="{{ media }}/startup.js?v=@CACHE@"></script>
+ <link rel="stylesheet" href="{{ media }}/mdc-linear-progress.css?v=@CACHE@">
+ <link rel="stylesheet" href="{{ media }}/cascade.css?v=@CACHE@">
+ <link rel="stylesheet" href="{{ media }}/design-m3.css?v=@CACHE@">
+ {% if (node?.css): %}<link rel="stylesheet" href="{{ resource }}/{{ entityencode(node.css, true) }}">{% endif %}
+ {% if (css): %}<style>{{ css }}</style>{% endif %}
+ <script src="{{ dispatcher.build_url('admin/translations', dispatcher.lang) }}"></script>
+ <script src="{{ resource }}/cbi.js"></script>
+ {% if (!blank_page): %}
+ <script defer src="{{ media }}/mdc-linear-progress.js?v=@CACHE@"></script>
+ <script defer src="{{ media }}/mdc-switch.js?v=@CACHE@"></script>
+ <script defer src="{{ media }}/mdc-textfield.js?v=@CACHE@"></script>
+ <script defer src="{{ media }}/runtime.js?v=@CACHE@"></script>
+ <script defer src="{{ media }}/textfield.js?v=@CACHE@"></script>
+ <script defer src="{{ media }}/mdc-controls.js?v=@CACHE@"></script>
+ <script defer src="{{ media }}/material-web.js?v=@CACHE@"></script>
+ <script defer src="{{ media }}/components.js?v=@CACHE@"></script>
+ <script defer src="{{ media }}/controls.js?v=@CACHE@"></script>
+ <script defer src="{{ media }}/feedback.js?v=@CACHE@"></script>
+ <script defer src="{{ media }}/extras.js?v=@CACHE@"></script>
+ <script defer src="{{ media }}/branding.js?v=@CACHE@"></script>
+ <script defer src="{{ media }}/surfaces.js?v=@CACHE@"></script>
+ <script defer src="{{ media }}/app.js?v=@CACHE@"></script>
+ <script defer src="{{ media }}/wait.js?v=@CACHE@"></script>
+ {% endif %}
+</head>
+<body class="lang_{{ entityencode(dispatcher.lang, true) }}" data-page="{{ entityencode(join('-', ctx.request_path), true) }}">
+ {% if (!blank_page): %}
+ <header class="ml-toolbar"><div class="ml-toolbar-inner">
+  <button id="ml-back" class="ml-icon-button" type="button" aria-label="{{ _('Back') }}" hidden><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+  <button id="ml-menu-button" class="ml-icon-button" type="button" aria-label="{{ _('Menu') }}" aria-controls="ml-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg></button>
+  <span id="ml-title" class="ml-title" aria-label="MaterialLuCI">MaterialLuCI</span>
+  <div id="indicators"></div>
+ </div></header>
+ <a class="ml-skip" href="#maincontent">{{ _('Skip to content') }}</a>
+ <div class="ml-layout">
+ <aside id="ml-sidebar" class="ml-sidebar" aria-label="{{ _('Navigation') }}">
+  <div id="ml-sidebar-heading" class="ml-sidebar-heading"><span id="ml-sidebar-name" data-default-name="{{ entityencode(boardinfo.hostname ?? 'MaterialLuCI', true) }}">{{ entityencode(boardinfo.hostname ?? 'MaterialLuCI', true) }}</span><button id="ml-drawer-close" type="button" class="text-action" aria-label="{{ _('Close') }}">×</button></div>
+  <nav id="ml-menu-tree"><p class="hint">{{ _('Loading…') }}</p></nav>
+ </aside>
+ <div id="ml-drawer-scrim" class="ml-drawer-scrim" hidden></div>
+ <div id="page-content"><main id="maincontent" class="container" tabindex="-1">
+  <div id="ml-startup-error" role="alert" hidden>{{ _('The interface could not be initialized. Please reload this page.') }} <button type="button" onclick="location.reload()">{{ _('Reload') }}</button></div>
+  <noscript><div class="alert-message warning">{{ _('You must enable JavaScript in your browser or LuCI will not work properly.') }}</div></noscript>
+  {% if (getuid() == 0 && getspnam('root')?.pwdp === ''): %}
+   <div class="alert-message warning"><h4>{{ _('No password set!') }}</h4><p>{{ _('Please configure a root password to protect the web interface.') }}</p>
+   {% if (dispatcher.lookup('admin/system/admin')): %}<a class="text-action" href="{{ dispatcher.build_url('admin/system/admin') }}">{{ _('Go to password configuration...') }}</a>{% endif %}</div>
+  {% endif %}
+  {% if (boardinfo.rootfs_type == 'initramfs'): %}
+   <div class="alert-message warning"><h4>{{ _('System running in recovery (initramfs) mode.') }}</h4><p>{{ _('No changes to settings will be stored and are lost after rebooting. This mode should only be used to install a firmware upgrade') }}</p>
+   {% if (dispatcher.lookup('admin/system/flash')): %}<a class="text-action" href="{{ dispatcher.build_url('admin/system/flash') }}">{{ _('Go to firmware upgrade...') }}</a>{% endif %}</div>
+  {% endif %}
+  <div id="tabmenu" hidden></div>
+ {% endif %}
