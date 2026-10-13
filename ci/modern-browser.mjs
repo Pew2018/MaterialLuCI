@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const browser=await chromium.launch({headless:true});
 const base='http://127.0.0.1:8766',checks=[],errors=[];
+let page;
 try {
- const page=await browser.newPage({viewport:{width:390,height:844}});
+ page=await browser.newPage({viewport:{width:390,height:844}});
  await page.addInitScript(()=>{if(!localStorage.getItem('materialluci-design'))localStorage.setItem('materialluci-design','classic');});
  page.on('pageerror',e=>{errors.push(e.message);console.error(e);});
  let release;
@@ -13,11 +14,12 @@ try {
  await page.waitForFunction(()=>window.L?.loaded&&window.MaterialLuCI);
  await page.waitForSelector('#view > .spinning');
  await page.waitForSelector('.ml-view-progress');
- await page.waitForSelector('.ml-nav-parent');
+ await page.waitForSelector('.ml-nav-parent',{state:'attached'});
  assert.equal(await page.getByText('Forbidden plugin',{exact:true}).count(),0);
  assert.equal(await page.locator('#tabmenu .tabs').count(),1);
  const address=page.url(),parent=page.locator('.ml-nav-parent').first();
  await page.locator('#ml-menu-button').click();
+ await parent.waitFor({state:'visible'});
  const expanded=await parent.getAttribute('aria-expanded');await parent.click();
  assert.notEqual(await parent.getAttribute('aria-expanded'),expanded);assert.equal(page.url(),address);
  await page.keyboard.press('Escape');
@@ -70,6 +72,7 @@ try {
   await page.reload();
   await page.waitForFunction(()=>window.L?.loaded&&document.querySelector('input[id$=".hostname"]'));
   assert.equal(await page.locator('html').getAttribute('data-design'),design);
+  await page.locator('.cbi-tabmenu a').filter({hasText:'General'}).click();
   await field.fill('router-valid');
   for(const mode of ['light','dark','system']) {
    await page.evaluate(v=>MaterialAppearance.set('mode',v),mode);
@@ -108,4 +111,7 @@ try {
  assert.deepEqual(errors,[]);
  fs.writeFileSync('dist/modern/browser-checks.json',JSON.stringify({luci:JSON.parse(fs.readFileSync('ci/modern-target.json')).luci,checks,limitations:['mocked RPC and OS','no real router writes or flashing','no third-party plugin validation','persisted pageshow event is a lifecycle check, not real bfcache navigation']},null,2));
  console.log(JSON.stringify({checks,errors}));
+} catch(error) {
+ if(page){console.error('Modern page state:',(await page.locator('body').innerText()).slice(0,5000));await page.screenshot({path:'dist/modern/modern-failure.png'});}
+ throw error;
 } finally {await browser.close();}

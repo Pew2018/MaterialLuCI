@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Offline APK transaction test; native LuCI dependency is a test-only stub."""
-import hashlib,json,os,pathlib,subprocess
+import hashlib,json,os,pathlib,subprocess,shutil
 r=pathlib.Path(__file__).resolve().parents[1]
 apk=(r/'build/apk-tool').read_text();
-sdk=pathlib.Path((r/'build/sdk-path').read_text());fakeroot=sdk/'staging_dir/host/bin/fakeroot'
+fakeroot=shutil.which('fakeroot');assert fakeroot
 pkg=next((r/'dist/modern').glob('*.apk'))
 area=r/'build/apk-transaction';area.mkdir(parents=True,exist_ok=True)
 empty=area/'empty';empty.mkdir()

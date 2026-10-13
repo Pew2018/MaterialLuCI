@@ -74,6 +74,8 @@ The default modern branch build runs:
 5. Matching ucode engine rendering with fixed official core header/footer and actual packaged templates: normal, login failure, blank, restricted menu/password context, no-password and initramfs warnings, hostname escaping and balanced shell.
 6. A small Chromium contract run using fixed real LuCI frontend and actual form/view/ui widgets. OS/ubus/HTTP responses are mocked and config writes are rejected. It covers drawer/menu ACL, route tabs, load completion, validation, one Flag event, DynamicList/ListValue, native reset, fieldset state restoration, nested SectionValue, modal wait feedback, both styles and modes, moved/disconnected nodes, desktop overflow and a persisted pageshow event. One representative screenshot, no large matrix.
 
+The template harness reproduces runtime scope stacking; OS, ubus, HTTP, dispatcher URLs, translation and HTML-helper inputs are deterministic test functions. It renders the actual fixed core templates and actual packaged theme with the matching engine, but does not run a complete live dispatcher.
+
 A simulated persisted pageshow is not proof of browser bfcache navigation. Existing lifecycle regression remains distinct. Neither the harness nor package inspection proves real router saving, rollback, flashing, hardware status or third-party plugin operation.
 
 **Supported migration target:** fixed official OpenWrt/LuCI above. Other OpenWrt releases, every ImmortalWrt branch and third-party plugins are unverified. Plugins with normal LuCI form/ui structures receive generic presentation adaptation; no comprehensive compatibility claim is made.

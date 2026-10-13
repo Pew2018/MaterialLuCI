@@ -93,7 +93,7 @@ jobs:
         id: sdk
         if: github.ref_name == 'feature/modern-luci'
         run: |
-          sudo apt-get install -y build-essential libncurses-dev zlib1g-dev gawk gettext libssl-dev unzip rsync file zstd python3-setuptools
+          sudo apt-get install -y build-essential libncurses-dev zlib1g-dev gawk gettext libssl-dev unzip rsync file zstd python3-setuptools fakeroot
           python3 ci/modern-sdk.py
       - name: Save pinned SDK host dependency cache
         if: always() && github.ref_name == 'feature/modern-luci' && steps.sdk.outcome == 'success'
@@ -133,3 +133,14 @@ jobs:
           path: dist/modern/*
           if-no-files-found: error
           retention-days: 30
+      - name: Upload focused diagnostics on failure
+        if: failure() && github.ref_name == 'feature/modern-luci'
+        uses: actions/upload-artifact@v4
+        with:
+          name: modern-validation-diagnostics-${{ env.SOURCE_SHA }}
+          path: |
+            dist/modern/modern-failure.png
+            dist/modern/template-checks.json
+            dist/modern/install-checks.json
+          if-no-files-found: ignore
+          retention-days: 7
