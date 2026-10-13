@@ -88,6 +88,15 @@ jobs:
       - name: Audit real modern APK
         if: github.ref_name == 'feature/modern-luci'
         run: python3 ci/modern-apk-audit.py
+      - name: Validate modern templates and representative native contracts
+        if: github.ref_name == 'feature/modern-luci'
+        run: |
+          python3 ci/modern-test-prepare.py
+          npx playwright install --with-deps chromium
+          python3 ci/modern-server.py &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          node ci/modern-browser.mjs
       - name: Upload modern APK and provenance
         if: github.ref_name == 'feature/modern-luci'
         uses: actions/upload-artifact@v4

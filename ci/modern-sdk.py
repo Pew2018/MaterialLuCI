@@ -14,10 +14,10 @@ subprocess.run(['tar','--zstd','-xf',str(build/'sdk.download'),'-C',str(build)],
 dirs=list(build.glob('openwrt-sdk-*'));assert len(dirs)==1
 sdk=dirs[0];(build/'sdk-path').write_text(str(sdk))
 assert t['luci'] in (sdk/'feeds.conf.default').read_text()
-subprocess.run(['./scripts/feeds','update','luci'],cwd=sdk,check=True)
+subprocess.run(['./scripts/feeds','update','-a'],cwd=sdk,check=True)
 head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=sdk/'feeds/luci',text=True).strip()
 assert head==t['luci'],head
-subprocess.run(['./scripts/feeds','install','-p','luci','luci-base'],cwd=sdk,check=True)
+subprocess.run(['./scripts/feeds','install','luci-base','ucode'],cwd=sdk,check=True)
 shutil.copytree(build/'modern-package',sdk/'package/luci-theme-materialluci')
 with (sdk/'.config').open('a') as f:
  f.write('\nCONFIG_PACKAGE_luci-theme-materialluci=m\nCONFIG_LUCI_JSMIN=n\nCONFIG_LUCI_CSSTIDY=n\n')
