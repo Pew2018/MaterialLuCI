@@ -1,0 +1,11 @@
+# User screenshot followup — 1.0.1-4
+Baseline f3abcac8aa3016df27ac11cacb71e45c34d706f1, only feature/m3e-theme, source theme/root.
+Screenshots reviewed: 153019, 153149, 153302, 153302-1, 153352, 153427, 153527, 153549, 153556, 153559.
+
+1. UCI actions: move original primary node to the end. Close, Revert, Save & Apply; DOM/keyboard order and original native callbacks agree.
+2. Native device menu: field width and desktop menu intrinsic/minimum width were missing. Bounded width, original preview/open/custom items, native placement/keyboard preserved; no portal/replacement.
+3. DHCP lease status: native DummyValue has scalar label/field shape with an h4 and polling table. Classify those specific hosts as full-width data cards, retain tables and node IDs. Only hide the duplicate label when it exactly repeats the native h4.
+4. Dialog size: previous 420px minimum covered all cbi-modal/uci-dialog. Short forms now 600px max and no minimum height, UCI summary 720px max and no minimum; only tabbed forms keep the existing bounded minimum/760px width. No geometry observers, hidden field measuring, timers or width animation.
+5. Hostname deletion: source has native createHandlerFn -> handleRemove -> map.data.remove -> map.save. Isolated tests execute actual pinned LuCI GridSection event/save/load/render and verify deleted data/row plus reset. Native modal shares that JSON backend explicitly because LuCI creates a UCI Map for modals even on a JSONMap. These tests do not prove target-firmware RPC/ACL/delete success. Screenshot alone does not establish root cause. If target deletion remains broken, the first browser exception and failed UCI RPC response are needed; no claim that all device failures have been fixed.
+6–7. Appearance: MaterialLuCI Classic replaces visible OnePlus names, internal group renamed classic, copy simplified. Native/M3 mode controls and swatch roles keep respective geometry. Check SVG is original local Apache-2.0 path; preferences and seed values retained. Adjacent row actions get spacing; short modal actions share height.
+Default build remains lightweight. Independent scoped workflow adds actual native widgets on top of the existing 16 Chromium/WebKit style/theme/viewport checks. No local clone/edit/build or production router write.

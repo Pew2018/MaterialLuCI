@@ -97,6 +97,9 @@ table tr+tr td,.table .tr+.tr .td{border-top:1px solid var(--divider)}
 /* DummyValue lease status is a complete data group, not a scalar label/field. */
 body .cbi-value.ml-data-section{display:block;width:100%;min-width:0}
 body .ml-data-section>.cbi-value-title{display:block;float:none;width:auto;max-width:none;text-align:left;margin:0 0 12px;padding:0;font-weight:500;color:var(--ink)}
+/* A native DummyValue repeats its own h4 label. Retain the actual heading. */
+body .ml-data-section>.cbi-value-title.ml-duplicate-title{display:none}
+body .ml-data-section .cbi-value-field h4{font-size:15px;font-weight:500;line-height:1.4;margin:0 0 12px}
 body .ml-data-section>.cbi-value-field{display:block;width:100%;min-width:0}
 body .ml-data-section .ml-table-scroll{width:100%;max-width:100%;margin:0}
 
@@ -260,6 +263,7 @@ button>span:not(.tap-ripple),button>svg{position:relative;z-index:2}
 
 /* Keep modal commands in sight while the keyboard reduces the scroll surface. */
 #modal_overlay .modal>h4,#modal_overlay .modal>h3{position:sticky;top:-20px;z-index:3;background:var(--surface);margin:-20px -24px 12px;padding:20px 24px 12px}
+#modal_overlay .modal>.right>button{min-height:48px;line-height:20px}
 #modal_overlay .modal>.right{position:sticky;bottom:-12px;z-index:3;background:var(--surface);border-top:1px solid var(--divider);margin-bottom:-12px;padding:12px 0}
 body.modal-overlay-active #modal_overlay>.modal{scroll-padding-top:64px;scroll-padding-bottom:72px}
 @media(max-width:599px){

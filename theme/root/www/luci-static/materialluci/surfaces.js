@@ -38,6 +38,8 @@
   // DHCP DummyValue hosts retain their native label/field and polling table.
   for(const table of all("#lease_status_table,#lease6_status_table")){
    const value=table.closest(".cbi-value");if(value&&!value.classList.contains("ml-data-section"))value.classList.add("ml-data-section");
+   const label=value?.querySelector(":scope > .cbi-value-title"),heading=value?.querySelector(".cbi-value-field h4");
+   if(label&&heading){const duplicate=label.textContent.trim()===heading.textContent.trim();if(label.classList.contains("ml-duplicate-title")!==duplicate)label.classList.toggle("ml-duplicate-title",duplicate);}
   }
   for(const svg of all("#view svg"))if(isPlot(svg))svg.parentElement?.classList.add("ml-chart-surface");
   // Recognize the actual legacy flashops direct-child groups. Add only

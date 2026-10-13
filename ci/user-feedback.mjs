@@ -54,7 +54,6 @@ try{for(const [engine,type] of [["chromium",chromium],["webkit",webkit]]){
   assert.equal(await page.locator('[data-sid=first]').count(),0,"reset must not resurrect deleted section");
   await page.locator(".cbi-section-create .cbi-button-add").click();
   await page.waitForSelector("#modal_overlay>.modal");
-  console.log("native-add-modal",await page.locator("#modal_overlay").innerHTML());
   const modal=page.locator("#modal_overlay>.modal");
   await page.locator('#modal_overlay .cbi-value[data-name=name] input[type=text]').fill("third.example");
 
@@ -99,9 +98,9 @@ try{for(const [engine,type] of [["chromium",chromium],["webkit",webkit]]){
    window.longMenu=new fixtureUI.Dropdown("wan",{"wan":"Switch VLAN: eth0.2 (wan, wan6) / long interface alias","lan":"Bridge: br-lan (lan)","other":"Custom / 自定义设备名称"},{optional:true});
    row.lastElementChild.append(longMenu.render());view.append(row);
   });
-  const dropdown=page.locator(".cbi-value-field>.cbi-dropdown").last();
+  const dropdown=page.locator("#view .cbi-value-field>.cbi-dropdown").last();
   await dropdown.scrollIntoViewIfNeeded();await dropdown.focus();await page.keyboard.press("ArrowDown");
-  await page.waitForFunction(()=>document.querySelector(".cbi-value-field>.cbi-dropdown[open]"));
+  await page.waitForFunction(()=>document.querySelector("#view .cbi-value-field>.cbi-dropdown[open]"));
   const menuWidth=await dropdown.locator("ul.dropdown").evaluate(n=>n.getBoundingClientRect().width);
   assert.ok(menuWidth>=300,"long device menu must not collapse to glyph width");
   await page.keyboard.press("Escape");
