@@ -82,7 +82,7 @@
   if(!active){current?.destroy();return;}
   for(const cls of ["mdc-dialog__container","mdc-dialog__surface","mdc-dialog__content"])if(!panel.classList.contains(cls))panel.classList.add(cls);
   // Move the existing primary action, keeping its node and native callback.
-  const actions=panel.matches(".uci-dialog")&&panel.querySelector(":scope > .cbi-section > .right");
+  const actions=panel.matches(".uci-dialog")?panel.querySelector(":scope > .cbi-section > .right"):null;
   const apply=actions?.querySelector("button.cbi-button-positive.important");
   if(apply&&actions.lastElementChild!==apply)actions.append(apply);
   const title=panel.querySelector(":scope > h4,:scope > h3");

@@ -599,7 +599,7 @@ body #modal_overlay>.modal:has(.cbi-map,.cbi-section,.cbi-tblsection,pre):not(.a
 body.modal-overlay-active #modal_overlay>.modal.cbi-modal:not(.alert-message),
 body.modal-overlay-active #modal_overlay>.modal:has(.cbi-map):not(.alert-message){width:min(600px,100%);min-height:0;height:auto}
 body.modal-overlay-active #modal_overlay>.modal.uci-dialog:not(.alert-message){width:min(720px,100%);min-height:0;height:auto}
-body.modal-overlay-active #modal_overlay>.modal:has([data-tab-title]):not(.alert-message){width:min(760px,100%);min-height:min(360px,calc(var(--ml-vv-height) - 48px));height:auto}
+body.modal-overlay-active #modal_overlay>.modal:has([data-tab-title]):not(.alert-message){width:min(760px,100%);min-height:min(420px,calc(var(--ml-vv-height) - 48px));height:auto}
 #modal_overlay .uci-dialog>.cbi-section>.right{align-items:center;padding:12px 0 0}
 #modal_overlay .uci-dialog>.cbi-section>.right>button{margin:0;min-height:48px;line-height:20px}
 #modal_overlay .uci-dialog>.cbi-section>.right>button.btn:not(.cbi-button){--button-bg:transparent;--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed);--button-ink:var(--accent-ink);background:transparent;color:var(--accent-ink)}

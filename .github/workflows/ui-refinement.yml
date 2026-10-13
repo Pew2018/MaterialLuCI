@@ -23,6 +23,7 @@ jobs:
       - run: node ci/theme-coverage.mjs
         if: ${{ !cancelled() }}
       - uses: actions/checkout@v4
+        if: ${{ !cancelled() }}
         with:
           repository: openwrt/luci
           ref: e4c46338b196e486a88b1a75b78e283708c82bc4
@@ -33,12 +34,14 @@ jobs:
             modules/luci-mod-status/htdocs/luci-static/resources
             modules/luci-mod-system/htdocs/luci-static/resources
       - uses: actions/checkout@v4
+        if: ${{ !cancelled() }}
         with:
           repository: immortalwrt/luci
           ref: 5829eabba50ec0afa17d2ee486bc90dc15180c34
           path: immortal-fixture
           sparse-checkout: modules/luci-mod-system/htdocs/luci-static/resources/view/system/flash.js
       - name: Prepare actual LuCI widget regression
+        if: ${{ !cancelled() }}
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y lua5.1
