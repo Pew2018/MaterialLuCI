@@ -989,3 +989,7 @@ body .ml-sidebar button.ml-nav-parent>.ml-nav-parent-label,
 body .ml-sidebar button.ml-nav-parent>.ml-nav-chevron{pointer-events:none;border-radius:0;background:transparent}
 body .ml-sidebar button.ml-nav-parent:focus-visible{outline:2px solid var(--control-accent);outline-offset:-2px}
 body .ml-switch-hit .mdc-switch:focus-visible{outline:2px solid var(--control-accent);outline-offset:0}
+
+/* LuCI system/leds uses semantic abbreviations in its title, description and
+   grid headings. Override the UA dotted underline only on this native route. */
+body #maincontent[data-ml-page=leds] abbr[title]{text-decoration:none}

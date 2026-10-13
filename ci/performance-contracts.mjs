@@ -15,7 +15,7 @@ function fixture(){
  function notify(record){for(const observer of observers)if(observer.targets.some(([target,o])=>(record.target===target||o.subtree&&target.contains(record.target))&&(record.type==="childList"?o.childList:o.attributes&&(!o.attributeFilter||o.attributeFilter.includes(record.attributeName))))){observer.records.push(record);if(!observer.queued){observer.queued=true;queue(()=>{observer.queued=false;const records=observer.records.splice(0);if(records.length)observer.callback(records);});}}}
  class Element extends Events{
   constructor(tag){super();this.nodeType=1;this.tagName=tag.toUpperCase();this.parentElement=null;this.children=[];this.attrs=new Map();this.dataset={};this.values=new Map();this.textContent="";this.tabIndex=0;this.rect={left:0,top:0,bottom:100,width:200};this.reads=0;this.writes=0;this.attributeWrites=0;
-   this.style={getPropertyValue:key=>this.values.get(key)||"",setProperty:(key,value)=>{this.writes++;this.values.set(key,value);}};
+   this.style={getPropertyValue:key=>this.values.get(key)||"",setProperty:(key,value)=>{this.writes++;this.values.set(key,value);notify({type:"attributes",target:this,attributeName:"style",addedNodes:[],removedNodes:[]});},removeProperty:key=>{if(this.values.delete(key)){this.writes++;notify({type:"attributes",target:this,attributeName:"style",addedNodes:[],removedNodes:[]});}}};
    this.classList={contains:key=>(this.className||"").split(/\s+/).includes(key),add:(...keys)=>{const list=new Set((this.className||"").split(/\s+/).filter(Boolean));keys.forEach(k=>list.add(k));this.className=[...list].join(" ");},remove:(...keys)=>{this.className=(this.className||"").split(/\s+/).filter(k=>!keys.includes(k)).join(" ");},toggle:(key,force)=>{const yes=force??!this.classList.contains(key);yes?this.classList.add(key):this.classList.remove(key);return yes;}};
   }
   get className(){return this.attrs.get("class")||"";}set className(value){if(value!==this.className)this.setAttribute("class",value);}
@@ -40,7 +40,7 @@ function fixture(){
 
    const id=part.match(/#([\w-]+)/)?.[1];if(id&&this.id!==id)return false;
    if([...part.matchAll(/\.([\w-]+)/g)].some(m=>!this.classList.contains(m[1])))return false;
-   if([...part.matchAll(/\[([\w-]+)(?:=["']?([^"'\]]+)["']?)?\]/g)].some(m=>m[2]?this.getAttribute(m[1])!==m[2]:!this.hasAttribute(m[1])))return false;
+   if([...part.matchAll(/\[([\w-]+)(?:=["']?([^"'\]]*)["']?)?\]/g)].some(m=>m[2]!==undefined?this.getAttribute(m[1])!==m[2]:!this.hasAttribute(m[1])))return false;
    const tag=part.match(/^[\w-]+/)?.[0];return !tag||this.tagName===tag.toUpperCase();
   });}
   contains(n){return n===this||this.children.some(c=>c.contains(n));}
@@ -66,10 +66,11 @@ function fixture(){
  }
  const document=new Events();document.body=new Element("body");document.documentElement=new Element("html");document.documentElement.lang="en";
  document.getElementById=id=>document.body.querySelector("#"+id);
+ document.querySelector=selector=>document.body.querySelector(selector);
  document.createElement=tag=>tag==="input"?new Input():new Element(tag);
  class Observer{constructor(callback){this.callback=callback;this.targets=[];this.records=[];this.queued=false;observers.push(this);}observe(target,options){this.targets.push([target,options]);}takeRecords(){return this.records.splice(0);}disconnect(){this.targets=[];this.records=[];}}
  const window=new Events();
- const context=vm.createContext({window,document,MutationObserver:Observer,ResizeObserver:class{observe(){}unobserve(){}disconnect(){}},HTMLInputElement:Input,AbortController,console,innerWidth:800,performance:{now:()=>clock++},queueMicrotask:queue,setTimeout:fn=>{const id=++sequence;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),requestAnimationFrame:fn=>{const id=++sequence;frames.set(id,fn);return id;},cancelAnimationFrame:id=>frames.delete(id)});
+ const context=vm.createContext({window,document,MutationObserver:Observer,ResizeObserver:class{observe(){}unobserve(){}disconnect(){}},HTMLInputElement:Input,AbortController,Event:class{constructor(type){this.type=type;}},console,innerWidth:800,performance:{now:()=>clock++},queueMicrotask:queue,setTimeout:fn=>{const id=++sequence;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),requestAnimationFrame:fn=>{const id=++sequence;frames.set(id,fn);return id;},cancelAnimationFrame:id=>frames.delete(id)});
  function load(name){vm.runInContext(fs.readFileSync(base+name,"utf8"),context,{filename:name});Object.assign(context,window);}
  function drain(){for(let i=0;i<3000;i++){if(micro.length){micro.shift()();continue;}const map=timers.size?timers:frames;if(!map.size)return;const [id,fn]=map.entries().next().value;map.delete(id);fn();}throw Error("Scheduler did not settle");}
  function drainMicro(){for(let i=0;i<3000&&micro.length;i++)micro.shift()();assert.equal(micro.length,0);}
@@ -250,4 +251,73 @@ function fixture(){
  assert.ok(app.indexOf("MaterialSurfaces.prepare(main)")<app.indexOf("enhance(main);"));
  assert.ok(!app.includes("queueSurfaces"),"component discovery must not schedule a delayed card pass");
 }
-console.log("Runtime lifecycle, radio-group batching and loading-state contracts passed (no browser rendering).");
+
+
+{
+ const f=fixture(),toolbar=f.document.createElement("header"),inner=f.document.createElement("div"),title=f.document.createElement("span"),indicator=f.document.createElement("div");
+ toolbar.className="ml-toolbar";inner.className="ml-toolbar-inner";title.id="ml-title";inner.append(title,indicator);toolbar.append(inner);f.document.body.append(toolbar);
+ const sidebar=f.document.createElement("aside"),heading=f.document.createElement("div"),name=f.document.createElement("span");heading.id="ml-sidebar-heading";name.id="ml-sidebar-name";name.dataset.defaultName="Router";heading.append(name);sidebar.append(heading);f.document.body.append(sidebar);
+ const storage=new Map();f.context.localStorage={getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)};
+ f.context.Event=class{constructor(type){this.type=type;}};
+ let styleReads=0,background="rgb(255,255,255)",foreground="rgb(120,120,120)";
+ f.context.getComputedStyle=()=>{styleReads++;return {backgroundColor:background,color:foreground,getPropertyValue:()=>foreground};};
+ f.load("branding.js");f.drain();assert.equal(title.style.getPropertyValue("color"),"#000000");
+ const initialReads=styleReads,initialWrites=title.writes,attrs=title.attributeWrites;
+ for(let i=0;i<10;i++){f.document.documentElement.style.setProperty("--ml-vv-top",i+"px");indicator.append(f.document.createElement("span"));}
+ f.drain();assert.equal(styleReads,initialReads,"viewport and indicator updates must not compute title colors");assert.equal(title.writes,initialWrites);
+ f.window.MaterialBranding.apply();f.window.MaterialBranding.set("toolbarTitle","MaterialLuCI");f.drain();
+ assert.equal(styleReads,initialReads);assert.equal(title.writes,initialWrites);
+ const sameAttrs=title.attributeWrites;f.window.MaterialBranding.set("toolbarTitle","MaterialLuCI");f.drain();assert.equal(title.attributeWrites,sameAttrs,"unchanged title attributes must not be written");
+ f.window.MaterialBranding.set("sidebarName","New Router");f.drain();assert.equal(styleReads,initialReads,"name edits must not compute title color");
+ const newName=f.document.createElement("span");newName.id="ml-sidebar-name";name.remove();heading.append(newName);f.drain();assert.equal(newName.textContent,"New Router");assert.equal(styleReads,initialReads,"name node replacement must not compute title color");
+ f.window.MaterialBranding.set("toolbarTitleColorValue","#123456");f.window.MaterialBranding.set("toolbarTitleColor","custom");f.drain();assert.equal(title.style.getPropertyValue("color"),"#123456");
+ background="rgb(0,0,0)";foreground="rgb(100,100,100)";
+ f.document.documentElement.setAttribute("data-theme","dark");f.drain();assert.equal(title.style.getPropertyValue("color"),"#123456");
+ f.window.MaterialBranding.set("toolbarTitleColor","auto");f.drain();assert.equal(title.style.getPropertyValue("color"),"#FFFFFF");
+ const before=styleReads;inner.style.setProperty("background-color","black");f.drain();assert.ok(styleReads>before,"real toolbar background changes must compute contrast");
+ const replacement=f.document.createElement("span");replacement.id="ml-title";title.remove();inner.append(replacement);f.drain();assert.equal(replacement.textContent,"MaterialLuCI");assert.equal(replacement.style.getPropertyValue("color"),"#FFFFFF");
+ f.window.dispatchEvent({type:"pagehide",persisted:true});f.document.documentElement.setAttribute("data-theme","light");background="rgb(255,255,255)";foreground="rgb(0,0,0)";f.drain();
+ f.window.dispatchEvent({type:"pageshow",persisted:true});f.drain();assert.equal(replacement.style.getPropertyValue("color"),"","bfcache must restore natural theme ink");
+}
+{
+ const f=fixture();f.load("runtime.js");let fields=0,buttons=0,ranges=0;
+ f.window.MaterialRuntime.register({selector:"input,select",enhance(){fields++;}});
+ f.window.MaterialRuntime.register({selector:"button",enhance(){buttons++;}});
+ f.window.MaterialRuntime.register({range:true,discoverSelector:"#view,.alert-message.danger",enhance(){ranges++;}});
+ f.window.MaterialRuntime.start(f.document.body);f.drain();
+ const status=f.document.createElement("span");f.document.body.append(status);const path=f.document.createElement("path");status.append(path);f.drain();
+ assert.deepEqual([fields,buttons,ranges],[0,0,0],"status elements must not dispatch irrelevant adapters");
+ const input=f.document.createElement("input");status.append(input);f.drain();assert.equal(fields,1,"an existing status container can later receive a real field");
+ const container=f.document.createElement("div");container.append(f.document.createElement("select"),f.document.createElement("button"));f.document.body.append(container);f.drain();assert.deepEqual([fields,buttons,ranges],[2,1,0]);
+ const view=f.document.createElement("div");view.id="view";f.document.body.append(view);f.drain();assert.equal(ranges,1);
+}
+{
+ // Execute the actual viewport handler without constructing the rest of the UI.
+ const f=fixture(),vv=new f.Element("viewport");vv.height=800;vv.width=400;Object.defineProperties(vv,{offsetTop:{value:0,writable:true},offsetLeft:{value:0,writable:true}});vv.scale=1;
+ f.context.innerHeight=800;f.context.innerWidth=400;f.window.visualViewport=vv;f.context.narrow={matches:true};f.context.toolbar=null;f.load("runtime.js");
+ const app=fs.readFileSync(base+"app.js","utf8");vm.runInContext(app.slice(app.indexOf(" const vv=window.visualViewport"),app.indexOf(" window.MaterialLuCI=")),f.context);
+ const input=f.document.createElement("input");input.setAttribute("type","text");f.document.body.append(input);f.document.activeElement=input;
+ const root=f.document.documentElement;const writes=root.writes;vv.dispatchEvent({type:"scroll"});f.drain();assert.equal(root.writes,writes,"focused input without keyboard must not write viewport geometry");
+ vv.height=480;f.window.dispatchEvent({type:"resize"});f.drain();assert.equal(root.style.getPropertyValue("--ml-keyboard-space"),"320px");
+ const keyboardWrites=root.writes;vv.dispatchEvent({type:"scroll"});f.drain();assert.equal(root.writes,keyboardWrites,"identical geometry must not write styles");
+ vv.height=800;f.window.dispatchEvent({type:"resize"});f.drain();assert.equal(root.style.getPropertyValue("--ml-keyboard-space"),"");const closedWrites=root.writes;
+ vv.offsetTop=24;vv.dispatchEvent({type:"scroll"});f.drain();assert.equal(root.writes,closedWrites,"keyboard closed with retained focus must not track scrolling");
+ input.setAttribute("type","range");vv.height=400;f.window.dispatchEvent({type:"resize"});f.drain();assert.equal(root.writes,closedWrites,"range input must not activate keyboard adaptation");
+ input.setAttribute("type","text");vv.scale=2;f.window.dispatchEvent({type:"resize"});f.drain();assert.equal(root.writes,closedWrites,"zoom must not masquerade as keyboard");
+ f.document.body.classList.add("ml-dialog-open");f.drain();assert.equal(root.style.getPropertyValue("--ml-vv-height"),"400px","dialog geometry must remain supported at zoom");
+ f.window.dispatchEvent({type:"pagehide",persisted:true});f.window.dispatchEvent({type:"pageshow",persisted:true});f.drain();assert.equal(root.style.getPropertyValue("--ml-vv-height"),"400px");
+}
+{
+ // Parse the authored LED rule and apply its selector to real abbreviation
+ // structures in the DOM fixture; this checks scope/semantics, not CSS paint.
+ const css=fs.readFileSync(base+"cascade.css","utf8"),rules=[...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m=>({selector:m[1].replace(/\/\*[\s\S]*?\*\//g,"").trim(),declarations:m[2].trim()}));
+ const ledRules=rules.filter(r=>r.selector.includes("abbr"));assert.equal(ledRules.length,1);
+ const declarations=Object.fromEntries(ledRules[0].declarations.split(";").filter(Boolean).map(s=>s.split(":").map(v=>v.trim())));assert.deepEqual(declarations,{"text-decoration":"none"});
+ const f=fixture(),main=f.document.createElement("main");main.id="maincontent";main.setAttribute("data-ml-page","leds");f.document.body.append(main);
+ const abbreviations=["h2","p","th"].map(tag=>{const host=f.document.createElement(tag),abbr=f.document.createElement("abbr");abbr.textContent="LED";abbr.setAttribute("title","Light Emitting Diode");host.append(abbr);main.append(host);return abbr;});
+ for(const design of ["classic","m3e"])for(const theme of ["light","dark"]){f.document.documentElement.dataset.design=design;f.document.documentElement.dataset.theme=theme;assert.ok(abbreviations.every(n=>n.matches(ledRules[0].selector)&&n.getAttribute("title")==="Light Emitting Diode"));}
+ for(const tag of ["a","input","button"]){const n=f.document.createElement(tag);main.append(n);assert.ok(!n.matches(ledRules[0].selector));}
+ main.setAttribute("data-ml-page","system");assert.ok(abbreviations.every(n=>!n.matches(ledRules[0].selector)),"other routes must retain their abbreviation styles");
+}
+
+console.log("Runtime lifecycle, discovery dispatch, branding, viewport and LED scope contracts passed (no browser rendering).");
