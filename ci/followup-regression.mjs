@@ -67,6 +67,13 @@ try{
   await page.evaluate(()=>MaterialFeedback.bind(document.getElementById("view")));
   await page.waitForFunction(()=>document.querySelector("#add md-ripple,#add .mdc-button__ripple"));
   const after=await read();assert.equal(before.add,after.add);assert.equal(after.add,48);if(design==="m3e"){assert.equal(after.del,36);assert.equal(after.radius,"24px");}
+
+  await page.locator("#add").focus();
+  assert.equal(await page.locator("#add").evaluate(n=>getComputedStyle(n).outlineWidth),"2px");
+  await page.evaluate(()=>{add.disabled=true;});
+  await page.waitForFunction(()=>document.querySelector("#add md-ripple")?.disabled||document.querySelector("#add .mdc-button__ripple"));
+  assert.equal(await page.locator("#add").evaluate(n=>n.disabled),true);
+  await page.evaluate(()=>{add.disabled=false;});
   await page.evaluate(()=>{const n=add.cloneNode(false);n.id="added-later";n.textContent="Add later";add.replaceWith(n);});
   await page.waitForFunction(()=>document.querySelector("#added-later md-ripple,#added-later .mdc-button__ripple"));
   assert.equal(await page.locator("#added-later").evaluate(n=>n.getBoundingClientRect().height),48);
@@ -111,7 +118,7 @@ try{
   await page.evaluate(()=>MaterialRuntime.start(document.body));
   await page.evaluate(()=>{window.anchor=E("button",{type:"button"},"Menu");document.body.append(anchor);});
   for(const mode of ["close","escape","selected","remove-anchor","remove-popup"]){
-   await page.evaluate(()=>{window.menuChoice=null;window.menu=MaterialExtras.menu(anchor,[["a","A"],["b","B",true]],"a",v=>menuChoice=v);window.popup=document.querySelector(".ml-action-menu");});
+   await page.evaluate(()=>{window.menuChoice=null;anchor.focus();window.menu=MaterialExtras.menu(anchor,[["a","A"],["b","B",true]],"a",v=>menuChoice=v);window.popup=document.querySelector(".ml-action-menu");});
    await page.waitForFunction(()=>menu.open);
    if(mode==="escape")await page.evaluate(()=>anchor.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true})));
    else if(mode==="selected")await page.evaluate(()=>{popup.dispatchEvent(new CustomEvent("MDCMenu:selected",{detail:{item:popup.querySelector("li")}}));menu.open=false;});
@@ -121,6 +128,8 @@ try{
 
    await page.waitForFunction(()=>!document.querySelector(".ml-action-menu"));
    assert.equal(await page.evaluate(()=>rippleCreated),await page.evaluate(()=>rippleDestroyed));
+   if(mode==="escape")assert.equal(await page.evaluate(()=>document.activeElement===anchor),true);
+   if(mode==="selected")assert.equal(await page.evaluate(()=>menuChoice),"a");
    if(mode==="remove-anchor")await page.evaluate(()=>document.body.append(anchor));
    await page.evaluate(()=>{popup.dispatchEvent(new CustomEvent("MDCMenuSurface:opened"));popup.dispatchEvent(new CustomEvent("MDCMenuSurface:closed"));});
   }
@@ -160,6 +169,14 @@ try{
   assert.equal(await page.evaluate(()=>mediaAdds-mediaRemoves),1);
   await page.setViewportSize({width:1200,height:800});
   await page.waitForFunction(()=>document.getElementById("ml-appearance-entry").open);
+  await page.evaluate(()=>document.getElementById("ml-appearance-entry").remove());
+  await page.waitForFunction(()=>mediaAdds===mediaRemoves);
+
+  await page.evaluate(()=>{
+   window.matchMedia=query=>{const m=realMatchMedia(query);return {get matches(){return m.matches;},addListener(fn){mediaAdds++;mediaCallbacks.add(fn);m.addListener(fn);},removeListener(fn){mediaRemoves++;mediaCallbacks.delete(fn);m.removeListener(fn);}};};
+   makeAppearance(maincontent);
+  });
+  assert.equal(await page.evaluate(()=>mediaAdds-mediaRemoves),1);
   await page.evaluate(()=>document.getElementById("ml-appearance-entry").remove());
   await page.waitForFunction(()=>mediaAdds===mediaRemoves);
   assert.deepEqual(errors.sort(),["unrelated-fixture","view-failure-fixture"].sort());

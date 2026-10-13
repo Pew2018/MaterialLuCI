@@ -21,7 +21,26 @@ try{
   for(let i=0;i<20;i++)await page.evaluate(i=>{field.classList.toggle("probe-active");below.textContent=String(i);},i);
   const observer=await page.evaluate(()=>({...probe}));
   const tables=await page.evaluate(()=>Object.fromEntries(["simple","wide"].map(id=>{const n=document.getElementById(id),h=n.parentElement;return [id,{table:n.getBoundingClientRect().width,host:h.clientWidth,scroll:h.scrollWidth}];})));
-  results.push({design,before,after,observer,tables});
+
+  const focus=await page.evaluate(()=>{
+   const n=document.createElement("input");n.type="password";n.id="focused-probe";const parent=document.createElement("div");parent.className="cbi-value-field";parent.append(n);document.getElementById("view").append(parent);n.focus();
+   const height=n.getBoundingClientRect().height,scroll=scrollY,start=performance.now();MaterialTextFields.enhance(n);
+   return {before:height,after:n.getBoundingClientRect().height,retained:document.activeElement===n,scrollBefore:scroll,scrollAfter:scrollY,constructorMs:performance.now()-start,deferred:!n.closest(".ml-text-field")};
+  });
+  await page.evaluate(()=>{
+   const view=document.getElementById("view");
+   const fields=document.createElement("table");fields.id="fields";fields.className="cbi-section-table";fields.innerHTML='<tr><th>Option</th><th>Value</th><th>Action</th></tr><tr><td>DNS</td><td><input type="text" value="2001:db8::1"></td><td><button>Save</button></td></tr>';
+   const chain=document.createElement("div");chain.setAttribute("data-chain","input");chain.id="chain";chain.innerHTML='<h3>INPUT</h3><table id="firewall"><tr><th>Packets</th><th>Bytes</th><th>Target</th><th>Protocol</th><th>Source</th><th>Destination</th></tr><tr><td>123</td><td>456</td><td>ACCEPT</td><td>tcp</td><td class="nowrap">2001:db8:1234::1/64</td><td>anywhere</td></tr></table>';
+   view.append(fields,chain);MaterialSurfaces.prepare();MaterialRuntime.start(document.body);
+  });
+  const additionalTables=await page.evaluate(()=>({fields:{width:document.getElementById("fields").getBoundingClientRect().width,host:document.getElementById("fields").parentElement.clientWidth},firewall:{parent:document.getElementById("firewall").parentElement.id,adjacent:document.querySelector("#chain h3").nextElementSibling.id,width:document.getElementById("firewall").getBoundingClientRect().width,host:chain.clientWidth},pageWidth:document.documentElement.scrollWidth,viewport:innerWidth}));
+  await page.evaluate(()=>{probe.syncs=0;document.body.classList.add("modal-overlay-active");});
+  await page.waitForFunction(()=>MaterialControls.count().dialogs===1);
+  await page.evaluate(()=>document.querySelector("#modal_overlay>.modal").innerHTML='<h4 id="probe-title">New title</h4><input>');
+  await page.waitForFunction(()=>document.querySelector("#modal_overlay>.modal").getAttribute("aria-labelledby")==="probe-title");
+  const modal=await page.evaluate(()=>({...probe}));
+  results.push({design,before,after,observer,tables,focus,additionalTables,modal});
+
   await page.close();
  }
 }finally{await browser.close();fs.mkdirSync("dist/ui-refinement",{recursive:true});fs.writeFileSync("dist/ui-refinement/probe.json",JSON.stringify(results,null,2));}
