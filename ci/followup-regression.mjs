@@ -136,6 +136,7 @@ try{
    await page.evaluate(()=>{popup.dispatchEvent(new CustomEvent("MDCMenuSurface:opened"));popup.dispatchEvent(new CustomEvent("MDCMenuSurface:closed"));document.dispatchEvent(new WheelEvent("wheel",{bubbles:true}));});
    assert.equal(await page.evaluate(()=>MaterialExtras.counts().scrollDismissals),dismissals,"late portal events must not resurrect closed menu ownership");
   }
+  const temporaryBalance=await page.evaluate(()=>({created:rippleCreated,destroyed:rippleDestroyed}));
   // Scoped modal adapter: visibility, panel/overlay replacement, heading title.
   await page.evaluate(()=>{document.body.classList.add("modal-overlay-active");});
   // Previous permanent pagehide stopped adapters: test fresh controls/runtime.
@@ -183,7 +184,14 @@ try{
   await page.evaluate(()=>document.getElementById("ml-appearance-entry").remove());
   await page.waitForFunction(()=>mediaAdds===mediaRemoves);
   assert.deepEqual(errors.sort(),["unrelated-fixture","view-failure-fixture"].sort());
-  results.push({design,status:"passed",pollUnchangedWrites:writes.length,manualRippleBalance:await page.evaluate(()=>({created:rippleCreated,destroyed:rippleDestroyed}))});
+  // A live native select legitimately owns one more list ripple at this
+  // point. Permanent unload must destroy it and any still-open temporary menu.
+  await page.evaluate(()=>{window.menu=MaterialExtras.menu(anchor,[["a","A"],["b","B"]],"a",()=>{});});
+  await page.waitForFunction(()=>menu.open);
+  await page.evaluate(()=>dispatchEvent(new PageTransitionEvent("pagehide",{persisted:false})));
+  assert.equal(await page.locator(".ml-action-menu").count(),0);
+  assert.equal(await page.evaluate(()=>rippleCreated),await page.evaluate(()=>rippleDestroyed));
+  results.push({design,temporaryBalance,status:"passed",pollUnchangedWrites:writes.length,manualRippleBalance:await page.evaluate(()=>({created:rippleCreated,destroyed:rippleDestroyed}))});
   await page.close();
  }
 }finally{await browser.close();fs.mkdirSync("dist/ui-refinement",{recursive:true});fs.writeFileSync("dist/ui-refinement/followup.json",JSON.stringify(results,null,2));}
