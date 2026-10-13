@@ -39,7 +39,7 @@ try{
   // Native readonly first paint, intermediate frame, then real delayed MDC.
   await page.evaluate(()=>document.getElementById("view").innerHTML='<div class="cbi-value"><div class="cbi-value-field"><input id="localtime" type="text" readonly value="2026-10-13 23:00:00"></div></div>');
   const initial=await page.locator("#localtime").evaluate(n=>({bg:getComputedStyle(n).backgroundColor,color:getComputedStyle(n).color,id:n.id,readonly:n.readOnly}));
-  assert.equal(initial.bg,design==="m3e"?(theme==="dark"?"rgb(51, 51, 51)":"rgb(238, 238, 238)"):(theme==="dark"?"rgb(33, 33, 33)":"rgb(255, 255, 255)"));
+  assert.equal(initial.bg,design==="m3e"?(theme==="dark"?"rgb(51, 51, 51)":"rgb(238, 238, 238)"):(theme==="dark"?"rgb(30, 30, 30)":"rgb(255, 255, 255)"));
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   assert.equal(await page.locator("#localtime").evaluate(n=>getComputedStyle(n).backgroundColor),initial.bg);
   await page.addScriptTag({path:base+"textfield.js"});

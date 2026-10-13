@@ -186,9 +186,10 @@ try{
   assert.deepEqual(errors.sort(),["unrelated-fixture","view-failure-fixture"].sort());
   // A live native select legitimately owns one more list ripple at this
   // point. Permanent unload must destroy it and any still-open temporary menu.
-  await page.evaluate(()=>{window.menu=MaterialExtras.menu(anchor,[["a","A"],["b","B"]],"a",()=>{});});
-  await page.waitForFunction(()=>menu.open);
-  await page.evaluate(()=>dispatchEvent(new PageTransitionEvent("pagehide",{persisted:false})));
+  // A legitimate late resize may dismiss a menu between separate browser
+  // tasks. Keep opening + permanent unload in one task and assert it was live.
+  const openAtUnload=await page.evaluate(()=>{window.menu=MaterialExtras.menu(anchor,[["a","A"],["b","B"]],"a",()=>{});const open=menu.open;dispatchEvent(new PageTransitionEvent("pagehide",{persisted:false}));return open;});
+  assert.equal(openAtUnload,true);
   assert.equal(await page.locator(".ml-action-menu").count(),0);
   assert.equal(await page.evaluate(()=>rippleCreated),await page.evaluate(()=>rippleDestroyed));
   results.push({design,temporaryBalance,status:"passed",pollUnchangedWrites:writes.length,manualRippleBalance:await page.evaluate(()=>({created:rippleCreated,destroyed:rippleDestroyed}))});
