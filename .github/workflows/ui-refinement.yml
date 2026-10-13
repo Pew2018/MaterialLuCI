@@ -2,7 +2,7 @@ name: Scoped UI refinement regression
 on:
   push:
     branches: [feature/m3e-theme]
-    paths: ["ci/ui-refinement.mjs", ".github/workflows/ui-refinement.yml"]
+    paths: ["theme/**", "ci/ui-refinement.mjs", "ci/followup*.mjs", "ci/performance-contracts.mjs", ".github/workflows/ui-refinement.yml"]
 permissions:
   contents: read
 jobs:
@@ -17,6 +17,7 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
       - run: python3 scripts/build.py
+      - run: node ci/followup-probe.mjs
       - run: node ci/ui-refinement.mjs
       - uses: actions/upload-artifact@v4
         if: always()
