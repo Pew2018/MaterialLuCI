@@ -84,7 +84,8 @@ if a.candidate:
   assert "md-ripple" in files[assets+"material-web.js"].decode()
   assert 'scene:"view"' in wait and 'scene:"modal"' in wait
   assert re.search(r'\.scene\s*!==?\s*["\x27]view["\x27]',adapter), "view must bypass wavy engine"
-  checks["view_mdc_modal_design_scene_contract_packaged"]=True
+  assert re.search(r'\.scene\s*!==?\s*["\x27]modal["\x27]',adapter), "modal must bypass wavy engine"
+  checks["view_and_modal_official_mdc_scene_contract_packaged"]=True
   checks["dual_style_progress_adapter_packaged"]=True
   assert "mdc-linear-progress-primary-indeterminate-translate" in shared_css
   assert "height:4px" in files[assets+"design-m3.css"].decode() and "height:16px" in files[assets+"design-m3.css"].decode()

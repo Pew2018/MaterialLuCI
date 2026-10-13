@@ -1,13 +1,13 @@
 @import url("base.css");
 /* Classic Material visual language; LuCI business layout remains authoritative. */
-:root{--page:#fafafa;--surface:#fff;--card:#fff;--ink:#212121;--muted:#707070;--disabled:#bdbdbd;--divider:rgba(0,0,0,.06);--log:#f5f5f5;--danger:#b3261e;--overlay:rgba(0,0,0,.38);--ripple-opacity:.14;--inset-bottom:env(safe-area-inset-bottom,0px);--inset-top:env(safe-area-inset-top,0px);--seed:#42a5f5;--accent-ink:#006db8;--control-accent:#078ae7;--control-strong:#006db8;--primary-surface:#1976d2;--on-primary:#fff;--action-fill:#1976d2;--on-accent:#fff;--action-tonal:#e4f2fe;--on-action-tonal:#006ab3;--nav-icon:#078ae7;--nav-label:#006db8;--switch-thumb:#078ae7;--switch-track:rgba(7,138,231,.5)}
-:root[data-theme=dark]{--page:#121212;--surface:#212121;--card:#212121;--ink:rgba(255,255,255,.87);--muted:rgba(255,255,255,.60);--disabled:rgba(255,255,255,.38);--divider:rgba(255,255,255,.12);--log:#1e1e1e;--danger:#ffb4ab;--overlay:rgba(0,0,0,.48);--ripple-opacity:.18}
+:root{--change-add-bg:#e5f4e8;--change-add-ink:#174d27;--change-add-border:#71a780;--change-del-bg:#fce8e6;--change-del-ink:#8c1d18;--change-del-border:#ce827c;--ml-action-radius:2px;--ml-item-radius:2px;--page:#fafafa;--surface:#fff;--card:#fff;--ink:#212121;--muted:#707070;--disabled:#bdbdbd;--divider:rgba(0,0,0,.06);--log:#f5f5f5;--danger:#b3261e;--overlay:rgba(0,0,0,.38);--ripple-opacity:.14;--inset-bottom:env(safe-area-inset-bottom,0px);--inset-top:env(safe-area-inset-top,0px);--seed:#42a5f5;--accent-ink:#006db8;--control-accent:#078ae7;--control-strong:#006db8;--primary-surface:#1976d2;--on-primary:#fff;--action-fill:#1976d2;--on-accent:#fff;--action-tonal:#e4f2fe;--on-action-tonal:#006ab3;--nav-icon:#078ae7;--nav-label:#006db8;--switch-thumb:#078ae7;--switch-track:rgba(7,138,231,.5)}
+:root[data-theme=dark]{--change-add-bg:#183b25;--change-add-ink:#b7edc4;--change-add-border:#527b5d;--change-del-bg:#482320;--change-del-ink:#ffc3bc;--change-del-border:#98635c;--page:#121212;--surface:#212121;--card:#212121;--ink:rgba(255,255,255,.87);--muted:rgba(255,255,255,.60);--disabled:rgba(255,255,255,.38);--divider:rgba(255,255,255,.12);--log:#1e1e1e;--danger:#ffb4ab;--overlay:rgba(0,0,0,.48);--ripple-opacity:.18}
 
 :root{--sidebar-width:248px;--toolbar-height:56px;--hover:rgba(0,0,0,.045);--pressed:rgba(0,0,0,.09);--ml-vv-height:100dvh;--ml-vv-width:100vw;--ml-vv-top:0px;--ml-vv-left:0px;--ml-keyboard-space:0px}
 :root[data-theme=dark]{--hover:rgba(255,255,255,.06);--pressed:rgba(255,255,255,.10)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{min-height:100%;scroll-padding-top:80px}
-body{margin:0!important;min-height:100vh;min-height:100dvh;height:auto;display:block;overflow:visible;background:var(--page);color:var(--ink);font:400 14px/1.45 Roboto,"Noto Sans",system-ui,sans-serif}
+body{margin:0!important;min-height:100vh;min-height:100dvh;height:auto;display:block;overflow:visible;background:var(--page);color:var(--ink);font:400 14px/1.45 Roboto,"Noto Sans",system-ui,"PingFang SC","Microsoft YaHei",sans-serif}
 button,input,textarea,select{font:inherit}
 button,a,input,textarea,select,summary{touch-action:manipulation}
 button{cursor:pointer}button,a{user-select:none}
@@ -29,6 +29,12 @@ body button.ml-icon-button{width:48px;height:48px;min-width:48px;min-height:48px
 :root[data-toolbar=false][data-icons=true] .ml-icon-button:not(.ml-toolbar-inner .ml-icon-button){color:var(--accent-ink)}
 #indicators{font-size:11px;display:flex;gap:4px;flex:none}
 #indicators [data-indicator]{text-shadow:none;white-space:nowrap;border-radius:2px;padding:2px 4px;background:var(--log);color:var(--muted)!important}
+/* Native indicator text/count and click handler remain owned by ui.changes. */
+#indicators [data-indicator=uci-changes]{display:inline-flex;align-items:center;justify-content:center;min-height:48px;max-width:min(38vw,320px);margin:0;padding:6px 10px;border-radius:var(--ml-action-radius);font-family:inherit;font-size:13px;font-weight:500;line-height:1.3;text-transform:none;white-space:normal;overflow-wrap:anywhere;background:transparent;color:inherit!important;cursor:pointer}
+#indicators [data-indicator=uci-changes]:hover{background:var(--hover)}
+#indicators [data-indicator=uci-changes]:active{background:var(--pressed)}
+#indicators [data-indicator=uci-changes]:focus-visible{outline:2px solid currentColor;outline-offset:-3px}
+
 .ml-layout{display:grid;grid-template-columns:var(--sidebar-width) minmax(0,1fr);align-items:start}
 .ml-sidebar{position:sticky;top:56px;height:calc(100dvh - 56px);overflow-y:auto;overscroll-behavior:contain;background:var(--page);border-right:1px solid rgba(0,0,0,.12);padding:12px 0;z-index:11}
 .ml-sidebar-heading{display:flex;align-items:center;justify-content:space-between;min-height:40px;padding:0 20px 8px;color:var(--muted);font-size:13px}
@@ -131,8 +137,20 @@ body .cbi-dropdown:not(.btn):not(.cbi-button),body .cbi-dynlist{background:var(-
 body .cbi-dropdown[open]>ul.dropdown{background:var(--surface);color:var(--ink);border:1px solid var(--divider);box-shadow:0 4px 12px rgba(0,0,0,.18);max-height:min(360px,calc(var(--ml-vv-height) - 100px));overflow-y:auto}
 body .cbi-dropdown[open]>ul.dropdown>li{border-bottom:1px solid var(--divider)}
 body .cbi-dropdown[open]>ul.dropdown>li[selected],body .cbi-dropdown[open]>ul.dropdown>li.focus{background:var(--action-tonal);color:var(--on-action-tonal)}
-body .cbi-dynlist>.item{background:var(--surface);border:1px solid var(--divider);box-shadow:none;color:var(--ink);border-radius:2px}
-.cbi-dynlist>.item::after{color:var(--danger);border-color:var(--divider)}
+body .cbi-dynlist>.item{background:var(--surface);border:1px solid var(--divider);box-shadow:none;color:var(--ink);border-radius:var(--ml-item-radius);min-height:36px;padding:8px 42px 8px 10px;line-height:20px;overflow-wrap:anywhere}
+/* Original pseudo-element hit target is retained; a local SVG avoids font glyph drift. */
+body .cbi-dynlist>.item::after{content:"";width:36px;padding:0;border:0;border-radius:0 var(--ml-item-radius) var(--ml-item-radius) 0;color:var(--danger);background:currentColor;-webkit-mask:url("icons/close.svg") center/20px no-repeat;mask:url("icons/close.svg") center/20px no-repeat}
+body .cbi-dynlist>.item:focus-visible{outline:2px solid var(--control-strong);outline-offset:2px}
+body .cbi-dynlist[disabled]>.item::after,body fieldset:disabled .cbi-dynlist>.item::after{color:var(--disabled)}
+@media(forced-colors:active){body .cbi-dynlist>.item::after{background:ButtonText;forced-color-adjust:none}}
+body .cbi-dropdown>.more{font:inherit;color:var(--muted);text-shadow:none}
+body .cbi-dropdown>ul>li[display]:not([display="0"]){border-left-color:var(--divider)}
+body .cbi-dropdown[open]>ul.dropdown{max-width:min(600px,calc(var(--ml-vv-width) - 40px));overflow-x:hidden}
+body .cbi-dropdown[open]>ul.dropdown>li{white-space:normal;overflow-wrap:anywhere;text-overflow:clip;background-image:none}
+body .cbi-dropdown[open]>ul.dropdown>li>label{min-width:0;white-space:normal;overflow-wrap:anywhere}
+body .cbi-dropdown input[type=checkbox],body .cbi-dropdown input[type=radio]{accent-color:var(--control-accent)}
+body .cbi-dropdown[open]>ul.dropdown>li.focus{outline:2px solid var(--control-strong);outline-offset:-2px}
+
 .ifacebox,.ifacebadge{background:var(--surface);background-image:none;text-shadow:none;color:var(--ink);border:1px solid var(--divider);border-radius:2px;box-shadow:none;max-width:100%}
 .ifacebox .ifacebox-body{background:transparent;color:var(--ink);border-color:var(--divider);white-space:normal;line-height:1.5}
 .ifacebox .ifacebox-head{color:var(--ink);border-color:var(--divider);padding:8px 12px}
@@ -155,7 +173,7 @@ body.modal-overlay-active #modal_overlay>.modal{
  position:relative;top:auto;left:auto;transform:none;margin:0;display:block;background:var(--surface);color:var(--ink);
  border-radius:2px;max-width:min(900px,100%);max-height:100%;overflow-y:auto;overflow-x:hidden;min-width:min(320px,100%);width:fit-content;box-shadow:0 8px 20px rgba(0,0,0,.18);padding:20px 24px 12px;scroll-padding:16px}
 #modal_overlay .modal>h4,#modal_overlay .modal>h3{font-size:18px;margin:0 0 16px;padding:0}
-#modal_overlay .modal>.right{float:none;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:16px}
+#modal_overlay .modal>.right,#modal_overlay .uci-dialog>.cbi-section>.right{float:none;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:16px}
 #modal_overlay .modal .cbi-page-actions{justify-content:flex-start}
 .ml-dialog{background:var(--surface);color:var(--ink);width:360px;max-width:100%;max-height:100%;display:flex;flex-direction:column;padding:20px 24px 12px;border-radius:2px;box-shadow:0 8px 20px rgba(0,0,0,.18)}
 .ml-dialog h2{font-size:18px;font-weight:500;padding:0;margin:0 0 16px;flex:none}
@@ -306,7 +324,7 @@ body .ml-sidebar button.ml-nav-parent:active{background:var(--pressed)}
 
 /* One content surface; status badges and tables stay embedded and flat. */
 .ml-card-surface :is(.ifacebox,.ifacebadge){background:transparent;box-shadow:none}
-#maincontent .ifacebox .ifacebox-head:not([style*="background"]):not(.active){background:var(--log)}
+body :is(#maincontent,#modal_overlay) .ifacebox .ifacebox-head:not([style*="background"]):not(.active){background:var(--log)}
 #maincontent .ifacebox .ifacebox-body{border:0}
 #maincontent .ifacebadge{background:transparent;border-color:var(--divider)}
 #maincontent .network-status-table{background:transparent}
@@ -383,19 +401,26 @@ body::after{content:"";position:fixed;bottom:0;left:0;right:0;height:env(safe-ar
 @media(max-width:1023px){.ml-sidebar{top:var(--ml-vv-top);height:var(--ml-vv-height)}}
 :root{--divider:rgba(0,0,0,.12);--status-surface:#f5f5f5;--status-active:#e3f2fd;--status-active-ink:#174564}
 :root[data-theme=dark]{--divider:rgba(255,255,255,.12);--status-surface:#262626;--status-active:#263943;--status-active-ink:#b9def5}
-#maincontent :is(.ifacebox,.ifacebox-body,.ifacebadge){color:var(--ink)!important;border-radius:2px;text-shadow:none!important}
+body :is(#maincontent,#modal_overlay) :is(.ifacebox,.ifacebox-body,.ifacebadge){color:var(--ink)!important;border-radius:2px;text-shadow:none!important}
 #maincontent .ifacebox .ifacebox-head{background:var(--status-surface);border-bottom:1px solid var(--divider);padding:8px 12px;color:var(--ink)}
 #maincontent .ifacebox .ifacebox-head.active:not([style]){background:var(--status-active);color:var(--status-active-ink)}
-#maincontent .ifacebox .ifacebox-body{padding:12px;line-height:1.6}
+body :is(#maincontent,#modal_overlay) .ifacebox .ifacebox-body{border-color:var(--divider);padding:12px;line-height:1.6}
 #maincontent .ifacebadge img{flex:none;object-fit:contain}
-:root[data-theme=dark] #maincontent .ifacebadge img{background:#e0e0e0;border-radius:2px;padding:1px}
+
 #maincontent :is(table,.table,tr,.tr,td,.td,th,.th){background-color:transparent}
 #maincontent :is(.cbi-map-descr,.cbi-section-descr){background:transparent}
 #maincontent .ml-chart-surface{color:var(--ink);min-width:0;max-width:100%;overflow:hidden}
 #maincontent .ml-chart-surface svg{display:block;max-width:100%;background:transparent}
-#maincontent .ml-chart-surface svg line{stroke:var(--divider)!important}
-#maincontent .ml-chart-surface svg text{fill:var(--muted)!important;text-shadow:none!important}
-#maincontent .ml-chart-surface svg rect{fill:transparent!important}
+/* OpenWrt 21.02 loadSVG has an inline white host and inline black axes.
+   Only recognized plots and top-level axes are overridden, never series groups. */
+#maincontent .ml-chart-surface,
+#maincontent #view div:has(>svg>polyline):has(>svg>text),
+#maincontent #channel_graph:has(>svg){background-color:var(--card)!important;border-color:var(--divider)!important}
+#maincontent .ml-chart-surface svg>line,
+#maincontent #channel_graph>svg>line{stroke:var(--divider)!important}
+#maincontent .ml-chart-surface svg>text,
+#maincontent #channel_graph>svg>text{fill:var(--muted)!important;text-shadow:none!important}
+
 #maincontent .ml-view-progress{display:block!important;position:relative;z-index:1;width:100%;height:4px;min-height:4px;margin:8px 0 12px;overflow:hidden}
 #maincontent .ml-view-progress .mdc-linear-progress{height:4px;display:block}
 @media(hover:hover){body .ml-sidebar button.ml-nav-parent:hover{background:var(--hover)}}
@@ -558,6 +583,15 @@ body #modal_overlay>.modal.alert-message{
 /* Configuration tables and package logs retain the established wide layout. */
 body #modal_overlay>.modal:is(.cbi-modal,.uci-dialog):not(.alert-message),
 body #modal_overlay>.modal:has(.cbi-map,.cbi-section,.cbi-tblsection,pre):not(.alert-message){max-width:min(900px,100%)}
+/* Stable configuration geometry; short confirmation/status dialogs retain intrinsic size. */
+body.modal-overlay-active #modal_overlay>.modal:is(.cbi-modal,.uci-dialog):not(.alert-message),
+body.modal-overlay-active #modal_overlay>.modal:has(.cbi-map,.cbi-tblsection,[data-tab-title]):not(.alert-message){width:min(760px,100%);min-height:min(420px,calc(var(--ml-vv-height) - 48px));height:auto}
+#modal_overlay .uci-dialog>.cbi-section>.right{align-items:center;padding:12px 0 0}
+#modal_overlay .uci-dialog>.cbi-section>.right>button{margin:0;min-height:48px;line-height:20px}
+#modal_overlay .uci-dialog>.cbi-section>.right>button.btn:not(.cbi-button){--button-bg:transparent;--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed);--button-ink:var(--accent-ink);background:transparent;color:var(--accent-ink)}
+#modal_overlay .uci-dialog>.cbi-section>.right>button.cbi-button-positive.important{--button-bg:var(--action-fill);--button-ink:var(--on-accent);background:var(--action-fill);color:var(--on-accent)}
+#modal_overlay .uci-dialog>.cbi-section>.right>button.cbi-button-reset{--button-bg:var(--action-tonal);--button-ink:var(--on-action-tonal);background:var(--action-tonal);color:var(--on-action-tonal)}
+
 @media(max-width:599px){
  body #modal_overlay>.modal.mdc-dialog__container{width:100%;max-width:480px}
 }
@@ -658,7 +692,7 @@ body .cbi-value-field :is(.ml-text-field,.ml-mdc-select){vertical-align:top}
 body #maincontent[data-ml-page=reboot] #view>hr{display:none}
 body #maincontent[data-ml-page=reboot] #view>p{margin:0 0 20px;color:var(--muted);line-height:1.6}
 body #maincontent[data-ml-page=reboot] #view>button.cbi-button{
- min-height:48px;min-width:160px;padding:12px 24px;line-height:20px;border-radius:2px
+ min-height:48px;min-width:160px;padding:12px 24px;line-height:20px
 }
 @media(max-width:599px){
  body .cbi-value-title{min-height:0;display:block;margin-bottom:8px;padding:0}
@@ -710,8 +744,9 @@ body :is(input:not([type]),input[type=""],input[type="text"],input[type="passwor
  color:var(--disabled);-webkit-text-fill-color:var(--disabled);border-color:var(--disabled);opacity:1
 }
 body :is(input:not([type]),input[type=""],input[type="text"],input[type="password"],input[type="number"],input[type="email"],input[type="url"],input[type="tel"],input[type="search"],textarea,select)[readonly]:not(:disabled){
- color:var(--ink);-webkit-text-fill-color:var(--ink)
+ color:var(--ink);-webkit-text-fill-color:var(--ink);background:var(--surface);border-bottom-color:var(--muted)
 }
+body .ml-text-field.mdc-text-field--filled>.mdc-text-field__input[readonly]:not(:disabled){background:transparent}
 body :is(input:not([type]),input[type=""],input[type="text"],input[type="password"],input[type="number"],input[type="email"],input[type="url"],input[type="tel"],input[type="search"],textarea)::placeholder,
 body :is(input:not([type]),input[type=""],input[type="text"],input[type="password"],input[type="number"],input[type="email"],input[type="url"],input[type="tel"],input[type="search"],textarea)::-webkit-input-placeholder{
  color:var(--muted);-webkit-text-fill-color:var(--muted);opacity:1
@@ -866,8 +901,8 @@ body .ml-native-button>input:is([type=button],[type=submit],[type=reset]):disabl
 body .ml-native-button.mdc-button:not(:has(>input:disabled)):active{background:var(--button-pressed-bg)}
 /* Only explicit icon/list controls are compact; destructive table actions
    must not inherit the dimensions of full-page destructive operations. */
-body :is(.cbi-dynlist,.cbi-section-table,.table) :is(.cbi-button-remove,.cbi-input-remove){
- min-width:36px;width:auto;min-height:36px;padding:8px;margin:0
+body :is(.cbi-section-table,.table) :is(button.cbi-button,a.cbi-button,a.btn,div.btn,input.cbi-button):not(.cbi-dropdown):not(.cbi-dynlist *){
+ min-width:36px;width:auto;min-height:36px;padding:8px 12px;margin:0;line-height:20px;border-radius:var(--ml-action-radius)
 }
 /* Original Lua multipart forms keep all inputs, siblings and submit handlers.
    Flex-wrap coordinates the file selector, action and conditional description. */
@@ -957,6 +992,16 @@ body .ml-sidebar button.ml-nav-parent.mdc-button>.ml-nav-chevron{
 /* Restore actions keep their intrinsic width before and after MDC attaches. */
 .ml-brand-controls>.text-action{flex:0 0 auto}
 
+/* LuCI sorting feedback. No drag/drop listeners or row reconstruction. */
+body .drag-handle{cursor:grab;color:var(--muted);touch-action:none}
+body .drag-handle:active{cursor:grabbing}
+body #maincontent :is(tr,.tr).drag-over-above>:is(td,.td){box-shadow:inset 0 3px var(--control-strong)}
+body #maincontent :is(tr,.tr).drag-over-below>:is(td,.td){box-shadow:inset 0 -3px var(--control-strong)}
+body #maincontent :is(tr,.tr).flash>:is(td,.td){animation:ml-sort-flash 280ms ease-out}
+@keyframes ml-sort-flash{from{background-color:var(--action-tonal)}to{background-color:transparent}}
+/* Native touch preview uses inline colors; override only that temporary host. */
+body .touchsort-element{background:var(--raised-surface,var(--surface))!important;color:var(--ink)!important;border:2px solid var(--control-strong);border-radius:var(--ml-item-radius);box-shadow:0 2px 6px var(--overlay)!important;pointer-events:none}
+@media(prefers-reduced-motion:reduce){body #maincontent :is(tr,.tr).flash>:is(td,.td){animation:none}}
 /* Native pane visibility and compound-list sizing must work in either design.
    LuCI owns data-tab-active and all original children. */
 body [data-tab-title]:not([data-tab-active=true]){display:none!important}

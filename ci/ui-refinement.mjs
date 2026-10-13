@@ -36,10 +36,10 @@ try{
   // Check the real MDC instance, not the former progress stub.
   assert.equal(await page.locator(".ml-view-progress .ml-task-progress").evaluate(n=>n._mlComponent instanceof MaterialMDC.MDCLinearProgress),true);
   await page.evaluate(()=>{document.body.classList.add("modal-overlay-active");MaterialWait.sync();});
-  const engine=design==="m3e"?"m3e":"mdc";
+  const engine="mdc";
   await page.waitForFunction(engine=>document.querySelector("#ml-mdc-wait-progress")?.dataset.mlProgressEngine===engine,engine);
-  assert.equal(await page.locator("#ml-mdc-wait-progress").evaluate(n=>getComputedStyle(n).height),design==="m3e"?"16px":"4px");
-  assert.equal(await page.locator("#ml-mdc-wait-progress .ml-wavy-progress").count(),design==="m3e"?1:0);
+  assert.equal(await page.locator("#ml-mdc-wait-progress").evaluate(n=>getComputedStyle(n).height),"4px");
+  assert.equal(await page.locator("#ml-mdc-wait-progress .ml-wavy-progress").count(),0);
   await page.evaluate(()=>{document.body.classList.remove("modal-overlay-active");MaterialWait.sync();});
   assert.equal(await page.locator("#ml-mdc-wait-progress").count(),0);
   await page.evaluate(()=>document.getElementById("view").innerHTML='<section id="ordinary" class="cbi-section"><h3>Ordinary</h3><p>Content</p></section>');

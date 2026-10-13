@@ -1,6 +1,7 @@
 /* Shared shell geometry stays in cascade.css. Only M3-owned controls here. */
 :root[data-design=m3e]{
  --ml-card-radius:16px;
+ --ml-action-radius:24px;--ml-item-radius:8px;
  --md-sys-typescale-label-large-font:Roboto,"Noto Sans",system-ui,sans-serif;
  --md-sys-typescale-label-large-size:14px;
  --md-sys-typescale-label-large-line-height:20px;
@@ -57,7 +58,7 @@ body .ml-design-options button[aria-pressed=true]{background:var(--action-tonal)
 :root[data-design=m3e] body .ml-m3-feedback{position:relative;isolation:isolate}
 :root[data-design=m3e] body .ml-m3-feedback>md-ripple{position:absolute;inset:0;border-radius:inherit;pointer-events:none;--md-ripple-hover-color:currentColor;--md-ripple-pressed-color:currentColor}
 /* Business controls only. Shell, selections, tabs and field icons keep their geometry. */
-:root[data-design=m3e] body :is(#maincontent,#modal_overlay) :is(button,a.btn,a.cbi-button,div.btn,input[type=button],input[type=submit],input[type=reset]):not(:where(.mdc-switch,.ml-icon-button,.ml-poll-action,.ml-nav-parent,.ml-option,.ml-choice,.ml-swatch-item,.ml-mode-option,.text-action,.cbi-button-add,.cbi-button-up,.cbi-button-down,.ml-text-field *,.ml-mdc-select *,.ml-mdc-menu *,#ml-appearance *)){
+:root[data-design=m3e] body :is(#maincontent,#modal_overlay) :is(button,a.btn,a.cbi-button,div.btn,input[type=button],input[type=submit],input[type=reset]):not(:where(.mdc-switch,.ml-icon-button,.ml-poll-action,.ml-nav-parent,.ml-option,.ml-choice,.ml-swatch-item,.ml-mode-option,.text-action,div.cbi-button-add:not(.cbi-button),.cbi-button-up,.cbi-button-down,.ml-text-field *,.ml-mdc-select *,.ml-mdc-menu *,#ml-appearance *)){
  border-radius:24px;min-height:48px;padding:12px 24px;font-weight:500;letter-spacing:.1px;line-height:20px;text-align:center
 }
 :root[data-design=m3e] body :is(#maincontent,#modal_overlay) :is(button,a.btn,a.cbi-button,div.btn):not(:where(.mdc-switch,.ml-nav-parent,.ml-option,.ml-choice,.ml-swatch-item,.ml-mode-option,.ml-text-field *,.ml-mdc-select *,.ml-mdc-menu *,#ml-appearance *)){
@@ -67,12 +68,14 @@ body .ml-design-options button[aria-pressed=true]{background:var(--action-tonal)
 :root[data-design=m3e] body :is(#maincontent,#modal_overlay) :is(.cbi-section-table,.table,table,.cbi-dynlist>.item) :is(button.cbi-button,a.cbi-button,a.btn,input.cbi-button):not(:where(.cbi-dropdown,.cbi-button-add,.cbi-button-up,.cbi-button-down,.ml-icon-button,.cbi-dynlist>.add-item *)){
  min-width:36px;width:auto;min-height:36px;padding:8px 12px;border:0;border-radius:18px
 }
-:root[data-design=m3e] body :is(.cbi-button-add,.cbi-button-up,.cbi-button-down,.ml-icon-button,.ml-text-field button){border-radius:50%;min-width:36px;min-height:36px;padding:8px}
+:root[data-design=m3e] body :is(div.cbi-button-add:not(.cbi-button),.cbi-button-up,.cbi-button-down,.ml-icon-button,.ml-text-field button){border-radius:50%;min-width:36px;min-height:36px;padding:8px}
 :root[data-design=m3e] body :is(#maincontent,#modal_overlay) .text-action{border-radius:20px;min-height:40px;padding:10px 12px}
 :root[data-design=m3e] body :is(#maincontent,#modal_overlay) :is(button,a.btn,a.cbi-button,div.btn,input[type=button],input[type=submit],input[type=reset]):focus-visible{outline:2px solid var(--control-strong);outline-offset:2px}
 :root[data-design=m3e] body :is(a.btn,a.cbi-button,div.btn):is([aria-disabled=true],[disabled]){background:var(--pressed);color:var(--disabled);box-shadow:none;cursor:default}
 :root[data-design=m3e] body .ml-native-button{padding:0}
 :root[data-design=m3e] body .ml-native-button>input{border-radius:inherit}
+/* Readonly fields paint correctly before deferred enhancement. */
+:root[data-design=m3e] body .cbi-value-field :is(input[readonly],textarea[readonly]):not(:where(.ml-text-field *,.cbi-dropdown *,.cbi-dynlist *)){background:var(--md-sys-color-surface-container-highest);padding-left:16px;padding-right:16px}
 /* Match eligible native fields before deferred MDC decoration. Focused fields
    keep their native node and the adapter still defers moving them until blur. */
 :root[data-design=m3e] body .cbi-value-field :is(input:not([type]),input[type=text],input[type=password],input[type=email],input[type=url],input[type=tel],input[type=search],input[type=number]):not(:where(.cbi-dynlist *,.cbi-dropdown *,.ml-text-field *)){height:56px;min-height:56px;box-sizing:border-box}

@@ -2,7 +2,7 @@
 /* MDC enhancement layer. No cloned form values, RPC, ACL or route changes. */
 (function(){
  const {MDCCheckbox,MDCRadio,MDCFormField,MDCDialog}=MaterialMDCControls;
- const selections=new Map(),dialogs=new Map();
+ const selections=new Map(),dialogs=new Map(),indicators=new Map();
  function element(tag,cls){const el=document.createElement(tag);el.className=cls;el.setAttribute("aria-hidden","true");return el;}
  function selection(input){
   if(selections.has(input)){window.MaterialComponents?.syncSelections(input);return;}
@@ -105,7 +105,21 @@
  MaterialRuntime.register({range:true,discoverSelector:"#modal_overlay",enhance(root){const overlay=root.id==="modal_overlay"?root:root.querySelector("#modal_overlay");if(overlay)observeOverlay(overlay);},cleanup(root){if(observedOverlay&&!observedOverlay.isConnected&&(root===observedOverlay||root.contains(observedOverlay)))observeOverlay(document.getElementById("modal_overlay"));}});
  observeOverlay(document.getElementById("modal_overlay"));
  MaterialRuntime.register({selector:'input[type="checkbox"],input[type="radio"]',enhance,cleanup(root){MaterialRuntime.cleanup(root,selections,'input');MaterialRuntime.cleanup(root,dialogs,'#modal_overlay,.ml-backdrop');}});
- window.addEventListener("pagehide",event=>{if(!event.persisted){modalObserver.disconnect();visibilityObserver.disconnect();for(const entry of [...dialogs.values()])entry.destroy();for(const entry of [...selections.values()])entry.destroy();}});
+ 
+ // A native indicator is a span with a click callback. Add keyboard access
+ // without replacing its first text node or registering another click handler.
+ function indicator(node){
+  if(indicators.has(node))return;
+  const oldRole=node.getAttribute("role"),oldTab=node.getAttribute("tabindex");
+  if(oldRole===null)node.setAttribute("role","button");
+  if(oldTab===null)node.tabIndex=0;
+  const key=event=>{if((event.key==="Enter"||event.key===" ")&&!event.repeat&&!node.closest('[inert],[aria-disabled="true"]')){event.preventDefault();node.click();}};
+  node.addEventListener("keydown",key);
+  indicators.set(node,{destroy(){node.removeEventListener("keydown",key);for(const [key,value] of [["role",oldRole],["tabindex",oldTab]])if(value===null)node.removeAttribute(key);else node.setAttribute(key,value);indicators.delete(node);}});
+ }
+ MaterialRuntime.register({selector:'[data-indicator="uci-changes"]',enhance(root){if(root.matches?.('[data-indicator="uci-changes"]'))indicator(root);root.querySelectorAll?.('[data-indicator="uci-changes"]').forEach(indicator);},cleanup(root){MaterialRuntime.cleanup(root,indicators,'[data-indicator="uci-changes"]');}});
+
+ window.addEventListener("pagehide",event=>{if(!event.persisted){for(const entry of [...indicators.values()])entry.destroy();modalObserver.disconnect();visibilityObserver.disconnect();for(const entry of [...dialogs.values()])entry.destroy();for(const entry of [...selections.values()])entry.destroy();}});
  window.MaterialControls={enhance,dialog,closeDialog(root){dialogs.get(root)?.destroy();},count(){return {selections:selections.size,dialogs:dialogs.size};}};
  syncLuCI();
 })();

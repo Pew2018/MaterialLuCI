@@ -12,7 +12,7 @@
   frame=0;if(stopped||!root||!modal||!overlay)return;
   const box=modal.getBoundingClientRect(),outer=overlay.getBoundingClientRect(),padding=innerWidth<600?18:24;
   MaterialRuntime.setStyle(root,"left",(box.left-outer.left+padding)+"px");
-  MaterialRuntime.setStyle(root,"top",(box.bottom-outer.top-(MaterialComponents.isM3()?28:16))+"px");
+  MaterialRuntime.setStyle(root,"top",(box.bottom-outer.top-16)+"px");
   MaterialRuntime.setStyle(root,"width",Math.max(0,box.width-padding*2)+"px");
   if(moving.size&&performance.now()<followUntil)frame=requestAnimationFrame(position);
  }

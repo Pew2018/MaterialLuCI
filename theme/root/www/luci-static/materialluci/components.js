@@ -107,8 +107,8 @@
   queueGroup(group);
  }
  function progress(node,options={}){
-  // View loads use official MDC in both designs; other feedback retains its engine.
-  if(m3()&&options.scene!=="view"){
+  // View and modal waits use official MDC; general task feedback retains its engine.
+  if(m3()&&options.scene!=="view"&&options.scene!=="modal"){
    // Project-owned M3 Expressive adapter: Material Web 2.5 has no wavy API.
    // Native host retains the accessible indeterminate progress semantics.
    node.classList.remove("mdc-linear-progress","mdc-linear-progress--indeterminate","mdc-linear-progress--closed");

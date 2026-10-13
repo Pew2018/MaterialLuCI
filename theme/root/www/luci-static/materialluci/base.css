@@ -493,12 +493,17 @@ p {
 /* Change List */
 
 .uci-change-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
     padding-top: 15px;
 }
 
 .uci-change-legend-label {
-    float: left;
-    margin-right: 100px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
 }
 
 .uci-change-legend-label>ins,
@@ -512,7 +517,9 @@ p {
 }
 
 .uci-change-list {
-    font-family: monospace;
+    font: 13px/1.6 ui-monospace, monospace;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
 }
 
 .uci-change-list ins,
@@ -528,27 +535,31 @@ p {
 
 .uci-change-list ins,
 .uci-change-legend-label ins {
-    background: #cfc;
-    border: 2px solid #4f4;
+    background: var(--change-add-bg);
+    color: var(--change-add-ink);
+    border: 1px solid var(--change-add-border);
 }
 
 .uci-change-list del,
 .uci-change-legend-label del {
-    background: #fcc;
-    border: 2px solid #f00;
+    background: var(--change-del-bg);
+    color: var(--change-del-ink);
+    border: 1px solid var(--change-del-border);
 }
 
 .uci-change-list var,
 .uci-change-legend-label var {
-    background: #f2f2f2;
-    border: 2px solid #ccc;
+    background: var(--log);
+    color: var(--ink);
+    border: 1px solid var(--divider);
+    font-style: normal;
 }
 
 .uci-change-list var ins,
 .uci-change-list var del {
     border: 0;
-    white-space: pre;
-    padding: 0;
+    white-space: pre-wrap;
+    padding: 2px 4px;
 }
 
 .uci-change-legend-label var ins,
@@ -829,9 +840,9 @@ textarea[disabled],
 input[readonly],
 select[readonly],
 textarea[readonly] {
-    background-color: #f5f5f5;
-    border-color: #ddd;
-    color: unset;
+    background-color: var(--surface);
+    border-color: var(--divider);
+    color: var(--ink);
 }
 
 table.cbi-section-table input,
