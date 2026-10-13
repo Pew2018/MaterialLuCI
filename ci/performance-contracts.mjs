@@ -40,7 +40,7 @@ function fixture(){
 
    const id=part.match(/#([\w-]+)/)?.[1];if(id&&this.id!==id)return false;
    if([...part.matchAll(/\.([\w-]+)/g)].some(m=>!this.classList.contains(m[1])))return false;
-   if([...part.matchAll(/\[([\w-]+)(?:=["']?([^"'\]]+)["']?)?\]/g)].some(m=>m[2]?this.getAttribute(m[1])!==m[2]:!this.hasAttribute(m[1])))return false;
+   if([...part.matchAll(/\[([\w-]+)(?:=["']?([^"'\]]*)["']?)?\]/g)].some(m=>m[2]!==undefined?this.getAttribute(m[1])!==m[2]:!this.hasAttribute(m[1])))return false;
    const tag=part.match(/^[\w-]+/)?.[0];return !tag||this.tagName===tag.toUpperCase();
   });}
   contains(n){return n===this||this.children.some(c=>c.contains(n));}
@@ -292,7 +292,7 @@ console.log("Runtime lifecycle, radio-group batching and loading-state contracts
 }
 {
  // Execute the actual viewport handler without constructing the rest of the UI.
- const f=fixture(),vv=new f.Element("viewport");vv.height=800;vv.width=400;vv.offsetTop=0;vv.offsetLeft=0;vv.scale=1;
+ const f=fixture(),vv=new f.Element("viewport");vv.height=800;vv.width=400;Object.defineProperties(vv,{offsetTop:{value:0,writable:true},offsetLeft:{value:0,writable:true}});vv.scale=1;
  f.context.innerHeight=800;f.context.innerWidth=400;f.window.visualViewport=vv;f.context.narrow={matches:true};f.context.toolbar=null;f.load("runtime.js");
  const app=fs.readFileSync(base+"app.js","utf8");vm.runInContext(app.slice(app.indexOf(" const vv=window.visualViewport"),app.indexOf(" window.MaterialLuCI=")),f.context);
  const input=f.document.createElement("input");input.setAttribute("type","text");f.document.body.append(input);f.document.activeElement=input;

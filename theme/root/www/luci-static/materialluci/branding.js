@@ -72,21 +72,20 @@
  const observer=new MutationObserver(()=>{if(snapshot()!==appearanceKey)queueColor();});
  const shellObserver=new MutationObserver(records=>{
   // Ignore indicator text, ripple and progress updates in the toolbar subtree.
-  const relevant=n=>n.nodeType===1&&(n.matches?.("#ml-title,#ml-sidebar-name,#ml-sidebar-heading")||n.querySelector?.("#ml-title,#ml-sidebar-name,#ml-sidebar-heading"));
-  if(records.some(r=>[...r.addedNodes,...r.removedNodes].some(relevant)))apply();
+  const relevant=n=>n.nodeType===1&&(n.matches?.("#ml-title,#ml-sidebar-name,#ml-sidebar-heading,.ml-toolbar-inner")||n.querySelector?.("#ml-title,#ml-sidebar-name,#ml-sidebar-heading,.ml-toolbar-inner"));
+  if(records.some(r=>[...r.addedNodes,...r.removedNodes].some(relevant))){observeShell();colorKey="";apply();}
  });
- function observe(){
-  observer.observe(root,{attributes:true,attributeFilter:["style","data-theme","data-toolbar","data-design"]});
-  const toolbar=document.querySelector(".ml-toolbar"),heading=document.getElementById("ml-sidebar-heading");
-  if(toolbar)shellObserver.observe(toolbar,{childList:true,subtree:true});
-  if(heading?.parentElement)shellObserver.observe(heading.parentElement,{childList:true,subtree:true});
+ function observeShell(){
+  shellObserver.disconnect();backgroundObserver.disconnect();
+  const toolbar=document.querySelector(".ml-toolbar"),inner=toolbar?.querySelector(".ml-toolbar-inner"),heading=document.getElementById("ml-sidebar-heading");
+  // Direct children only: indicator/ripple internals never enter this observer.
+  for(const el of [toolbar,inner,heading?.parentElement,heading])if(el)shellObserver.observe(el,{childList:true});
+  for(const el of [toolbar,inner])if(el)backgroundObserver.observe(el,{attributes:true,attributeFilter:["style","class"]});
  }
  // Toolbar-local background changes are rare but meaningful. Only direct
  // toolbar/inner attributes qualify; title's own color never loops back.
  const backgroundObserver=new MutationObserver(records=>{if(records.some(r=>r.target.matches(".ml-toolbar,.ml-toolbar-inner"))) {colorKey="";queueColor();}});
- const toolbar=document.querySelector(".ml-toolbar");
- if(toolbar)backgroundObserver.observe(toolbar,{attributes:true,subtree:true,attributeFilter:["style","class"]});
- observe();
+ observer.observe(root,{attributes:true,attributeFilter:["style","data-theme","data-toolbar","data-design"]});observeShell();
  window.addEventListener("pagehide",event=>{
   suspended=true;cancelAnimationFrame(frame);frame=0;
   if(!event.persisted){observer.disconnect();shellObserver.disconnect();backgroundObserver.disconnect();}
