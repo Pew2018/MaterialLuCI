@@ -15,16 +15,17 @@
  function portalMenu(root){
   root.classList.add("ml-mdc-menu");document.body.append(root);
   const menu=new MDCMenu(root,undefined,undefined,el=>{const list=new MDCList(el);list.disabledItemsFocusable=false;return list;});menu.setIsHoisted(true);menu.setFixedPosition(true);
-  root.addEventListener("MDCMenuSurface:opening",()=>openMenus.add(menu));
-  root.addEventListener("MDCMenuSurface:opened",()=>{if(menu.open)openMenus.add(menu);});
-  root.addEventListener("MDCMenuSurface:closed",()=>{if(!menu.open)openMenus.delete(menu);});
+  const live=()=>root.isConnected&&root._mlMdcMenu===menu;
+  root.addEventListener("MDCMenuSurface:opening",()=>{if(live())openMenus.add(menu);});
+  root.addEventListener("MDCMenuSurface:opened",()=>{if(live()&&menu.open)openMenus.add(menu);});
+  root.addEventListener("MDCMenuSurface:closed",()=>{if(!live()||!menu.open)openMenus.delete(menu);});
   const openDescriptor=Object.getOwnPropertyDescriptor(MDCMenu.prototype,"open");
-  if(openDescriptor?.get&&openDescriptor?.set)Object.defineProperty(menu,"open",{configurable:true,get(){return openDescriptor.get.call(this);},set(value){openDescriptor.set.call(this,value);if(openDescriptor.get.call(this))openMenus.add(this);else openMenus.delete(this);}});
+  if(openDescriptor?.get&&openDescriptor?.set)Object.defineProperty(menu,"open",{configurable:true,get(){return openDescriptor.get.call(this);},set(value){openDescriptor.set.call(this,value);if(live()&&openDescriptor.get.call(this))openMenus.add(this);else openMenus.delete(this);}});
   menu.wrapFocus=true;menu.hasTypeahead=true;root._mlMdcMenu=menu;
   // v14 transition callbacks may arrive after an opposite user action.
   // Do not let a superseded opened/closed event steal focus or select state.
-  root.addEventListener('MDCMenuSurface:opened',event=>{if(!menu.open)event.stopImmediatePropagation();},true);
-  root.addEventListener('MDCMenuSurface:closed',event=>{if(menu.open)event.stopImmediatePropagation();},true);
+  root.addEventListener('MDCMenuSurface:opened',event=>{if(!live()||!menu.open)event.stopImmediatePropagation();},true);
+  root.addEventListener('MDCMenuSurface:closed',event=>{if(!live()||menu.open)event.stopImmediatePropagation();},true);
   if(root.classList.contains('ml-action-menu')){menu.setDefaultFocusState(DefaultFocusState.NONE);root.addEventListener('MDCMenuSurface:opened',()=>{if(menu.open&&root.isConnected)root.querySelector('.mdc-deprecated-list')?.focus({preventScroll:true});});}
   return menu;
  }
@@ -37,7 +38,7 @@
   popup.addEventListener("keydown",key,true);anchor.addEventListener("keydown",key);
   popup._mlEscapeCleanup=()=>anchor.removeEventListener("keydown",key);
   popup.addEventListener("MDCMenuSurface:closed",()=>{
-   if(restore&&anchor.isConnected&&!anchor.closest('[disabled],[aria-disabled="true"]')&&!document.body.classList.contains("modal-overlay-active"))anchor.focus({preventScroll:true});
+   if(restore&&popup.isConnected&&anchor.isConnected&&!anchor.closest('[disabled],[aria-disabled="true"]')&&!document.body.classList.contains("modal-overlay-active"))anchor.focus({preventScroll:true});
    restore=false;
   });
  }

@@ -106,15 +106,15 @@ try{
   assert.equal(await page.evaluate(()=>pollNode.hasAttribute("title")),false);
 
   // Spy on actual manual MDC ripple owners, never substitute a ripple stub.
-  await page.evaluate(()=>{
-   window.rippleCreated=0;window.rippleDestroyed=0;
-   const Real=MaterialMDCControls.MDCRipple;
-   MaterialMDCControls.MDCRipple=class extends Real{constructor(...args){super(...args);rippleCreated++;}destroy(){rippleDestroyed++;super.destroy();}};
-  });
+  await page.evaluate(()=>{window.rippleCreated=0;window.rippleDestroyed=0;});
   // extras closes over constructor; reload after existing instances are disposed.
   await page.evaluate(()=>dispatchEvent(new PageTransitionEvent("pagehide",{persisted:false})));
   await page.addScriptTag({path:base+"runtime.js"});
-  await page.addScriptTag({path:base+"extras.js"});
+  // Export getters are read-only. Instrument the actual manual constructor
+  // call, with a Proxy forwarding to the real bundled MDC implementation.
+  let extras=fs.readFileSync(source+"extras.js","utf8");
+  extras=extras.replace(" const make=", ' const RippleSpy=new Proxy(MDCRipple,{construct(Target,args){const instance=Reflect.construct(Target,args);rippleCreated++;const destroy=instance.destroy.bind(instance);instance.destroy=()=>{rippleDestroyed++;return destroy();};return instance;}});\n const make=').replace("new MDCRipple(li)","new RippleSpy(li)");
+  await page.addScriptTag({content:extras});
   await page.evaluate(()=>MaterialRuntime.start(document.body));
   await page.evaluate(()=>{window.anchor=E("button",{type:"button"},"Menu");document.body.append(anchor);});
   for(const mode of ["close","escape","selected","remove-anchor","remove-popup"]){
@@ -127,11 +127,14 @@ try{
    else await page.evaluate(()=>{menu.open=false;menu.open=false;});
 
    await page.waitForFunction(()=>!document.querySelector(".ml-action-menu"));
+   assert.ok(await page.evaluate(()=>rippleCreated)>0,"spy must observe real constructors");
    assert.equal(await page.evaluate(()=>rippleCreated),await page.evaluate(()=>rippleDestroyed));
    if(mode==="escape")assert.equal(await page.evaluate(()=>document.activeElement===anchor),true);
    if(mode==="selected")assert.equal(await page.evaluate(()=>menuChoice),"a");
    if(mode==="remove-anchor")await page.evaluate(()=>document.body.append(anchor));
-   await page.evaluate(()=>{popup.dispatchEvent(new CustomEvent("MDCMenuSurface:opened"));popup.dispatchEvent(new CustomEvent("MDCMenuSurface:closed"));});
+   const dismissals=await page.evaluate(()=>MaterialExtras.counts().scrollDismissals);
+   await page.evaluate(()=>{popup.dispatchEvent(new CustomEvent("MDCMenuSurface:opened"));popup.dispatchEvent(new CustomEvent("MDCMenuSurface:closed"));document.dispatchEvent(new WheelEvent("wheel",{bubbles:true}));});
+   assert.equal(await page.evaluate(()=>MaterialExtras.counts().scrollDismissals),dismissals,"late portal events must not resurrect closed menu ownership");
   }
   // Scoped modal adapter: visibility, panel/overlay replacement, heading title.
   await page.evaluate(()=>{document.body.classList.add("modal-overlay-active");});
