@@ -227,7 +227,8 @@
   const colorError=node("div",{id:"ml-brand-title-color-error",class:"ml-field-error",role:"alert","aria-live":"polite"});
   const colorWarning=node("div",{id:"ml-brand-title-color-warning",class:"ml-brand-warning",role:"status","aria-live":"polite"});
   const colorFields=node("div",{id:"ml-brand-title-color-fields",class:"ml-brand-color-fields"},[colorText,colorPicker]);
-  function updateColorFeedback(){const custom=colorMode.value==="custom";colorFields.hidden=!custom;colorWarning.hidden=true;if(!custom)return;const contrast=window.MaterialBranding.contrastAgainstToolbar(window.MaterialBranding.prefs.toolbarTitleColorValue);if(contrast!==null&&contrast<4.5){colorWarning.hidden=false;colorWarning.textContent=t("与当前顶栏背景的对比度低于 4.5:1。仍按你的选择应用。","Contrast against the current toolbar is below 4.5:1. Your choice remains applied.");}}
+  let customColorRow=null;
+  function updateColorFeedback(){const custom=colorMode.value==="custom";colorFields.hidden=!custom;if(customColorRow)customColorRow.hidden=!custom;colorWarning.hidden=true;if(!custom)return;const contrast=window.MaterialBranding.contrastAgainstToolbar(window.MaterialBranding.prefs.toolbarTitleColorValue);if(contrast!==null&&contrast<4.5){colorWarning.hidden=false;colorWarning.textContent=t("与当前顶栏背景的对比度低于 4.5:1。仍按你的选择应用。","Contrast against the current toolbar is below 4.5:1. Your choice remains applied.");}}
   function applyBrandColor(value,source){if(!/^#[0-9a-f]{6}$/i.test(value)){colorError.textContent=t("请输入 #RRGGBB 格式的 6 位 HEX 颜色。","Enter a six-digit HEX color in #RRGGBB format.");colorText.setAttribute("aria-invalid","true");return;}const normalized=value.toUpperCase();colorError.textContent="";colorText.setAttribute("aria-invalid","false");if(source!=="text")colorText.value=normalized;if(source!=="picker")colorPicker.value=normalized;window.MaterialBranding.set("toolbarTitleColorValue",normalized);updateColorFeedback();}
   colorText.value=window.MaterialBranding.prefs.toolbarTitleColorValue;colorPicker.value=colorText.value;
   colorText.addEventListener("input",()=>applyBrandColor(colorText.value,"text"));colorText.addEventListener("blur",()=>{if(/^#[0-9a-f]{6}$/i.test(colorText.value))colorText.value=colorText.value.toUpperCase();});
@@ -235,7 +236,7 @@
   colorMode.addEventListener("change",()=>{window.MaterialBranding.set("toolbarTitleColor",colorMode.value);colorError.textContent="";colorText.setAttribute("aria-invalid","false");updateColorFeedback();});
   colorText.addEventListener("keydown",event=>{if(event.key==="Enter")event.preventDefault();});
   const autoColor=textButton(t("恢复自动","Restore automatic"),()=>{window.MaterialBranding.set("toolbarTitleColor","auto");colorMode.value="auto";colorError.textContent="";colorText.setAttribute("aria-invalid","false");updateColorFeedback();});
-  identity.append(brandRow(t("自定义颜色","Custom color"),t("仅在选择自定义颜色时显示。","Available when custom title color is selected."),node("div",{class:"ml-brand-controls ml-brand-color-control"},[colorFields,autoColor])));
+  customColorRow=brandRow(t("自定义颜色","Custom color"),t("仅调整顶栏标题文字。","Changes only the toolbar title text."),node("div",{class:"ml-brand-controls ml-brand-color-control"},[colorFields,autoColor]));identity.append(customColorRow);
   identity.append(colorError,colorWarning);updateColorFeedback();window.addEventListener("materialluci:appearance",updateColorFeedback);
 
   const visibility=node("input",{id:"ml-brand-sidebar-visible",type:"checkbox",class:"ml-switch","data-ml-owner":"appearance","aria-label":t("显示侧边栏设备名称","Show sidebar device name")});

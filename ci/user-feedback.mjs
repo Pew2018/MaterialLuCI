@@ -18,7 +18,10 @@ try{for(const [engine,type] of [["chromium",chromium],["webkit",webkit]]){
   const settingsText=await page.locator("#ml-appearance").innerText();
   assert.ok(!settingsText.includes("OnePlus"));
   assert.ok(settingsText.includes("MaterialLuCI Classic"));
-  assert.equal(await page.locator("#ml-appearance button").evaluateAll(ns=>ns.every(n=>n.type==="button")),true);
+  // Playwright selectors pierce official Material Web shadow roots. Check
+  // form-associated hosts and light-DOM buttons, not their internal buttons.
+  assert.equal(await page.evaluate(()=>[...document.querySelectorAll("#ml-appearance button,#ml-appearance md-outlined-button,#ml-appearance md-text-button")].every(n=>n.type==="button")),true);
+  assert.equal(await page.locator("#ml-brand-title-color-fields").isVisible(),false);
   await page.locator('.ml-swatch-item[data-seed="#009688"]').click();
   assert.equal(await page.locator('.ml-swatch-item[data-seed="#009688"] .ml-swatch').getAttribute("data-selected"),"true");
   assert.equal(await page.locator('.ml-swatch-item[data-seed="#009688"] .ml-swatch').innerText(),"");
