@@ -31,7 +31,7 @@ try{
    };enter();
   });
   await page.waitForFunction(()=>MaterialWait.activeCount()===1);
-  await page.evaluate(()=>Promise.reject(new Error("unrelated-fixture")));
+  await page.evaluate(()=>{Promise.reject(new Error("unrelated-fixture"));});
   await page.waitForTimeout(30);
   assert.equal(await page.evaluate(()=>MaterialWait.activeCount()),1);
   await page.evaluate(()=>{const local=E("section",{},null);local.append(E("div",{class:"alert-message danger"},"Local"));document.getElementById("view").append(local);});
@@ -145,8 +145,9 @@ try{
    document.getElementById("view").innerHTML='<div class="cbi-value"><select name="mediaurlbase"><option value="/luci-static/materialluci">Material</option></select></div>';
   });
   const entry=app.slice(app.indexOf(' function allFields('),app.indexOf(' function enhanceSwitch('));
+  const disclosureLayout=app.slice(app.lastIndexOf(" MaterialRuntime.registerLayout("),app.indexOf(" MaterialRuntime.start(document.body);"));
   const cleanup=app.match(/cleanup\(root\)\{MaterialRuntime.cleanup\(root,switches,"input"\);MaterialRuntime.cleanup\(root,disclosures,"#ml-appearance-entry"\);\}/)[0];
-  await page.addScriptTag({content:'(function(){const t=(a,b)=>b,disclosures=new Map(),switches=new Map();const node=(tag,attrs={},children=[])=>{const n=document.createElement(tag);for(const [k,v]of Object.entries(attrs)){if(k==="text")n.textContent=v;else n.setAttribute(k,v);}n.append(...children);return n;};const openAppearance=details=>{if(!details.querySelector("#ml-appearance")){const n=document.createElement("section");n.id="ml-appearance";details.append(n);}};'+entry+'window.makeAppearance=appearanceEntry;MaterialRuntime.register({selector:"select",enhance:appearanceEntry,'+cleanup+'});appearanceEntry(maincontent);})();'});
+  await page.addScriptTag({content:'(function(){const t=(a,b)=>b,disclosures=new Map(),switches=new Map();const node=(tag,attrs={},children=[])=>{const n=document.createElement(tag);for(const [k,v]of Object.entries(attrs)){if(k==="text")n.textContent=v;else n.setAttribute(k,v);}n.append(...children);return n;};const openAppearance=details=>{if(!details.querySelector("#ml-appearance")){const n=document.createElement("section");n.id="ml-appearance";details.append(n);}};'+entry+'window.makeAppearance=appearanceEntry;MaterialRuntime.register({selector:"select",enhance:appearanceEntry,'+cleanup+'});'+disclosureLayout+'appearanceEntry(maincontent);})();'});
   assert.equal(await page.evaluate(()=>mediaAdds-mediaRemoves),1);
   await page.evaluate(()=>{const n=document.getElementById("ml-appearance-entry");maincontent.append(n);});
   await page.waitForTimeout(30);

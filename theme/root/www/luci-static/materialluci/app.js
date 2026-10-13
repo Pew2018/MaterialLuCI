@@ -332,6 +332,10 @@
  enhance(main);
  MaterialRuntime.register({range:true,discoverSelector:'div.btn,.cbi-page-actions>input,.ifacebox-head[style],select,[id$=mediaurlbase],[name$=mediaurlbase]',priority:-20,initial:false,enhance(root){if(root.closest?.("#maincontent,#modal_overlay,.ml-backdrop"))enhance(root);},cleanup(root){MaterialRuntime.cleanup(root,switches,"input");MaterialRuntime.cleanup(root,disclosures,"#ml-appearance-entry");}});
  MaterialRuntime.register({priority:-10,selector:'.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox,.cbi-value-field input[type="checkbox"]',enhance:enhanceSwitch});
+ MaterialRuntime.registerLayout(records=>{
+  if(!disclosures.size||!records.some(r=>[...r.removedNodes].some(n=>n.nodeType===1)))return;
+  for(const [details,entry] of [...disclosures])if(!details.isConnected)entry.destroy();
+ });
  MaterialRuntime.start(document.body);
  const vv=window.visualViewport,root=document.documentElement;let viewportFrame=0;
  const editorSelector='input:not([type]),input[type=""],input[type=text],input[type=password],input[type=email],input[type=url],input[type=tel],input[type=search],input[type=number],textarea';

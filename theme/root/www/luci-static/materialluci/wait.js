@@ -83,7 +83,7 @@
   // Only the view-level loader is a view load. A nested busy button, upload
   // or directory browser must never turn the whole page into a loading view.
   const busy=scope?.querySelector(":scope > .spinning:not(button):not(.btn):not(.cbi-button)");
-  if(!busy){if(viewTask&&scope?.isConnected)window.MaterialSurfaces?.ensure(scope);if(failedScope===scope)failedScope=null;stopView();return;}
+  if(!busy){if(viewTask&&scope?.isConnected)window.MaterialSurfaces?.ensure(scope);failedScope=null;failedLoader=null;stopView();return;}
   if(failedScope===scope&&failedLoader===busy)return;
   if(failedScope){failedScope=null;failedLoader=null;}
   if(viewTask&&(viewScope!==scope||!scope.isConnected))stopView();
