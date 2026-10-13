@@ -2,7 +2,7 @@ name: Scoped UI refinement regression
 on:
   push:
     branches: [feature/m3e-theme]
-    paths: ["theme/**", "ci/ui-refinement.mjs", "ci/theme-coverage.mjs", "ci/user-feedback.mjs", "ci/followup*.mjs", "ci/performance-contracts.mjs", ".github/workflows/ui-refinement.yml"]
+    paths: ["theme/**", "ci/ui-refinement.mjs", "ci/theme-coverage.mjs", "ci/user-feedback.mjs", "ci/followup*.mjs", "ci/performance-contracts.mjs", "ci/changes-scroll.mjs", ".github/workflows/ui-refinement.yml"]
 permissions:
   contents: read
 jobs:
@@ -11,6 +11,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
