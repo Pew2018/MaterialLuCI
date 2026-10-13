@@ -74,6 +74,9 @@ if a.candidate:
   assert 'MaterialComponents.progress' in wait and 'MDCLinearProgress' in adapter and 'ml-wavy-progress' in adapter
   assert "ml-wave-travel" in files[assets+"design-m3.css"].decode()
   assert "md-ripple" in files[assets+"material-web.js"].decode()
+  assert 'scene:"view"' in wait and 'scene:"modal"' in wait
+  assert re.search(r'\.scene\s*!==?\s*["\x27]view["\x27]',adapter), "view must bypass wavy engine"
+  checks["view_mdc_modal_design_scene_contract_packaged"]=True
   checks["dual_style_progress_adapter_packaged"]=True
   checks["expressive_wave_and_official_ripple_packaged"]=True
  else:assert 'MDCLinearProgress' in wait

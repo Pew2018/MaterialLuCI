@@ -49,6 +49,8 @@ try{
    },mode);
    await page.waitForFunction(()=>MaterialWait.activeCount()===0);
    assert.equal(await page.locator(".ml-view-progress").count(),0);
+   // A failed view stays latched until its loader exits, matching native lifecycle.
+   await page.evaluate(()=>document.getElementById("view").innerHTML="<p>Clean</p>");
   }
   await page.evaluate(()=>{
    const v=document.getElementById("view");v.innerHTML='<p class="spinning">Loading</p>';
@@ -96,7 +98,7 @@ try{
   // Native submission/reset and disabled feedback recovery; no input reparenting.
   await page.evaluate(()=>{
    const main=document.getElementById("maincontent");main.dataset.mlPage="system";document.documentElement.dataset.cards="true";
-   main.innerHTML='<div id="view"><section class="cbi-section"><h3>Buttons</h3><form id="form"><fieldset id="fieldset"><input id="value" value="original"><button id="plain" type="submit" name="act" value="save">Save</button><a class="btn" id="link" href="#native">Link</a><input id="submit" type="submit" name="act" value="Input"><input id="reset" type="reset" value="Reset"><div class="cbi-page-actions"><form class="inline"></form></div><table class="cbi-section-table"><tr><td><button id="remove" class="cbi-button cbi-button-remove" type="button">Delete</button></td></tr></table><div class="btn cbi-dropdown" id="compound" tabindex="0"><span>Apply</span><span class="open">Menu</span></div></fieldset></form></section></div>';
+   main.innerHTML='<div id="view"><section class="cbi-section"><h3>Buttons</h3><form id="form"><fieldset id="fieldset"><input id="value" value="original"><button id="plain" type="submit" name="act" value="save">Save</button><a class="btn" id="link" href="#native">Link</a><input id="submit" type="submit" name="act" value="Input"><input id="reset" type="reset" value="Reset"><table class="cbi-section-table"><tr><td><button id="remove" class="cbi-button cbi-button-remove" type="button">Delete</button></td></tr></table><div class="btn cbi-dropdown" id="compound" tabindex="0"><span>Apply</span><span class="open">Menu</span></div></fieldset></form></section></div>';
    window.submissions=[];document.getElementById("form").addEventListener("submit",e=>{e.preventDefault();submissions.push({id:e.submitter.id,name:e.submitter.name,value:e.submitter.value});});
    MaterialSurfaces.prepare();MaterialFeedback.bind(main);
   });
