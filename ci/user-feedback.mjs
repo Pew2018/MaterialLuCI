@@ -33,6 +33,8 @@ try{for(const [engine,type] of [["chromium",chromium],["webkit",webkit]]){
    window.fixtureForm=form;window.fixtureUI=ui;
    const m=new form.JSONMap({domain:[{".name":"first",name:"first.example",ip:"192.0.2.1"},{".name":"second",name:"second.example",ip:"192.0.2.2"}]},"Hostnames");
    const s=m.section(form.GridSection,"domain","Host entries");s.addremove=true;s.anonymous=true;s.sortable=true;
+   // Native modal constructs a UCI Map; keep that Map on the same isolated JSON backend.
+   s.addModalOptions=function(section){section.map.data=this.map.data;};
    const name=s.option(form.Value,"name","Hostname");name.datatype="hostname";name.rmempty=true;
    const ip=s.option(form.Value,"ip","IP address");ip.datatype="ipaddr";ip.rmempty=true;ip.value("192.0.2.1","192.0.2.1 (Long alias)");
    window.nativeMap=m;window.nativeSection=s;window.nativeCalls={remove:[],save:0};
@@ -52,9 +54,10 @@ try{for(const [engine,type] of [["chromium",chromium],["webkit",webkit]]){
   assert.equal(await page.locator('[data-sid=first]').count(),0,"reset must not resurrect deleted section");
   await page.locator(".cbi-section-create .cbi-button-add").click();
   await page.waitForSelector("#modal_overlay>.modal");
+  console.log("native-add-modal",await page.locator("#modal_overlay").innerHTML());
   const modal=page.locator("#modal_overlay>.modal");
-  await page.locator('#modal_overlay input[id$=".name"]').fill("third.example");
-  await page.locator('#modal_overlay input[type=text]').filter({hasNot:page.locator('[id$=".name"]')}).count().catch(()=>{});
+  await page.locator('#modal_overlay .cbi-value[data-name=name] input[type=text]').fill("third.example");
+
   await page.evaluate(()=>{
    const field=document.querySelector("#modal_overlay .cbi-value[data-name=ip]");
    const widget=field.querySelector(".cbi-dropdown");
