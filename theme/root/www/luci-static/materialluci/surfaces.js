@@ -89,10 +89,6 @@
   if(!scope?.isConnected||!main.contains(scope))return;
   wrapTables(scope);updateSurfaces(scope);prepared.add(scope);
  }
- function changed(n){
-  return n.nodeType===1&&!n.closest?.(decoration)&&
-   (n.matches?.(structural)||n.querySelector?.(structural));
- }
  function prepareRecords(records){
   const roots=new Set();
   for(const r of records){
@@ -102,13 +98,19 @@
    // Direct view replacement and genuine section/table structure matter;
    // polling text, table cells, clocks and SVG path updates do not.
    const table=r.target.closest?.("table,.table");
-   const firstRow=table?.querySelector("tr,.tr");
-   const firstRows=table&&!table.closest(".ml-table-scroll,[data-chain]")&&firstRow&&
+   const unpreparedTable=table&&!table.closest(".ml-table-scroll,[data-chain]");
+   const firstRow=unpreparedTable?table.querySelector("tr,.tr"):null;
+   const firstRows=unpreparedTable&&firstRow&&
     (r.target===firstRow||elements.includes(firstRow))&&[...firstRow.children].filter(n=>n.matches("td,th,.td,.th")).length>=3;
    const svg=r.target.closest?.("svg");
+   // Classified plot internals cannot change card ownership. Still let runtime
+   // independently discover any real fields inserted outside those SVGs.
+   if(svg?.parentElement?.classList.contains("ml-chart-surface"))continue;
    const firstPlot=svg&&!svg.parentElement?.classList.contains("ml-chart-surface")&&isPlot(svg);
-   const newPlot=elements.some(n=>[...(n.matches("svg")?[n]:[]),...n.querySelectorAll("svg")].some(plot=>!plot.parentElement?.classList.contains("ml-chart-surface")&&isPlot(plot)));
-   if(r.target.id==="view"||r.target===main||firstRows||firstPlot||newPlot||elements.some(changed)){
+   // Reuse one structural/plot discovery per changed subtree.
+   const candidates=elements.flatMap(n=>[...(n.matches(structural+",svg")?[n]:[]),...n.querySelectorAll(structural+",svg")]).filter(n=>!n.closest?.(decoration));
+   const newPlot=!svg&&candidates.some(plot=>plot.matches("svg")&&!plot.parentElement?.classList.contains("ml-chart-surface")&&isPlot(plot));
+   if(r.target.id==="view"||r.target===main||firstRows||firstPlot||newPlot||candidates.some(n=>n.matches(structural))){
     const root=owner(r.target);if(root)roots.add(root);
    }
   }

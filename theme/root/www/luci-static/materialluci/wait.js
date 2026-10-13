@@ -102,7 +102,7 @@
   }
   syncView();
  }
- MaterialRuntime.register({range:true,priority:-30,enhance(n){
+ MaterialRuntime.register({range:true,discoverSelector:'#view,#modal_overlay,.alert-message.danger',priority:-30,enhance(n){
   if(viewTask&&(n.matches?.(".alert-message.danger")||n.querySelector?.(".alert-message.danger")))syncView([{addedNodes:[n]}]);
   if(n.id==="modal_overlay")observe(n);else if(!overlay?.isConnected){const candidate=n.querySelector?.("#modal_overlay");if(candidate)observe(candidate);}
   if(n.id==="view")observeView(n);else if(!viewNode?.isConnected){const candidate=n.querySelector?.("#view");if(candidate)observeView(candidate);}

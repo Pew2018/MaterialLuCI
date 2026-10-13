@@ -12,20 +12,29 @@
   if(nodes.has(node))return;nodes.add(node);
   jobs.push(()=>{nodes.delete(node);if(node.isConnected)run();});
  }
+ // One discovery query per new subtree, then dispatch only matching adapters.
+ // Never memoize a container as complete: later real fields must be found.
+ const discovery={};
  function collect(root,initial=false){
-  for(const a of adapters){
-   if(initial&&a.initial===false)continue;
-   // Discovery itself is scheduled, rather than running outside the budget.
-   enqueue(a,root,()=>{
-    if(a.range){a.enhance(root);return;}
-    const nodes=[...(root.matches?.(a.selector)?[root]:[]),...root.querySelectorAll(a.selector)];
-    for(const n of nodes)if(!decorative(n)){
-     let pending=a.pending;if(!pending)a.pending=new WeakSet();
-     if(a.pending.has(n))continue;a.pending.add(n);
-     jobs.push(()=>{a.pending.delete(n);if(n.isConnected)a.enhance(n);});
+  enqueue(discovery,root,()=>{
+   const active=adapters.filter(a=>!initial||a.initial!==false);
+   const selectors=[...new Set(active.map(a=>a.discoverSelector||a.selector).filter(Boolean))];
+   const selector=selectors.join(",");
+   const candidates=selector?[...(root.matches?.(selector)?[root]:[]),...root.querySelectorAll(selector)].filter(n=>!decorative(n)):[];
+   for(const a of active){
+    const gate=a.discoverSelector||a.selector;
+    const nodes=gate?candidates.filter(n=>n.matches(gate)):[];
+    if(a.range){
+     if(!gate||nodes.length)enqueue(a,root,()=>a.enhance(root));
+     continue;
     }
-   });
-  }
+    for(const n of nodes){
+     if(!a.pending)a.pending=new WeakSet();
+     if(a.pending.has(n))continue;a.pending.add(n);
+     jobs.push(()=>{a.pending.delete(n);if(n.isConnected&&!decorative(n))a.enhance(n);});
+    }
+   }
+  });
  }
  function flush(){
   timer=0;if(stopped)return;

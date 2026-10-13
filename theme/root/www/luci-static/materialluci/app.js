@@ -289,7 +289,7 @@
 
  }
  const enhancementMetrics={fullScans:0,fastPaths:0,get surfacePasses(){return MaterialSurfaces.count();}};
- const layoutSelectors="div.btn,.cbi-checkbox>input[type=checkbox],input.cbi-input-checkbox,.cbi-value-field input[type=checkbox],.cbi-page-actions>input,table,.table,.cbi-section,.cbi-section-node,fieldset,section,.cbi-map,[data-tab],[data-table],.network-status-table,.ml-chart-surface,.ml-table-scroll,#view,.ifacebox-head[style]";
+ const layoutSelectors="[id],[name],div.btn,.cbi-checkbox>input[type=checkbox],input.cbi-input-checkbox,.cbi-value-field input[type=checkbox],.cbi-page-actions>input,table,.table,.cbi-section,.cbi-section-node,fieldset,section,.cbi-map,[data-tab],[data-table],.network-status-table,.ml-chart-surface,.ml-table-scroll,#view,.ifacebox-head[style]";
  function enhance(root){
   const viewHost=root.closest?.("#view");
   const needsFirstSurface=viewHost&&viewHost.children.length&&!viewHost.classList.contains("ml-card-surface")&&!viewHost.querySelector(".cbi-map,.cbi-section,fieldset,.ml-card-surface");
@@ -327,17 +327,19 @@
  if(document.querySelector('input[name="luci_password"]'))document.body.classList.add("ml-login");
  MaterialSurfaces.prepare(main);
  enhance(main);
- MaterialRuntime.register({range:true,priority:-20,initial:false,enhance(root){if(root.closest?.("#maincontent,#modal_overlay,.ml-backdrop"))enhance(root);},cleanup(root){MaterialRuntime.cleanup(root,switches,"input");}});
+ MaterialRuntime.register({range:true,discoverSelector:'div.btn,.cbi-page-actions>input,.ifacebox-head[style],[id],[name]',priority:-20,initial:false,enhance(root){if(root.closest?.("#maincontent,#modal_overlay,.ml-backdrop"))enhance(root);},cleanup(root){MaterialRuntime.cleanup(root,switches,"input");}});
  MaterialRuntime.register({priority:-10,selector:'.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox,.cbi-value-field input[type="checkbox"]',enhance:enhanceSwitch});
  MaterialRuntime.start(document.body);
  const vv=window.visualViewport,root=document.documentElement;let viewportFrame=0;
- const editorSelector='input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),textarea';
+ const editorSelector='input:not([type]),input[type=""],input[type=text],input[type=password],input[type=email],input[type=url],input[type=tel],input[type=search],input[type=number],textarea';
+ const keyboardInset=()=>narrow.matches&&document.activeElement?.matches(editorSelector)&&vv&&Math.abs(vv.scale-1)<.05?Math.max(0,innerHeight-vv.height-vv.offsetTop):0;
  function viewport(){
   viewportFrame=0;
   const editing=document.activeElement?.matches(editorSelector);
-  const drawerOpen=document.body.classList.contains("ml-drawer-open"),modalOpen=document.body.classList.contains("modal-overlay-active");
+  const drawerOpen=document.body.classList.contains("ml-drawer-open"),modalOpen=document.body.classList.contains("modal-overlay-active")||document.body.classList.contains("ml-dialog-open");
+  const inset=editing?keyboardInset():0,keyboardOpen=inset>100;
  
-  if(!drawerOpen&&!modalOpen&&!editing){
+  if(!drawerOpen&&!modalOpen&&!keyboardOpen){
    let cleared=false;
    for(const name of ["--ml-vv-height","--ml-vv-width","--ml-vv-top","--ml-vv-left","--ml-keyboard-space"])if(root.style.getPropertyValue(name)){root.style.removeProperty(name);cleared=true;}
    if(cleared)window.dispatchEvent(new Event("materialluci:viewport"));
@@ -350,15 +352,14 @@
   const set=(name,value)=>{if(root.style.getPropertyValue(name)!==value){root.style.setProperty(name,value);changed=true;}};
   set("--ml-vv-height",h+"px");set("--ml-vv-width",w+"px");
   set("--ml-vv-top",top+"px");set("--ml-vv-left",left+"px");
-  const inset=narrow.matches&&editing&&(!vv||Math.abs(vv.scale-1)<.05)?Math.max(0,innerHeight-h-top):0;
   // Add scroll room for the final form field only while an editor is focused.
-  set("--ml-keyboard-space",inset>100?inset+"px":"0px");
+  set("--ml-keyboard-space",keyboardOpen?inset+"px":"0px");
   if(changed)window.dispatchEvent(new Event("materialluci:viewport"));
  }
  function queueViewport(){if(!viewportFrame)viewportFrame=requestAnimationFrame(viewport);}
  function queueViewportOnScroll(){
-  const editing=narrow.matches&&document.activeElement?.matches(editorSelector);
-  if(editing||document.body.classList.contains("ml-drawer-open")||document.body.classList.contains("modal-overlay-active"))queueViewport();
+  const editing=keyboardInset()>100;
+  if(editing||document.body.classList.contains("ml-drawer-open")||document.body.classList.contains("modal-overlay-active")||document.body.classList.contains("ml-dialog-open"))queueViewport();
  }
  if(vv){vv.addEventListener("resize",queueViewport,{passive:true});vv.addEventListener("scroll",queueViewportOnScroll,{passive:true});}
  // Reused LuCI modals may reopen after a viewport resize. Update their
@@ -374,7 +375,7 @@
  let focusTimer;
  function revealFocused(){
   const el=document.activeElement;
-  if(!el?.matches('input:not([type=hidden]):not([type=checkbox]):not([type=radio]),textarea,select'))return;
+  if(!el?.matches(editorSelector+",select"))return;
   if(vv&&Math.abs(vv.scale-1)>.05)return;
   // Ordinary desktop resize/tab changes must never reposition a form.
   if(!el.closest(".modal,.ml-dialog-body")&&(!narrow.matches||!vv||innerHeight-vv.height<100))return;
