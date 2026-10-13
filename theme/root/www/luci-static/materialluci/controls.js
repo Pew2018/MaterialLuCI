@@ -86,16 +86,26 @@
   if(current&&current.panel!==panel)current.destroy();
   if(!dialogs.has(root))dialog(root,panel,true);
  }
- let scheduled=false,modalActive=document.body.classList.contains("modal-overlay-active");
+ let scheduled=false,modalActive=document.body.classList.contains("modal-overlay-active"),observedOverlay=null;
+ function scheduleModal(){if(!scheduled){scheduled=true;queueMicrotask(()=>{scheduled=false;syncLuCI();});}}
  const modalObserver=new MutationObserver(records=>{
-  const active=document.body.classList.contains("modal-overlay-active");
-  const changed=active!==modalActive;modalActive=active;
-  if(!changed&&!records.some(r=>r.type==="childList"&&(r.target.id==="modal_overlay"||[...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&(n.id==="modal_overlay"||n.matches?.(".modal,h3,h4"))))))return;
-  if(!scheduled){scheduled=true;queueMicrotask(()=>{scheduled=false;syncLuCI();});}
+  if(records.some(r=>r.target===observedOverlay||[...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&n.matches?.(".modal,h3,h4"))))scheduleModal();
  });
- modalObserver.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["class"]});
+ function observeOverlay(root){
+  if(root===observedOverlay)return;
+  modalObserver.disconnect();observedOverlay=root;
+  if(root)modalObserver.observe(root,{childList:true,subtree:true});
+  scheduleModal();
+ }
+ const visibilityObserver=new MutationObserver(()=>{
+  const active=document.body.classList.contains("modal-overlay-active");
+  if(active!==modalActive){modalActive=active;scheduleModal();}
+ });
+ visibilityObserver.observe(document.body,{attributes:true,attributeFilter:["class"]});
+ MaterialRuntime.register({range:true,discoverSelector:"#modal_overlay",enhance(root){const overlay=root.id==="modal_overlay"?root:root.querySelector("#modal_overlay");if(overlay)observeOverlay(overlay);},cleanup(root){if(observedOverlay&&!observedOverlay.isConnected&&(root===observedOverlay||root.contains(observedOverlay)))observeOverlay(document.getElementById("modal_overlay"));}});
+ observeOverlay(document.getElementById("modal_overlay"));
  MaterialRuntime.register({selector:'input[type="checkbox"],input[type="radio"]',enhance,cleanup(root){MaterialRuntime.cleanup(root,selections,'input');MaterialRuntime.cleanup(root,dialogs,'#modal_overlay,.ml-backdrop');}});
- window.addEventListener("pagehide",event=>{if(!event.persisted){modalObserver.disconnect();for(const entry of [...dialogs.values()])entry.destroy();for(const entry of [...selections.values()])entry.destroy();}});
+ window.addEventListener("pagehide",event=>{if(!event.persisted){modalObserver.disconnect();visibilityObserver.disconnect();for(const entry of [...dialogs.values()])entry.destroy();for(const entry of [...selections.values()])entry.destroy();}});
  window.MaterialControls={enhance,dialog,closeDialog(root){dialogs.get(root)?.destroy();},count(){return {selections:selections.size,dialogs:dialogs.size};}};
  syncLuCI();
 })();

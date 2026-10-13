@@ -62,17 +62,30 @@
  // LuCI View.__init__ inserts #view > .spinning, then replaces its
  // children only after load AND render resolve. Observe that structural
  // lifecycle, independent of locale and sidebar menu tasks.
- let viewTask=null,viewScope=null,failedScope=null;
+ let viewTask=null,viewScope=null,failedScope=null,failedLoader=null;
+ const viewPromises=new WeakMap();let viewPrototype=null,originalInit=null,trackedInit=null;
+ function installViewTracking(){
+  const proto=window.L?.view?.prototype;if(!proto||typeof proto.__init__!=="function"||viewPrototype)return;
+  viewPrototype=proto;originalInit=proto.__init__;
+  trackedInit=function(){
+   const result=originalInit.apply(this,arguments),scope=document.getElementById("view"),loader=scope?.querySelector(":scope > .spinning:not(button):not(.btn):not(.cbi-button)");
+   if(result&&typeof result==="object"&&loader)viewPromises.set(result,{scope,loader});
+   return result;
+  };
+  proto.__init__=trackedInit;
+ }
+ // Native setup waits for DOMContentLoaded before instantiating view classes.
+ // Track identity only: do not attach a catch or alter the business promise.
+ installViewTracking();document.addEventListener("DOMContentLoaded",installViewTracking,{once:true,signal:abort.signal});
  function stopView(){viewScope?.classList.remove("ml-view-loading");viewTask?.stop();viewTask=null;viewScope=null;}
  function syncView(records=[]){
   const scope=document.getElementById("view");
   // Only the view-level loader is a view load. A nested busy button, upload
   // or directory browser must never turn the whole page into a loading view.
   const busy=scope?.querySelector(":scope > .spinning:not(button):not(.btn):not(.cbi-button)");
-  const failure=records.some(r=>[...r.addedNodes].some(n=>n.nodeType===1&&(n.matches(".alert-message.danger")||n.querySelector(".alert-message.danger"))));
-  if(failure&&viewTask){failedScope=scope;stopView();}
   if(!busy){if(viewTask&&scope?.isConnected)window.MaterialSurfaces?.ensure(scope);if(failedScope===scope)failedScope=null;stopView();return;}
-  if(failedScope===scope)return;
+  if(failedScope===scope&&failedLoader===busy)return;
+  if(failedScope){failedScope=null;failedLoader=null;}
   if(viewTask&&(viewScope!==scope||!scope.isConnected))stopView();
   if(!viewTask){
    viewScope=scope;scope.classList.add("ml-view-loading");
@@ -94,7 +107,7 @@
     const relevant=records.filter(r=>{
      if(r.target.closest?.("[data-ml-component=progress],.ml-view-progress,.ml-progress-host"))return false;
      if(r.target===viewNode)return true;
-     return !!viewTask&&[...r.addedNodes].some(el=>el.nodeType===1&&(el.matches?.(".alert-message.danger")||el.querySelector?.(".alert-message.danger")));
+     return false;
     });
     if(relevant.length)syncView(relevant);
    });
@@ -102,8 +115,7 @@
   }
   syncView();
  }
- MaterialRuntime.register({range:true,discoverSelector:'#view,#modal_overlay,.alert-message.danger',priority:-30,enhance(n){
-  if(viewTask&&(n.matches?.(".alert-message.danger")||n.querySelector?.(".alert-message.danger")))syncView([{addedNodes:[n]}]);
+ MaterialRuntime.register({range:true,discoverSelector:'#view,#modal_overlay',priority:-30,enhance(n){
   if(n.id==="modal_overlay")observe(n);else if(!overlay?.isConnected){const candidate=n.querySelector?.("#modal_overlay");if(candidate)observe(candidate);}
   if(n.id==="view")observeView(n);else if(!viewNode?.isConnected){const candidate=n.querySelector?.("#view");if(candidate)observeView(candidate);}
  },cleanup(n){
@@ -112,11 +124,14 @@
   for(const [token,task] of tasks)if(!task.scope.isConnected&&(n===task.scope||n.contains(task.scope)))stopTask(token);
  }});
  observeView(document.getElementById("view"));
- window.addEventListener("unhandledrejection",()=>{if(viewTask){failedScope=viewScope;stopView();}},{signal:abort.signal});
+ window.addEventListener("unhandledrejection",event=>{
+  const task=viewPromises.get(event.promise);
+  if(task&&task.scope===document.getElementById("view")&&task.loader.parentElement===task.scope&&task.loader.classList.contains("spinning")){failedScope=task.scope;failedLoader=task.loader;stopView();}
+ },{signal:abort.signal});
  window.addEventListener("pagehide",event=>{
   if(frame){cancelAnimationFrame(frame);frame=0;}
   if(event.persisted)return;
-  stopped=true;abort.abort();visibilityObserver.disconnect();viewObserver?.disconnect();viewStateObserver?.disconnect();modalObserver?.disconnect();
+  stopped=true;abort.abort();if(viewPrototype?.__init__===trackedInit)viewPrototype.__init__=originalInit;visibilityObserver.disconnect();viewObserver?.disconnect();viewStateObserver?.disconnect();modalObserver?.disconnect();
   stopView();for(const token of [...tasks.keys()])stopTask(token);stopModal();
   if(overlay){overlay.removeEventListener("scroll",queuePosition);for(const event of ["transitionrun","transitionend","transitioncancel"])overlay.removeEventListener(event,motion,true);}
  });

@@ -320,4 +320,20 @@ function fixture(){
  main.setAttribute("data-ml-page","system");assert.ok(abbreviations.every(n=>!n.matches(ledRules[0].selector)),"other routes must retain their abbreviation styles");
 }
 
+{
+ const f=fixture();f.load("runtime.js");
+ const host=f.document.createElement("div");host.id="indicators";
+ const el=f.document.createElement("span");el.setAttribute("data-indicator","poll-status");el.setAttribute("data-style","inactive");host.append(el);f.document.body.append(host);
+ let binds=0;f.context.MaterialFeedback={bind(){binds++;}};f.context.MaterialExtras={setTooltip(n,label){f.window.MaterialRuntime.setAttr(n,"data-test-tip",label);}};
+ const app=fs.readFileSync(base+"app.js","utf8");
+ vm.runInContext('(function(){const t=(a,b)=>b;'+app.slice(app.indexOf(" const indicators="),app.indexOf(" const narrow="))+'window.syncPoll=syncPollIndicator;})();',f.context);
+ f.drain();const writes=el.attributeWrites;
+ for(let i=0;i<20;i++)f.window.syncPoll();f.drain();
+ assert.equal(el.attributeWrites,writes,"same refresh state must perform zero attribute writes");
+ assert.equal(binds,1);
+ el.setAttribute("data-style","active");f.drain();assert.equal(el.getAttribute("aria-label"),"Pause automatic refresh");
+ const next=f.document.createElement("span");next.setAttribute("data-indicator","poll-status");next.setAttribute("data-style","inactive");next.setAttribute("data-clickable","true");el.remove();host.append(next);f.drain();
+ assert.equal(binds,2,"replacement has exactly one feedback binding");
+ assert.equal(next.getAttribute("aria-label"),"Resume automatic refresh");
+}
 console.log("Runtime lifecycle, discovery dispatch, branding, viewport and LED scope contracts passed (no browser rendering).");

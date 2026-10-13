@@ -2,7 +2,7 @@
 /* Official MDC presentation. Original LuCI nodes and callbacks own data. */
 (function(){
  const {MDCRipple,MDCMenu,DefaultFocusState,MDCList,MDCSelect,MDCSnackbar,MDCTooltip}=MaterialMDCControls;
- const selects=new Map(),actions=new Map(),tips=new Map(),openMenus=new Set(),shownTips=new Set();let sequence=0,notice=null,stopped=false;
+ const selects=new Map(),actions=new Map(),tips=new Map(),openMenus=new Set(),shownTips=new Set(),temporaryMenus=new Map(),tooltipLabels=new WeakMap();let sequence=0,notice=null,stopped=false;
  const make=(tag,cls,text)=>{const el=document.createElement(tag);el.className=cls;if(text!=null)el.textContent=text;return el;};
  function item(label,value,disabled=false,selected=false){
   const li=make("li","mdc-deprecated-list-item"+(selected?" mdc-deprecated-list-item--selected":"")+(disabled?" mdc-deprecated-list-item--disabled":""));
@@ -10,7 +10,7 @@
   if(disabled)li.setAttribute("aria-disabled","true");
   li.append(make("span","mdc-deprecated-list-item__ripple"),make("span","mdc-deprecated-list-item__text",label));return li;
  }
- function clearItems(list){for(const li of list.children)li._mlMdcRipple?.destroy();}
+ function clearItems(list){for(const li of list.children){const ripple=li._mlMdcRipple;li._mlMdcRipple=null;ripple?.destroy();}}
  function replaceItems(list,items){clearItems(list);list.replaceChildren(...items);for(const li of items){li._mlMdcRipple=new MDCRipple(li);li._mlMdcRipple.disabled=li.getAttribute("aria-disabled")==="true";}}
  function portalMenu(root){
   root.classList.add("ml-mdc-menu");document.body.append(root);
@@ -25,7 +25,7 @@
   // Do not let a superseded opened/closed event steal focus or select state.
   root.addEventListener('MDCMenuSurface:opened',event=>{if(!menu.open)event.stopImmediatePropagation();},true);
   root.addEventListener('MDCMenuSurface:closed',event=>{if(menu.open)event.stopImmediatePropagation();},true);
-  if(root.classList.contains('ml-action-menu')){menu.setDefaultFocusState(DefaultFocusState.NONE);root.addEventListener('MDCMenuSurface:opened',()=>{if(menu.open)root.querySelector('.mdc-deprecated-list')?.focus({preventScroll:true});});}
+  if(root.classList.contains('ml-action-menu')){menu.setDefaultFocusState(DefaultFocusState.NONE);root.addEventListener('MDCMenuSurface:opened',()=>{if(menu.open&&root.isConnected)root.querySelector('.mdc-deprecated-list')?.focus({preventScroll:true});});}
   return menu;
  }
  function escapeFocus(popup,anchor){
@@ -150,8 +150,8 @@
   actions.set(owner,{open,destroy(){openMenus.delete(menu);popup._mlEscapeCleanup?.();clearItems(list);menu.destroy();popup.remove();owner.removeEventListener("click",click,true);arrow.removeEventListener("keydown",key);owner._mlMdcMenu=null;for(const a of ["aria-label","aria-haspopup","aria-controls","aria-expanded"])arrow.removeAttribute(a);for(const [a,v] of [["role",oldRole],["tabindex",oldTab]])if(v===null)arrow.removeAttribute(a);else arrow.setAttribute(a,v);actions.delete(owner);}});
  }
  function tooltip(anchor){
-  const label=anchor.getAttribute("aria-label")||anchor.title;if(!label)return;
-  const known=tips.get(anchor);if(known){if(known.surface.textContent!==label)known.surface.textContent=label;return;}
+  const label=tooltipLabels.get(anchor)||anchor.getAttribute("aria-label")||anchor.title;if(!label)return;
+  const known=tips.get(anchor);if(known){if(known.surface.textContent!==label)known.surface.textContent=label;if(anchor.hasAttribute("title"))anchor.removeAttribute("title");return;}
   const id="ml-tooltip-"+(++sequence),root=make("div","mdc-tooltip"),surface=make("div","mdc-tooltip__surface mdc-tooltip__surface-animation",label);
   root.id=id;root.setAttribute("role","tooltip");root.setAttribute("aria-hidden","true");root.append(surface);document.body.append(root);
   const description=anchor.getAttribute("aria-describedby"),title=anchor.getAttribute("title"),data=anchor.getAttribute("data-tooltip-id");
@@ -160,7 +160,7 @@
   const guard=event=>{if(anchor.closest('[inert],[aria-hidden="true"]')||!anchor.getClientRects().length){instance.hide();event.stopImmediatePropagation();}};
   for(const event of ["focus","mouseenter","touchstart"])anchor.addEventListener(event,guard,true);
   const visibility=new MutationObserver(()=>{const shown=instance.isShown();MaterialRuntime.setAttr(root,"aria-hidden",!shown);if(shown)shownTips.add(instance);else shownTips.delete(instance);});visibility.observe(root,{attributes:true,attributeFilter:["class"]});
-  tips.set(anchor,{surface,destroy(){shownTips.delete(instance);visibility.disconnect();for(const event of ["focus","mouseenter","touchstart"])anchor.removeEventListener(event,guard,true);instance.destroy();root.remove();anchor._mlMdcTooltip=null;for(const [a,v] of [["aria-describedby",description],["title",title],["data-tooltip-id",data]])if(v===null)anchor.removeAttribute(a);else anchor.setAttribute(a,v);tips.delete(anchor);}});
+  tips.set(anchor,{surface,destroy(){shownTips.delete(instance);visibility.disconnect();for(const event of ["focus","mouseenter","touchstart"])anchor.removeEventListener(event,guard,true);instance.destroy();root.remove();anchor._mlMdcTooltip=null;for(const [a,v] of [["aria-describedby",description],["title",tooltipLabels.get(anchor)||title],["data-tooltip-id",data]])if(v===null)anchor.removeAttribute(a);else anchor.setAttribute(a,v);tips.delete(anchor);}});
  }
  // Run before the surface's later body capture listener so clicking the
  // native arrow toggles once instead of closing and immediately reopening.
@@ -192,8 +192,14 @@
  });
  observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:["aria-label","title","inert","aria-hidden","disabled"]});
  MaterialRuntime.register({selector:"select,.cbi-dropdown.btn,.cbi-dropdown.cbi-button,.ml-icon-button,.ml-poll-action,#ml-drawer-close,button[aria-label]:has(svg):not(.mdc-switch)",enhance,cleanup(root){
-  MaterialRuntime.cleanup(root,selects,"select");MaterialRuntime.cleanup(root,actions,".cbi-dropdown");MaterialRuntime.cleanup(root,tips,"button,.ml-poll-action");
+  MaterialRuntime.cleanup(root,selects,"select");MaterialRuntime.cleanup(root,actions,".cbi-dropdown");MaterialRuntime.cleanup(root,tips,"button,.ml-poll-action");for(const [popup,e] of [...temporaryMenus])if(!popup.isConnected||!e.anchor.isConnected)e.destroy();
  }});
+ // Runtime layout delivery also sees removed decorative portals. Its normal
+ // discovery intentionally skips those nodes; do not add another body observer.
+ MaterialRuntime.registerLayout(records=>{
+  if(!temporaryMenus.size||!records.some(r=>[...r.removedNodes].some(n=>n.nodeType===1)))return;
+  for(const [popup,e] of [...temporaryMenus])if(!popup.isConnected||!e.anchor.isConnected)e.destroy();
+ });
  let scrollIdleTimer=0,scrollDismissals=0;
  function closeMenus(fromScroll=false){
   if(!openMenus.size&&!shownTips.size)return;
@@ -216,11 +222,14 @@
  document.addEventListener("pointerdown",event=>{if(event.clientX>=document.documentElement.clientWidth)closeMenus();},true);
  document.addEventListener("change",event=>{if(event.target.closest("#ml-appearance"))feedback(document.documentElement.lang.startsWith("zh")?"已保存此浏览器的主题设置":"Theme preferences saved in this browser");});
  document.addEventListener("click",event=>{if(event.target.closest("#ml-appearance .ml-swatch-item,#ml-appearance .ml-mode-option"))feedback(document.documentElement.lang.startsWith("zh")?"已保存此浏览器的主题设置":"Theme preferences saved in this browser");});
- window.addEventListener("pagehide",event=>{if(!event.persisted){clearTimeout(scrollIdleTimer);scrollIdleTimer=0;stopped=true;observer.disconnect();for(const e of [...selects.values()])e.destroy();for(const e of [...actions.values()])e.destroy();for(const e of [...tips.values()])e.destroy();if(notice){clearTimeout(notice.timer);notice.instance.destroy();notice.root.remove();notice=null;}}});
- window.MaterialExtras={enhance,feedback,menu(anchor,options,value,onChange){
+ window.addEventListener("pagehide",event=>{if(!event.persisted){clearTimeout(scrollIdleTimer);scrollIdleTimer=0;stopped=true;observer.disconnect();for(const e of [...temporaryMenus.values()])e.destroy();for(const e of [...selects.values()])e.destroy();for(const e of [...actions.values()])e.destroy();for(const e of [...tips.values()])e.destroy();if(notice){clearTimeout(notice.timer);notice.instance.destroy();notice.root.remove();notice=null;}}});
+ window.MaterialExtras={enhance,feedback,setTooltip(anchor,label){tooltipLabels.set(anchor,label);if(tips.has(anchor))tooltip(anchor);else MaterialRuntime.setAttr(anchor,"title",label);},menu(anchor,options,value,onChange){
   const popup=make("div","mdc-menu mdc-menu-surface ml-action-menu"),list=make("ul","mdc-deprecated-list");list.setAttribute("role","menu");list.tabIndex=-1;replaceItems(list,options.map(([key,label,disabled])=>{const li=item(label,key,disabled,key===value);li.setAttribute("role","menuitem");return li;}));popup.append(list);const menu=portalMenu(popup);escapeFocus(popup,anchor);menu.setAnchorElement(anchor);
   menu.items.forEach((li,i)=>menu.setEnabled(i,li.getAttribute("aria-disabled")!=="true"));
-  popup.addEventListener("MDCMenu:selected",event=>onChange(event.detail.item.dataset.value),{once:true});
-  popup.addEventListener("MDCMenuSurface:closed",()=>{popup._mlEscapeCleanup?.();openMenus.delete(menu);menu.destroy();popup.remove();},{once:true});menu.open=true;return menu;
+  let destroyed=false;const nativeDestroy=menu.destroy.bind(menu);
+  const destroy=()=>{if(destroyed)return;destroyed=true;temporaryMenus.delete(popup);popup._mlEscapeCleanup?.();openMenus.delete(menu);clearItems(list);nativeDestroy();popup._mlMdcMenu=null;popup.remove();};
+  menu.destroy=destroy;temporaryMenus.set(popup,{anchor,destroy});
+  popup.addEventListener("MDCMenu:selected",event=>{if(!destroyed&&event.detail.item?.getAttribute("aria-disabled")!=="true")onChange(event.detail.item.dataset.value);},{once:true});
+  popup.addEventListener("MDCMenuSurface:closed",()=>{if(!menu.open)destroy();});menu.open=true;return menu;
  },counts(){return {selects:selects.size,menus:actions.size,tooltips:tips.size,scrollDismissals};}};
 })();

@@ -15,7 +15,7 @@
  const zh=document.documentElement.lang.startsWith("zh"),t=(cn,en)=>zh?cn:en;
  const node=(tag,attrs={},children=[])=>{const el=document.createElement(tag);for(const [key,val] of Object.entries(attrs)){if(key==="text")el.textContent=val;else if(key==="class")el.className=val;else el.setAttribute(key,String(val));}for(const child of children)el.append(child);return el;};
  const textButton=(text,fn,cls="text-action")=>{if(cls==="text-action"&&MaterialComponents.isM3())return MaterialComponents.button(text,fn,cls,"text");const b=node("button",{type:"button",class:cls},[node("span",{text})]);b.addEventListener("click",fn);return b;};
- const switches=new Map();
+ const switches=new Map(),disclosures=new Map();
  function switchControl(input,label){
   {const entry=MaterialComponents.switchControl(input,label);if(entry){const cleanup=entry.destroy;entry.destroy=()=>{cleanup();switches.delete(input);};switches.set(input,entry);return entry.control;}}
   const control=node("button",{type:"button",class:"mdc-switch "+(input.checked?"mdc-switch--selected":"mdc-switch--unselected"),role:"switch","aria-label":label,"aria-checked":String(!!input.checked)},[
@@ -64,7 +64,7 @@
   sync();return control;
  }
  
- window.addEventListener("pagehide",event=>{if(!event.persisted)for(const entry of [...switches.values()])entry.destroy();});
+ window.addEventListener("pagehide",event=>{if(!event.persisted){for(const entry of [...switches.values()])entry.destroy();for(const entry of [...disclosures.values()])entry.destroy();}});
 
  // Keep LuCI's span and first text node: ui.showIndicator updates them in place.
  // Only poll-status is an automatic-refresh action; other indicators keep their semantics.
@@ -73,10 +73,11 @@
   const el=indicators?.querySelector('[data-indicator="poll-status"]');
   if(!el)return;
   const paused=el.getAttribute("data-style")==="inactive";
-  el.classList.add("ml-poll-action");el.setAttribute("role","button");el.tabIndex=0;
-  el.setAttribute("aria-label",paused?t("恢复自动刷新","Resume automatic refresh"):t("暂停自动刷新","Pause automatic refresh"));
-  el.title=paused?t("已暂停自动刷新","Automatic refresh paused"):t("正在自动刷新","Automatic refresh running");
-  el.dataset.paused=String(paused);
+  if(!el.classList.contains("ml-poll-action"))el.classList.add("ml-poll-action");MaterialRuntime.setAttr(el,"role","button");MaterialRuntime.setAttr(el,"tabindex",0);
+  MaterialRuntime.setAttr(el,"aria-label",paused?t("恢复自动刷新","Resume automatic refresh"):t("暂停自动刷新","Pause automatic refresh"));
+  const label=paused?t("已暂停自动刷新","Automatic refresh paused"):t("正在自动刷新","Automatic refresh running");
+  if(window.MaterialExtras)MaterialExtras.setTooltip(el,label);else MaterialRuntime.setAttr(el,"title",label);
+  MaterialRuntime.setAttr(el,"data-paused",paused);
   if(!pollBound.has(el)){pollBound.add(el);el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();if(!e.repeat)el.click();}});MaterialFeedback.bind(el);}
   // LuCI creates an inactive indicator without a click handler. It does not
   // retrofit one when polling resumes, so provide the same Poll start/stop
@@ -273,8 +274,10 @@
   const details=node("details",{id:"ml-appearance-entry",class:"ml-appearance-entry",open:"true"},[node("summary",{text:t("主题外观（此浏览器）","Theme appearance (this browser)")})]);
   const desktop=matchMedia("(min-width:1024px)");
   const syncDisclosure=()=>{if(desktop.matches)details.open=true;};
-  field.after(details);details.addEventListener("toggle",()=>{if(desktop.matches&&!details.open)details.open=true;if(details.open)openAppearance(details);});
+  const toggle=()=>{if(desktop.matches&&!details.open)details.open=true;if(details.open)openAppearance(details);};
+  field.after(details);details.addEventListener("toggle",toggle);
   if(desktop.addEventListener)desktop.addEventListener("change",syncDisclosure);else desktop.addListener(syncDisclosure);
+  disclosures.set(details,{destroy(){details.removeEventListener("toggle",toggle);if(desktop.removeEventListener)desktop.removeEventListener("change",syncDisclosure);else desktop.removeListener(syncDisclosure);disclosures.delete(details);}});
   syncDisclosure();if(details.open)openAppearance(details);
  }
  function enhanceSwitch(input){
@@ -327,7 +330,7 @@
  if(document.querySelector('input[name="luci_password"]'))document.body.classList.add("ml-login");
  MaterialSurfaces.prepare(main);
  enhance(main);
- MaterialRuntime.register({range:true,discoverSelector:'div.btn,.cbi-page-actions>input,.ifacebox-head[style],select,[id$=mediaurlbase],[name$=mediaurlbase]',priority:-20,initial:false,enhance(root){if(root.closest?.("#maincontent,#modal_overlay,.ml-backdrop"))enhance(root);},cleanup(root){MaterialRuntime.cleanup(root,switches,"input");}});
+ MaterialRuntime.register({range:true,discoverSelector:'div.btn,.cbi-page-actions>input,.ifacebox-head[style],select,[id$=mediaurlbase],[name$=mediaurlbase]',priority:-20,initial:false,enhance(root){if(root.closest?.("#maincontent,#modal_overlay,.ml-backdrop"))enhance(root);},cleanup(root){MaterialRuntime.cleanup(root,switches,"input");MaterialRuntime.cleanup(root,disclosures,"#ml-appearance-entry");}});
  MaterialRuntime.register({priority:-10,selector:'.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox,.cbi-value-field input[type="checkbox"]',enhance:enhanceSwitch});
  MaterialRuntime.start(document.body);
  const vv=window.visualViewport,root=document.documentElement;let viewportFrame=0;

@@ -52,13 +52,13 @@ try{
    await page.waitForFunction(()=>MaterialWait.activeCount()===1);
    await page.evaluate(mode=>{
     const v=document.getElementById("view");
-    if(mode==="failure"){const alert=document.createElement("div");alert.className="alert-message danger";v.append(alert);}
+    if(mode==="failure"){const alert=document.createElement("div");alert.className="alert-message danger";v.replaceChildren(alert);}
     else if(mode==="replace"){const next=document.createElement("div");next.id="view";next.innerHTML="<p>New view</p>";v.replaceWith(next);}
     else v.innerHTML="<p>Done</p>";
    },mode);
    await page.waitForFunction(()=>MaterialWait.activeCount()===0);
    assert.equal(await page.locator(".ml-view-progress").count(),0);
-   // A failed view stays latched until its loader exits, matching native lifecycle.
+   // A replaced loader is a completed structural lifecycle.
    await page.evaluate(()=>document.getElementById("view").innerHTML="<p>Clean</p>");
   }
   await page.evaluate(()=>{
