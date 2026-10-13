@@ -47,7 +47,7 @@ try{
    assert.deepEqual(await page.evaluate(()=>actionCounts),{close:0,undo:1,apply:1,menu:1});
    await page.locator('[data-action="close"]').click();await page.waitForFunction(()=>!document.querySelector(".modal").classList.contains("ml-changes-dialog"));
    await page.evaluate(()=>{document.querySelector(".modal").innerHTML='<h4>System</h4><div class="cbi-section"><p>Ordinary dialog</p></div>';document.body.classList.add("modal-overlay-active");});
-   await page.waitForFunction(()=>document.querySelector(".modal").classList.contains("mdc-dialog--open"));
+   await page.waitForFunction(()=>document.querySelector("#modal_overlay").classList.contains("mdc-dialog--open"));
    assert.equal(await page.locator(".modal.ml-changes-dialog").count(),0);assert.equal(await page.locator("#modal_overlay.ml-changes-overlay").count(),0);
    await page.evaluate(()=>document.body.classList.remove("modal-overlay-active"));
   }
