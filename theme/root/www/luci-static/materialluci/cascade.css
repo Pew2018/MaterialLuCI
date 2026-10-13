@@ -100,7 +100,7 @@ body .ml-data-section>.cbi-value-title{display:block;float:none;width:auto;max-w
 /* A native DummyValue repeats its own h4 label. Retain the actual heading. */
 body .ml-data-section>.cbi-value-title.ml-duplicate-title{display:none}
 body .ml-data-section .cbi-value-field h4{font-size:15px;font-weight:500;line-height:1.4;margin:0 0 12px}
-body .ml-data-section>.cbi-value-field{display:block;width:100%;min-width:0}
+body .ml-data-section>.cbi-value-field{display:block;width:100%;max-width:none;min-width:0}
 body .ml-data-section .ml-table-scroll{width:100%;max-width:100%;margin:0}
 
 .cbi-section-table-row[data-title]::before,.cbi-section-table-titles.named::before{color:var(--ink);font-weight:500}

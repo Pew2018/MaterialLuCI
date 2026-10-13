@@ -93,6 +93,7 @@ try{for(const [engine,type] of [["chromium",chromium],["webkit",webkit]]){
   for(const id of ["lease_status_table","lease6_status_table"]){
    assert.equal(await page.locator("#"+id).evaluate(n=>getComputedStyle(n.closest(".cbi-value")).display),"block");
    assert.equal(await page.locator("#"+id).evaluate(n=>getComputedStyle(n.closest(".cbi-value-field")).display),"block");
+   assert.equal(await page.locator("#"+id).evaluate(n=>{const value=n.closest(".cbi-value"),field=n.closest(".cbi-value-field"),s=getComputedStyle(value);return Math.abs(field.getBoundingClientRect().width-(value.getBoundingClientRect().width-parseFloat(s.paddingLeft)-parseFloat(s.paddingRight)))<1;}),true,"lease table fills its card content width");
   }
   await page.screenshot({path:"dist/ui-refinement/feedback-"+engine+"-"+design+"-leases.png",fullPage:true});
   // Long compound-menu choices retain native DOM and keyboard behavior.
