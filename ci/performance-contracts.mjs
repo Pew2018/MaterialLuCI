@@ -251,7 +251,7 @@ function fixture(){
  assert.ok(app.indexOf("MaterialSurfaces.prepare(main)")<app.indexOf("enhance(main);"));
  assert.ok(!app.includes("queueSurfaces"),"component discovery must not schedule a delayed card pass");
 }
-console.log("Runtime lifecycle, radio-group batching and loading-state contracts passed (no browser rendering).");
+
 
 {
  const f=fixture(),toolbar=f.document.createElement("header"),inner=f.document.createElement("div"),title=f.document.createElement("span"),indicator=f.document.createElement("div");
@@ -269,6 +269,7 @@ console.log("Runtime lifecycle, radio-group batching and loading-state contracts
  assert.equal(styleReads,initialReads);assert.equal(title.writes,initialWrites);
  const sameAttrs=title.attributeWrites;f.window.MaterialBranding.set("toolbarTitle","MaterialLuCI");f.drain();assert.equal(title.attributeWrites,sameAttrs,"unchanged title attributes must not be written");
  f.window.MaterialBranding.set("sidebarName","New Router");f.drain();assert.equal(styleReads,initialReads,"name edits must not compute title color");
+ const newName=f.document.createElement("span");newName.id="ml-sidebar-name";name.remove();heading.append(newName);f.drain();assert.equal(newName.textContent,"New Router");assert.equal(styleReads,initialReads,"name node replacement must not compute title color");
  f.window.MaterialBranding.set("toolbarTitleColorValue","#123456");f.window.MaterialBranding.set("toolbarTitleColor","custom");f.drain();assert.equal(title.style.getPropertyValue("color"),"#123456");
  background="rgb(0,0,0)";foreground="rgb(100,100,100)";
  f.document.documentElement.setAttribute("data-theme","dark");f.drain();assert.equal(title.style.getPropertyValue("color"),"#123456");
@@ -318,3 +319,5 @@ console.log("Runtime lifecycle, radio-group batching and loading-state contracts
  for(const tag of ["a","input","button"]){const n=f.document.createElement(tag);main.append(n);assert.ok(!n.matches(ledRules[0].selector));}
  main.setAttribute("data-ml-page","system");assert.ok(abbreviations.every(n=>!n.matches(ledRules[0].selector)),"other routes must retain their abbreviation styles");
 }
+
+console.log("Runtime lifecycle, discovery dispatch, branding, viewport and LED scope contracts passed (no browser rendering).");

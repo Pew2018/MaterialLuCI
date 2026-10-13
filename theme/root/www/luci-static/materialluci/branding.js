@@ -73,7 +73,11 @@
  const shellObserver=new MutationObserver(records=>{
   // Ignore indicator text, ripple and progress updates in the toolbar subtree.
   const relevant=n=>n.nodeType===1&&(n.matches?.("#ml-title,#ml-sidebar-name,#ml-sidebar-heading,.ml-toolbar-inner")||n.querySelector?.("#ml-title,#ml-sidebar-name,#ml-sidebar-heading,.ml-toolbar-inner"));
-  if(records.some(r=>[...r.addedNodes,...r.removedNodes].some(relevant))){observeShell();colorKey="";apply();}
+  if(records.some(r=>[...r.addedNodes,...r.removedNodes].some(relevant))){
+   const affectsTitle=n=>n.nodeType===1&&(n.matches?.("#ml-title,.ml-toolbar-inner")||n.querySelector?.("#ml-title,.ml-toolbar-inner"));
+   if(records.some(r=>[...r.addedNodes,...r.removedNodes].some(affectsTitle)))colorKey="";
+   observeShell();apply();
+  }
  });
  function observeShell(){
   shellObserver.disconnect();backgroundObserver.disconnect();

@@ -289,7 +289,7 @@
 
  }
  const enhancementMetrics={fullScans:0,fastPaths:0,get surfacePasses(){return MaterialSurfaces.count();}};
- const layoutSelectors="[id],[name],div.btn,.cbi-checkbox>input[type=checkbox],input.cbi-input-checkbox,.cbi-value-field input[type=checkbox],.cbi-page-actions>input,table,.table,.cbi-section,.cbi-section-node,fieldset,section,.cbi-map,[data-tab],[data-table],.network-status-table,.ml-chart-surface,.ml-table-scroll,#view,.ifacebox-head[style]";
+ const layoutSelectors="select,[id$=mediaurlbase],[name$=mediaurlbase],div.btn,.cbi-checkbox>input[type=checkbox],input.cbi-input-checkbox,.cbi-value-field input[type=checkbox],.cbi-page-actions>input,table,.table,.cbi-section,.cbi-section-node,fieldset,section,.cbi-map,[data-tab],[data-table],.network-status-table,.ml-chart-surface,.ml-table-scroll,#view,.ifacebox-head[style]";
  function enhance(root){
   const viewHost=root.closest?.("#view");
   const needsFirstSurface=viewHost&&viewHost.children.length&&!viewHost.classList.contains("ml-card-surface")&&!viewHost.querySelector(".cbi-map,.cbi-section,fieldset,.ml-card-surface");
@@ -327,7 +327,7 @@
  if(document.querySelector('input[name="luci_password"]'))document.body.classList.add("ml-login");
  MaterialSurfaces.prepare(main);
  enhance(main);
- MaterialRuntime.register({range:true,discoverSelector:'div.btn,.cbi-page-actions>input,.ifacebox-head[style],[id],[name]',priority:-20,initial:false,enhance(root){if(root.closest?.("#maincontent,#modal_overlay,.ml-backdrop"))enhance(root);},cleanup(root){MaterialRuntime.cleanup(root,switches,"input");}});
+ MaterialRuntime.register({range:true,discoverSelector:'div.btn,.cbi-page-actions>input,.ifacebox-head[style],select,[id$=mediaurlbase],[name$=mediaurlbase]',priority:-20,initial:false,enhance(root){if(root.closest?.("#maincontent,#modal_overlay,.ml-backdrop"))enhance(root);},cleanup(root){MaterialRuntime.cleanup(root,switches,"input");}});
  MaterialRuntime.register({priority:-10,selector:'.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox,.cbi-value-field input[type="checkbox"]',enhance:enhanceSwitch});
  MaterialRuntime.start(document.body);
  const vv=window.visualViewport,root=document.documentElement;let viewportFrame=0;
