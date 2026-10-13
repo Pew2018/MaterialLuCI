@@ -21,6 +21,7 @@ jobs:
       - run: node ci/ui-refinement.mjs
       - run: node ci/followup-regression.mjs
       - run: node ci/theme-coverage.mjs
+        if: ${{ !cancelled() }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:

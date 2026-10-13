@@ -1,6 +1,6 @@
 @import url("base.css");
 /* Classic Material visual language; LuCI business layout remains authoritative. */
-:root{--change-add-bg:#e5f4e8;--change-add-ink:#174d27;--change-add-border:#71a780;--change-del-bg:#fce8e6;--change-del-ink:#8c1d18;--change-del-border:#ce827c;--ml-action-radius:2px;--ml-item-radius:2px;--page:#fafafa;--surface:#fff;--card:#fff;--ink:#212121;--muted:#707070;--disabled:#bdbdbd;--divider:rgba(0,0,0,.06);--log:#f5f5f5;--danger:#b3261e;--overlay:rgba(0,0,0,.38);--ripple-opacity:.14;--inset-bottom:env(safe-area-inset-bottom,0px);--inset-top:env(safe-area-inset-top,0px);--seed:#42a5f5;--accent-ink:#006db8;--control-accent:#078ae7;--control-strong:#006db8;--primary-surface:#1976d2;--on-primary:#fff;--action-fill:#1976d2;--on-accent:#fff;--action-tonal:#e4f2fe;--on-action-tonal:#006ab3;--nav-icon:#078ae7;--nav-label:#006db8;--switch-thumb:#078ae7;--switch-track:rgba(7,138,231,.5)}
+:root{--change-add-bg:#e5f4e8;--change-add-ink:#174d27;--change-add-border:#71a780;--change-del-bg:#fce8e6;--change-del-ink:#8c1d18;--change-del-border:#ce827c;--ml-chart-bg:var(--card);--ml-action-radius:2px;--ml-item-radius:2px;--page:#fafafa;--surface:#fff;--card:#fff;--ink:#212121;--muted:#707070;--disabled:#bdbdbd;--divider:rgba(0,0,0,.06);--log:#f5f5f5;--danger:#b3261e;--overlay:rgba(0,0,0,.38);--ripple-opacity:.14;--inset-bottom:env(safe-area-inset-bottom,0px);--inset-top:env(safe-area-inset-top,0px);--seed:#42a5f5;--accent-ink:#006db8;--control-accent:#078ae7;--control-strong:#006db8;--primary-surface:#1976d2;--on-primary:#fff;--action-fill:#1976d2;--on-accent:#fff;--action-tonal:#e4f2fe;--on-action-tonal:#006ab3;--nav-icon:#078ae7;--nav-label:#006db8;--switch-thumb:#078ae7;--switch-track:rgba(7,138,231,.5)}
 :root[data-theme=dark]{--change-add-bg:#183b25;--change-add-ink:#b7edc4;--change-add-border:#527b5d;--change-del-bg:#482320;--change-del-ink:#ffc3bc;--change-del-border:#98635c;--page:#121212;--surface:#212121;--card:#212121;--ink:rgba(255,255,255,.87);--muted:rgba(255,255,255,.60);--disabled:rgba(255,255,255,.38);--divider:rgba(255,255,255,.12);--log:#1e1e1e;--danger:#ffb4ab;--overlay:rgba(0,0,0,.48);--ripple-opacity:.18}
 
 :root{--sidebar-width:248px;--toolbar-height:56px;--hover:rgba(0,0,0,.045);--pressed:rgba(0,0,0,.09);--ml-vv-height:100dvh;--ml-vv-width:100vw;--ml-vv-top:0px;--ml-vv-left:0px;--ml-keyboard-space:0px}
@@ -410,12 +410,13 @@ body :is(#maincontent,#modal_overlay) .ifacebox .ifacebox-body{border-color:var(
 #maincontent :is(table,.table,tr,.tr,td,.td,th,.th){background-color:transparent}
 #maincontent :is(.cbi-map-descr,.cbi-section-descr){background:transparent}
 #maincontent .ml-chart-surface{color:var(--ink);min-width:0;max-width:100%;overflow:hidden}
+:root[data-cards=false]{--ml-chart-bg:transparent}
 #maincontent .ml-chart-surface svg{display:block;max-width:100%;background:transparent}
 /* OpenWrt 21.02 loadSVG has an inline white host and inline black axes.
    Only recognized plots and top-level axes are overridden, never series groups. */
 #maincontent .ml-chart-surface,
 #maincontent #view div:has(>svg>polyline):has(>svg>text),
-#maincontent #channel_graph:has(>svg){background-color:var(--card)!important;border-color:var(--divider)!important}
+#maincontent #channel_graph:has(>svg){background-color:var(--ml-chart-bg)!important;border-color:var(--divider)!important}
 #maincontent .ml-chart-surface svg>line,
 #maincontent #channel_graph>svg>line{stroke:var(--divider)!important}
 #maincontent .ml-chart-surface svg>text,
@@ -430,7 +431,7 @@ body :is(#maincontent,#modal_overlay) .ifacebox .ifacebox-body{border-color:var(
 .ml-view-progress + #view > .spinning{background-image:none;padding-left:0}
 
 /* One typography and spacing system for the browser appearance settings. */
-:root{--mdc-typography-font-family:Roboto,"Noto Sans",system-ui,sans-serif;--mdc-theme-primary:var(--control-accent);--mdc-theme-on-surface:var(--ink);--mdc-theme-error:var(--danger)}
+:root{--mdc-typography-font-family:Roboto,"Noto Sans",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;--mdc-theme-primary:var(--control-accent);--mdc-theme-on-surface:var(--ink);--mdc-theme-error:var(--danger)}
 #ml-appearance-entry{max-width:none;margin:16px 0 20px;min-width:0}
 #ml-appearance-entry>summary{color:var(--ink);font-size:16px;font-weight:500;line-height:1.4;padding:12px 0;min-height:48px}
 #ml-appearance{max-width:none;width:100%;min-width:0;padding:8px 0 20px;font:inherit}
@@ -629,7 +630,7 @@ body .ml-preference-snackbar{z-index:60;pointer-events:none;padding-bottom:max(8
 body .ml-preference-snackbar .mdc-snackbar__surface{background:#323232;color:#fff;border-radius:2px;min-width:288px;max-width:min(568px,calc(100vw - 24px));pointer-events:auto}
 body .ml-preference-snackbar .mdc-snackbar__label{font:inherit;color:#fff}
 body .mdc-tooltip{z-index:70;pointer-events:none}
-body .mdc-tooltip__surface{background:#616161;color:#fff;border-radius:2px;font:400 12px/1.4 Roboto,"Noto Sans",system-ui,sans-serif;padding:6px 8px}
+body .mdc-tooltip__surface{background:#616161;color:#fff;border-radius:2px;font:400 12px/1.4 Roboto,"Noto Sans",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;padding:6px 8px}
 @media(prefers-reduced-motion:reduce){.ml-mdc-menu,.ml-preference-snackbar,.mdc-tooltip__surface-animation{animation:none!important;transition:none!important}}
 
 /* Native fallback controls follow the same browser color scheme. */

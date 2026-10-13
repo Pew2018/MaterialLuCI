@@ -113,7 +113,7 @@ try{
   await setup(page,design,theme,width);
   await page.evaluate(native=>{
    String.prototype.format=function(...args){let i=0;return this.replace(/%[sd]/g,()=>String(args[i++]));};
-   window.E=(tag,attrs,label)=>{const n=document.createElement(tag);for(const [k,v]of Object.entries(attrs||{}))typeof v==="function"?n.addEventListener(k,v):n.setAttribute(k,v);n.textContent=label;return n;};
+   window.E=(tag,attrs,label)=>{if(typeof attrs==="string"||Array.isArray(attrs)){label=attrs;attrs={};}const n=document.createElement(tag);for(const [k,v]of Object.entries(attrs||{}))typeof v==="function"?n.addEventListener(k,v):n.setAttribute(k,v);n.textContent=label;return n;};
    const UI={prototype:{showIndicator(name,text,click){indicators.append(E("span",{"data-indicator":name,click},text));},hideIndicator(name){document.querySelector('[data-indicator="'+name+'"]')?.remove();}}},L={bind:(fn,self)=>fn.bind(self)},changes={displayChanges(){}};
    changes.setIndicator=new Function("E","UI","L","_","return ("+native.setIndicator+")")(E,UI,L,v=>v);
    changes.renderChangeIndicator=new Function("E","UI","L","_","return ("+native.renderChangeIndicator+")")(E,UI,L,v=>v);window.nativeChanges=changes;
@@ -153,6 +153,16 @@ try{
   assert.deepEqual(await page.locator("#sorttable .tr").evaluateAll(ns=>ns.map(n=>n.dataset.sid)),["b","c","a"]);
   assert.deepEqual(await page.evaluate(()=>moves),[["dhcp","a","c",true]]);
   assert.equal(await page.locator(".drag-over-above,.drag-over-below").count(),0);
+
+  // Synthetic native touch method execution (not a physical-device trace).
+  await page.evaluate(()=>{
+   const rows=sorttable.querySelectorAll(".tr"),button=rows[0].querySelector(".drag-handle"),target=rows[2],r=target.getBoundingClientRect();
+   section.handleTouchMove({target:button,targetTouches:[{pageY:r.bottom-3,clientY:r.bottom-3}]});
+  });
+  assert.equal(await page.locator(".touchsort-element").count(),1);
+  assert.equal(await page.locator(".touchsort-element").evaluate(n=>getComputedStyle(n).pointerEvents),"none");
+  await page.evaluate(()=>section.handleTouchEnd({target:sorttable.querySelector(".tr .drag-handle")}));
+  assert.equal(await page.locator(".touchsort-element").count(),0);
   await page.screenshot({path:"dist/ui-refinement/coverage-"+engine+"-"+design+"-"+theme+"-"+width+".png",fullPage:true});
   assert.deepEqual(errors,[]);
   results.push({engine,design,theme,width,initialReadonly:initial,modalBefore:before,modalAfter:after,buttons:sizes,progress:{created:3,destroyed:3},chartOwnerPasses:passes,environment:await page.evaluate(()=>({dpr:devicePixelRatio,scale:visualViewport.scale,font:getComputedStyle(document.body).fontFamily})),scope:"Pinned native changes/desktop drag methods and isolated HTTP backend; not firmware apply/touch/Safari device acceptance"});

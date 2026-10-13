@@ -2,7 +2,7 @@
 :root[data-design=m3e]{
  --ml-card-radius:16px;
  --ml-action-radius:24px;--ml-item-radius:8px;
- --md-sys-typescale-label-large-font:Roboto,"Noto Sans",system-ui,sans-serif;
+ --md-sys-typescale-label-large-font:Roboto,"Noto Sans",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
  --md-sys-typescale-label-large-size:14px;
  --md-sys-typescale-label-large-line-height:20px;
  --md-switch-track-width:48px;
