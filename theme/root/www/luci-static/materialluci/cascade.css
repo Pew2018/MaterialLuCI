@@ -372,7 +372,7 @@ body :is(#maincontent,#modal_overlay) .ifacebox .ifacebox-head:not([style*="back
 body .ml-switch-hit .mdc-switch,
 body .ml-switch-hit .mdc-switch:hover,
 body .ml-switch-hit .mdc-switch:active,
-body .ml-switch-hit .mdc-switch:disabled{width:36px;height:48px;min-height:48px;min-width:36px;padding:0;margin:0;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible;color:var(--ink)}
+body .ml-switch-hit .mdc-switch:disabled{width:48px;height:48px;min-height:48px;min-width:48px;padding:0;margin:0;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible;color:var(--ink);justify-content:center}
 body .mdc-switch>span{z-index:auto}
 .cbi-checkbox:has(.ml-switch-source)>label:empty{display:none}
 :root{--switch-off-thumb:#fafafa;--switch-off-track:rgba(0,0,0,.38);--switch-disabled-thumb:#bdbdbd}
@@ -380,7 +380,6 @@ body .mdc-switch>span{z-index:auto}
 
 body .mdc-switch>.mdc-switch__handle-track{position:absolute}
 
-body .ml-switch-hit .mdc-switch{width:48px;min-width:48px;justify-content:center}
 body .ml-switch-hit .mdc-switch>.mdc-switch__track{width:36px}
 body .ml-switch-hit .mdc-switch>.mdc-switch__handle-track{width:16px;left:6px;transition-duration:150ms}
 body .ml-switch-hit .mdc-switch>.mdc-switch__focus-ring-wrapper{position:absolute}
