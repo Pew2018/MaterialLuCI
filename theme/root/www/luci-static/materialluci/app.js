@@ -249,7 +249,7 @@
   const restoreName=textButton(t("恢复设备名称","Restore device name"),()=>{window.MaterialBranding.set("sidebarName","");nameInput.value="";});
   identity.append(brandRow(t("侧边栏显示名称","Sidebar display name"),t("留空时使用设备主机名。","Leave blank to use the router hostname."),node("div",{class:"ml-brand-controls"},[nameInput,restoreName])));
   const palettes=[["MaterialLuCI Classic",[[t("经典蓝","Classic Blue"),"#42A5F5"],["Golden","#CC6F4E"],["Lemon Yellow","#E6A545"],["Grass Green","#7DC22F"],["Charm Purple","#9575CD"],["Sky Blue","#26C6DA"],["Vigour Red","#F06292"],["Fashion Pink","#BA68C8"]]],["Material Colors",[["Blue","#2196F3"],["Teal","#009688"],["Green","#4CAF50"],["Red","#F44336"],["Orange","#FF9800"],["Purple","#9C27B0"],["Cyan","#00BCD4"],["Indigo","#3F51B5"],["Pink","#E91E63"],["Blue Grey","#607D8B"],["Deep Orange","#FF5722"],["Light Green","#8BC34A"]]]];
-  function updateSwatches(){host.querySelectorAll(".ml-swatch-item").forEach(b=>{const active=b.dataset.seed===appearance.prefs.seed;b.setAttribute("aria-pressed",String(active));const s=b.querySelector(".ml-swatch");if(s.textContent)s.textContent="";if(s.getAttribute("data-selected")!==String(active))s.setAttribute("data-selected",String(active));s.style.color=MaterialPalette.generate(b.dataset.seed,false).swatchForeground;});}
+  function updateSwatches(){host.querySelectorAll(".ml-swatch-item").forEach(b=>{const active=b.dataset.seed===appearance.prefs.seed;b.setAttribute("aria-pressed",String(active));const s=b.querySelector(".ml-swatch");if(s.textContent)s.textContent="";if(s.getAttribute("data-selected")!==String(active))s.setAttribute("data-selected",String(active));s.style.color=MaterialPalette.swatchForeground(b.dataset.seed);});}
   for(const [title,colors] of palettes){const g=group(title);g.dataset.group=title==="MaterialLuCI Classic"?"classic":"material";const grid=node("div",{class:"ml-swatches"});for(const [label,color] of colors){const b=textButton(label,()=>{appearance.set("seed",color);hex.value=color;error.textContent="";hex.setAttribute("aria-invalid","false");updateSwatches();},"ml-swatch-item");b.dataset.seed=color;const sw=node("span",{class:"ml-swatch","aria-hidden":"true"});sw.style.background=color;b.prepend(sw);grid.append(b);}g.append(grid);}
   const custom=group(t("自定义强调色","Custom accent")),label=node("label",{for:"ml-hex",text:"HEX"}),hex=node("input",{id:"ml-hex",type:"text",maxlength:7,autocomplete:"off",spellcheck:"false","aria-describedby":"ml-hex-error"}),error=node("div",{id:"ml-hex-error",class:"ml-field-error",role:"status"});
   hex.value=appearance.prefs.seed;hex.addEventListener("input",()=>{const pos=hex.selectionStart;hex.value="#"+hex.value.replace(/[^0-9a-f]/gi,"").slice(0,6).toUpperCase();hex.setSelectionRange(Math.min(pos,hex.value.length),Math.min(pos,hex.value.length));const valid=/^#[0-9A-F]{6}$/.test(hex.value);hex.setAttribute("aria-invalid",String(!valid));error.textContent=valid?"":t("请输入 6 位 HEX 颜色值","Enter a 6 digit HEX color");if(valid){appearance.set("seed",hex.value);updateSwatches();}});
@@ -257,7 +257,9 @@
   const ranges=group(t("强调色应用","Accent areas"));ranges.dataset.group="ranges";general.after(ranges);host.append(custom);
   ranges.append(prefSwitch("toolbar",t("顶栏背景","Toolbar background"),t("将强调色用于顶栏背景。","Use the accent color for the toolbar.")),prefSwitch("categories",t("分组标题","Section headings"),t("将强调色用于分组标题。","Use the accent color for section headings.")),prefSwitch("icons",t("导航与返回图标","Navigation and back icons"),t("为中性顶栏图标着色。","Accent icons in the neutral toolbar.")));
 
-  updateSwatches();MaterialFeedback.bind(host);
+  updateSwatches();
+  // The runtime discovers each feedback control separately. Binding the whole
+  // palette here constructed every official ripple in one uninterruptible job.
  }
  function allFields(root){
   const selector='[id],[name]';
