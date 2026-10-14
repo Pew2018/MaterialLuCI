@@ -9,11 +9,17 @@ const browser=await chromium.launch(),results=[];
 try{
  for(const revision of ["before","after"])for(const design of ["classic","m3e"])for(const theme of ["light","dark"])for(const cards of ["true","false"]){
   const page=await browser.newPage({viewport:{width:390,height:844}});
-  if(revision==="before"){
-   for(const file of ["runtime.js","surfaces.js","feedback.js","controls.js","app.js","base.css","cascade.css","design-m3.css"]){
-    const content=execFileSync("git",["show",baseline+":theme/root/www/luci-static/materialluci/"+file],{encoding:"utf8"});
-    await page.route("**/luci-static/materialluci/"+file+"?**",route=>route.fulfill({body:content,contentType:file.endsWith(".css")?"text/css":"text/javascript"}));
-   }
+  // Match scripts/build.py: inline base.css into cascade.css and minify JS
+  // for BOTH revisions. A raw cascade override leaves @import base.css missing
+  // from the packed fixture and makes style/paint comparisons invalid.
+  const source=file=>revision==="before"
+   ?execFileSync("git",["show",baseline+":theme/root/www/luci-static/materialluci/"+file],{encoding:"utf8"})
+   :fs.readFileSync("theme/root/www/luci-static/materialluci/"+file,"utf8");
+  for(const file of ["runtime.js","surfaces.js","feedback.js","controls.js","app.js","cascade.css","design-m3.css"]){
+   let content=source(file);
+   if(file==="cascade.css")content=source("base.css")+content.replace('@import url("base.css");',"");
+   if(file.endsWith(".js"))content=execFileSync("node_modules/.bin/esbuild",["--minify","--target=es2020","--loader=js"],{input:content,encoding:"utf8"});
+   await page.route("**/luci-static/materialluci/"+file+"?**",route=>route.fulfill({body:content,contentType:file.endsWith(".css")?"text/css":"text/javascript"}));
   }
   await page.addInitScript(({design,theme,cards})=>{localStorage.setItem("materialluci-design",design);localStorage.setItem("materialluci-mode",theme);localStorage.setItem("materialluci-cards",cards);},{design,theme,cards});
   await page.goto(origin+"/upstream.html");await page.waitForSelector("#ml-appearance-entry");
