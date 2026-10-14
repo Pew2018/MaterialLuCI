@@ -30,7 +30,7 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]]){
   const client=engine==="chromium"?await page.context().newCDPSession(page):null;
   if(client)await client.send("Tracing.start",{categories:"toplevel,devtools.timeline,disabled-by-default-devtools.timeline,disabled-by-default-devtools.timeline.frame,disabled-by-default-devtools.timeline.stack,blink.user_timing,cc,gpu,v8",transferMode:"ReturnAsStream"});
   await page.goto(origin+(kind==="system"?"/system.html":"/upstream.html"));
-  await page.waitForSelector("#ml-appearance-entry");
+  await page.waitForSelector("#ml-appearance-entry",{state:"attached"});
   if(kind==="system"){
    await page.waitForSelector(".cbi-tabmenu");
    // Actual pinned system view's NTP controls; extra rows use real LuCI Value/Flag,
@@ -62,7 +62,7 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]]){
   },kind);
   if(state!=="loading")await page.waitForTimeout(700);
   await page.evaluate(state=>{
-   window.measure={frames:[],mutations:0,updates:0,longTasks:[],start:performance.now(),last:performance.now(),active:true,surfaces:MaterialSurfaces.count(),instances:MaterialFeedback.counts()};
+   performance.mark("scroll-measure-start");window.measure={frames:[],mutations:0,updates:0,longTasks:[],start:performance.now(),last:performance.now(),active:true,surfaces:MaterialSurfaces.count(),instances:MaterialFeedback.counts()};
    const m=measure;window.sampleObserver=new MutationObserver(rs=>m.mutations+=rs.length);sampleObserver.observe(view,{subtree:true,childList:true});
    if(PerformanceObserver.supportedEntryTypes.includes("longtask")){window.taskObserver=new PerformanceObserver(l=>m.longTasks.push(...l.getEntries().map(e=>({start:e.startTime,duration:e.duration}))));taskObserver.observe({type:"longtask"});}
    const frame=t=>{m.frames.push(t-m.last);m.last=t;if(m.active)requestAnimationFrame(frame);};requestAnimationFrame(frame);
@@ -75,6 +75,11 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]]){
   await page.mouse.move(width-80,400);
   for(let i=0;i<24;i++){await page.mouse.wheel(0,i<12?140:-140);await page.waitForTimeout(40);}
   await page.waitForTimeout(120);
+  const sample=await page.evaluate(()=>{
+   performance.mark("scroll-measure-end");clearInterval(window.pollTimer);measure.active=false;sampleObserver.disconnect();window.taskObserver?.disconnect();
+   const m=measure,a=m.frames.slice().sort((a,b)=>a-b);
+   return {duration:performance.now()-m.start,mutations:m.mutations,updates:m.updates,longTasks:m.longTasks,raf:{count:a.length,p50:a[Math.floor(a.length*.5)],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],max:Math.max(0,...a),over20:a.filter(x=>x>20).length,over34:a.filter(x=>x>34).length,raw:m.frames},surfacePasses:MaterialSurfaces.count()-m.surfaces,instancesBefore:m.instances,instancesAfter:MaterialFeedback.counts(),waitInstances:MaterialWait.activeCount(),scrollTop:scrollY,clicks:fixtureClicks,overflow:document.documentElement.scrollWidth>innerWidth};
+  });
   let touch=null;
   if(client&&width===390&&state==="idle"&&theme==="light"&&cards==="true"){
    const target=page.locator("#view .ml-switch-hit, #view button.cbi-button").first();
@@ -92,11 +97,6 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]]){
     }
    }
   }
-  const sample=await page.evaluate(()=>{
-   clearInterval(window.pollTimer);measure.active=false;sampleObserver.disconnect();window.taskObserver?.disconnect();
-   const m=measure,a=m.frames.slice().sort((a,b)=>a-b);
-   return {duration:performance.now()-m.start,mutations:m.mutations,updates:m.updates,longTasks:m.longTasks,raf:{count:a.length,p50:a[Math.floor(a.length*.5)],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],max:Math.max(0,...a),over20:a.filter(x=>x>20).length,over34:a.filter(x=>x>34).length,raw:m.frames},surfacePasses:MaterialSurfaces.count()-m.surfaces,instancesBefore:m.instances,instancesAfter:MaterialFeedback.counts(),waitInstances:MaterialWait.activeCount(),scrollTop:scrollY,clicks:fixtureClicks,overflow:document.documentElement.scrollWidth>innerWidth};
-  });
   sample.touch=touch;assert.equal(sample.clicks,0);assert.equal(sample.overflow,false);
   const id=[engine,repeat,revision,design,theme,cards,width,kind,state].join("-");
   if(client){
@@ -104,7 +104,7 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]]){
    let trace="";while(true){const part=await client.send("IO.read",{handle:stream});trace+=part.data;if(part.eof)break;}await client.send("IO.close",{handle:stream});
    // Retain all raw paired traces, including thread metadata.
    fs.writeFileSync(out+"/"+id+".json",trace);
-   const events=JSON.parse(trace).traceEvents,complete=events.filter(e=>e.ph==="X"),costs={};
+   const events=JSON.parse(trace).traceEvents,start=events.find(e=>e.name==="scroll-measure-start")?.ts,end=events.find(e=>e.name==="scroll-measure-end")?.ts;assert.ok(start&&end,"trace phase markers required");const complete=events.filter(e=>e.ph==="X"&&e.ts>=start&&e.ts<end),costs={};
    for(const name of ["Layout","UpdateLayoutTree","Paint","RasterTask","FunctionCall","RunTask","ThreadControllerImpl::RunTask","CompositeLayers","DrawFrame"]){
     const selected=complete.filter(e=>e.name===name);
     costs[name]={count:selected.length,totalMs:selected.reduce((s,e)=>s+(e.dur||0)/1000,0),maxMs:Math.max(0,...selected.map(e=>(e.dur||0)/1000)),threads:[...new Set(selected.map(e=>e.pid+":"+e.tid))]};
