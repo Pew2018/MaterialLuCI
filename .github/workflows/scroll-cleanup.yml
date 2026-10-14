@@ -18,7 +18,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json,subprocess
-          for run_id in [38510533262,38510533296,38510533312,38511437807,38511437708,38511650535,38511650475]:
+          for run_id in [38531116288,38531116263,38531116285]:
               run=json.loads(subprocess.check_output(["gh","api",f"repos/Pew2018/MaterialLuCI/actions/runs/{run_id}"],text=True))
               assert run["head_branch"]=="feature/m3e-theme"
               if run["status"] not in ("queued","in_progress"):
