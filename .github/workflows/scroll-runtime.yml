@@ -2,7 +2,7 @@ name: Runtime enhancement scroll evidence
 on:
   push:
     branches: [feature/m3e-theme]
-    paths: ["ci/scroll-runtime.mjs", "ci/trace-costs.mjs", ".github/workflows/scroll-runtime.yml"]
+    paths: ["theme/**", "ci/scroll-runtime.mjs", "ci/trace-costs.mjs", ".github/workflows/scroll-runtime.yml"]
 concurrency:
   group: scroll-runtime-${{ github.ref }}
   cancel-in-progress: true
