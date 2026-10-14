@@ -1123,3 +1123,6 @@ body #modal_overlay .ml-changes-dialog :is(.right,.button-row)>.cbi-dropdown.btn
 .ml-sidebar-heading #ml-drawer-close{display:none;flex:none;width:48px;height:48px;min-width:48px;min-height:48px;margin:0;padding:12px;border:0;border-radius:50%;background:transparent;color:var(--muted);box-shadow:none}
 .ml-sidebar-heading #ml-drawer-close svg{display:block;width:24px;height:24px;fill:currentColor}
 @media(max-width:1023px){.ml-sidebar-heading #ml-drawer-close{display:inline-flex}}
+
+/* Keep the temporary-drawer close action at the leading edge. */
+@media(max-width:1023px){.ml-sidebar-heading{justify-content:flex-start;gap:8px;padding-left:16px}.ml-sidebar-heading #ml-drawer-close{order:-1}}
