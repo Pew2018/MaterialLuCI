@@ -144,8 +144,10 @@ try{for(const [engine,type] of [["chromium",chromium],["webkit",webkit]]){
    },{theme,count});
    await page.waitForFunction(()=>document.querySelector(".ml-changes-dialog .button-row").lastElementChild.classList.contains("cbi-dropdown"));
    const combo=page.locator(".ml-changes-dialog .button-row>.cbi-dropdown");
-   assert.equal(await page.evaluate(()=>comboChildren.every((n,i)=>nativeCombo.node.childNodes[i]===n)),true,"theme enhancement preserves native child indices");
+   assert.equal(await page.evaluate(()=>comboChildren.slice(0,-1).every((n,i)=>nativeCombo.node.childNodes[i]===n)&&nativeCombo.node.lastElementChild===comboChildren[comboChildren.length-1]),true,"theme preserves native prefix indices and lastElementChild value container");
    await combo.scrollIntoViewIfNeeded();
+   await combo.click({position:{x:30,y:24}});
+   assert.deepEqual(await page.evaluate(()=>comboCalls),["0"],"default native action runs once");
    await combo.locator(":scope > .open").click();
    await page.waitForFunction(()=>document.querySelector(".ml-action-menu.mdc-menu-surface--open"));
    const unchecked=page.locator(".ml-action-menu.mdc-menu-surface--open [data-value='1']");
@@ -154,9 +156,9 @@ try{for(const [engine,type] of [["chromium",chromium],["webkit",webkit]]){
    await page.screenshot({path:"dist/ui-refinement/native-combo-"+engine+"-"+design+"-"+theme+"-"+width+"-"+count+".png"});
    await unchecked.click();
    assert.equal(await page.evaluate(()=>nativeCombo.getValue()),"1");
-   assert.deepEqual(await page.evaluate(()=>comboCalls),[],"choosing mode does not prematurely apply");
+   assert.deepEqual(await page.evaluate(()=>comboCalls),["0"],"choosing mode does not prematurely apply");
    await combo.click({position:{x:30,y:24}});
-   assert.deepEqual(await page.evaluate(()=>comboCalls),["1"]);
+   assert.deepEqual(await page.evaluate(()=>comboCalls),["0","1"]);
    await page.locator(".ml-changes-dialog .button-row>.cbi-button-reset").click();
    assert.equal(await page.evaluate(()=>comboUndo),1);
    // Native toggleItem deliberately rebuilds preview/hidden values. Verify the
