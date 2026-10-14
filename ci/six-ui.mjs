@@ -114,9 +114,9 @@ export async function verifySixUI(browser,name,base){
  await page.evaluate(()=>{MaterialAppearance.set("toolbar",true);MaterialAppearance.set("cards",true);});
  assert.equal(await page.locator('meta[name="theme-color"]').count(),1);
  assert.equal(await page.locator('meta[name="apple-mobile-web-app-status-bar-style"]').getAttribute("content"),"default");
- assert.deepEqual(await page.locator('meta[name="theme-color"]').evaluateAll(nodes=>nodes.map(n=>n.content)),["#121212"]);
+ assert.deepEqual(await page.locator('meta[name="theme-color"]').evaluateAll(nodes=>nodes.map(n=>n.content)),[await page.locator(".ml-toolbar").evaluate(el=>getComputedStyle(el).backgroundColor)]);
  assert(!await page.locator('meta[name="viewport"]').getAttribute("content").then(v=>v.includes("viewport-fit=cover")));
- assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),64);
+ assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),56);
  const inventory=await page.locator('input[type="checkbox"]').evaluateAll(nodes=>nodes.map(input=>({
   name:input.name,converted:input.classList.contains("ml-switch-source"),
   instance:!!input.parentElement.querySelector(".mdc-switch")?._mlMdcSwitch,

@@ -309,10 +309,9 @@ export async function verifyUpstreamPages(browser,name,base){
   await page.screenshot({path:"dist/previews/"+name+"-"+size+"-upstream-refresh.png"});
   for(const mode of ["light","dark"])for(const cards of [true,false]){
    await page.evaluate(({mode,cards})=>{MaterialAppearance.set("mode",mode);MaterialAppearance.set("cards",cards);},{mode,cards});
-   const neutral=mode==="dark"?"#121212":"#FAFAFA";
    for(const toolbar of [false,true]){
     await page.evaluate(v=>MaterialAppearance.set("toolbar",v),toolbar);
-    assert.equal(await page.locator('meta[name=theme-color]').getAttribute("content"),neutral);
+    assert.equal(await page.locator('meta[name=theme-color]').getAttribute("content"),await page.locator(".ml-toolbar").evaluate(el=>getComputedStyle(el).backgroundColor));
    }
    await page.locator("#upstream-network").scrollIntoViewIfNeeded();
    await page.screenshot({path:"dist/previews/"+name+"-"+size+"-ipv4-"+mode+"-cards-"+cards+".png"});

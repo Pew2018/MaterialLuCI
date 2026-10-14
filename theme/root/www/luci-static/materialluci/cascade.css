@@ -408,22 +408,17 @@ body .ml-switch-hit .mdc-switch .mdc-switch__icons{visibility:hidden}
 #maincontent .network-status-table{background:transparent!important}
 :root[data-cards=true] .ml-card-surface :is(.ifacebox,.ifacebadge){background:transparent!important}
 
-/* Browser boundary surfaces are neutral even when the page toolbar is colored.
-   Mobile keeps its neutral browser boundary; desktop has no artificial gap. */
+/* The app bar sits flush under the browser chrome. Its painted surface also
+ * feeds the single theme-color hint, so the system status area follows the
+ * toolbar: accent surface when colored, page surface when neutral. */
 /* Keep viewport scrolling native. Overscroll containment belongs to bounded
  * drawer/modal scrollers, not the root document (WebKit wheel chain). */
 html{background:var(--browser-surface,var(--page))}
 body{background:var(--page)}
-body .ml-toolbar,:root[data-toolbar=true] body .ml-toolbar{
- height:64px;padding-top:8px;background:var(--browser-surface,var(--page))
-}
+body .ml-toolbar,:root[data-toolbar=true] body .ml-toolbar{height:56px;padding-top:0}
 :root[data-toolbar=true] .ml-toolbar-inner{background:var(--toolbar-surface,var(--primary-surface));color:var(--on-toolbar,var(--on-primary))}
-.ml-sidebar{top:64px;height:calc(100dvh - 64px)}
+.ml-sidebar{top:56px;height:calc(100dvh - 56px)}
 body::after{content:"";position:fixed;bottom:0;left:0;right:0;height:env(safe-area-inset-bottom,0px);background:var(--browser-surface,var(--page));pointer-events:none;z-index:40}
-@media(min-width:1024px){
- body .ml-toolbar,:root[data-toolbar=true] body .ml-toolbar{height:56px;padding-top:0}
- .ml-sidebar{top:56px;height:calc(100dvh - 56px)}
-}
 @media(max-width:1023px){.ml-sidebar{top:var(--ml-vv-top);height:var(--ml-vv-height)}}
 :root{--divider:rgba(0,0,0,.12);--status-surface:#f5f5f5;--status-active:#e3f2fd;--status-active-ink:#174564}
 :root[data-theme=dark]{--divider:rgba(255,255,255,.12);--status-surface:#262626;--status-active:#263943;--status-active-ink:#b9def5}
@@ -971,7 +966,7 @@ body .cbi-page-actions>form.inline{display:flex;align-items:center;flex-wrap:wra
 body .ml-toolbar-inner #ml-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #ml-sidebar-heading[data-name-hidden=true] #ml-sidebar-name{display:none}
 #ml-sidebar-heading[data-name-hidden=true]{display:none}
-@media(max-width:1023px){#ml-sidebar-heading[data-name-hidden=true]{display:flex;justify-content:flex-end;min-height:44px;padding:0 20px}}
+@media(max-width:1023px){#ml-sidebar-heading[data-name-hidden=true]{display:flex;justify-content:flex-start;min-height:56px;padding:4px 20px 4px 16px}}
 .ml-brand-row{align-items:flex-start}
 .ml-brand-controls{display:flex;flex:0 1 48%;align-items:center;justify-content:flex-end;gap:8px;min-width:0}
 .ml-brand-controls>.ml-brand-input{flex:1 1 auto;min-width:0;width:100%;max-width:100%}
@@ -1118,11 +1113,14 @@ body #modal_overlay .ml-changes-dialog :is(.right,.button-row)>.cbi-dropdown.btn
  body.modal-overlay-active #modal_overlay>.modal.uci-dialog.ml-changes-dialog:not(.alert-message){max-height:calc(var(--ml-vv-height) - 16px)}
 }
 
-/* Mobile drawer header follows the compact Material icon-button pattern.
- * Keep a 48dp hit target around the 24dp close glyph. */
+/* Mobile drawer header follows the Material 3 navigation drawer header:
+ * a 56dp header, a 24dp close glyph inside a 48dp circular hit target, and
+ * the glyph inset 28dp from the leading edge (16px padding + 12px button
+ * padding), matching the drawer item icon alignment. */
 .ml-sidebar-heading #ml-drawer-close{display:none;flex:none;width:48px;height:48px;min-width:48px;min-height:48px;margin:0;padding:12px;border:0;border-radius:50%;background:transparent;color:var(--muted);box-shadow:none}
 .ml-sidebar-heading #ml-drawer-close svg{display:block;width:24px;height:24px;fill:currentColor}
 @media(max-width:1023px){.ml-sidebar-heading #ml-drawer-close{display:inline-flex}}
 
-/* Keep the temporary-drawer close action at the leading edge. */
-@media(max-width:1023px){.ml-sidebar-heading{justify-content:flex-start;gap:8px;padding-left:16px}.ml-sidebar-heading #ml-drawer-close{order:-1}}
+/* Keep the temporary-drawer close action at the leading edge, with or
+ * without the optional device-name headline. */
+@media(max-width:1023px){.ml-sidebar-heading{justify-content:flex-start;align-items:center;gap:8px;min-height:56px;padding:4px 20px 4px 16px}.ml-sidebar-heading #ml-drawer-close{order:-1}}
