@@ -2,7 +2,7 @@ name: Evidence driven scroll isolation
 on:
   push:
     branches: [feature/m3e-theme]
-    paths: ["ci/scroll-isolation.mjs", "ci/system-view.js", "ci/prepare.py", "ci/server.py", ".github/workflows/scroll-evidence.yml"]
+    paths: ["theme/**", "ci/scroll-isolation.mjs", "ci/system-view.js", "ci/prepare.py", "ci/server.py", ".github/workflows/scroll-evidence.yml"]
 permissions:
   contents: read
 jobs:

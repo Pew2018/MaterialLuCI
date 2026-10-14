@@ -2,7 +2,7 @@ name: Native graph scroll evidence
 on:
   push:
     branches: [feature/m3e-theme]
-    paths: ["ci/scroll-native-graphs.mjs", "ci/prepare-graphs.py", ".github/workflows/scroll-graphs.yml"]
+    paths: ["theme/**", "ci/scroll-native-graphs.mjs", "ci/prepare-graphs.py", ".github/workflows/scroll-graphs.yml"]
 permissions:
   contents: read
 jobs:

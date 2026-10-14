@@ -400,7 +400,9 @@ body .ml-switch-hit .mdc-switch .mdc-switch__icons{visibility:hidden}
 
 /* Browser boundary surfaces are neutral even when the page toolbar is colored.
    Mobile keeps its neutral browser boundary; desktop has no artificial gap. */
-html{background:var(--browser-surface,var(--page));overscroll-behavior-y:contain}
+/* Keep viewport scrolling native. Overscroll containment belongs to bounded
+ * drawer/modal scrollers, not the root document (WebKit wheel chain). */
+html{background:var(--browser-surface,var(--page))}
 body{background:var(--page)}
 body .ml-toolbar,:root[data-toolbar=true] body .ml-toolbar{
  height:64px;padding-top:8px;background:var(--browser-surface,var(--page))
