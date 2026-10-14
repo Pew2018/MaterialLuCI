@@ -18,6 +18,12 @@ try{for(const [engine,type] of [["chromium",chromium],["webkit",webkit]]){
   const settingsText=await page.locator("#ml-appearance").innerText();
   assert.ok(!settingsText.includes("OnePlus"));
   assert.ok(settingsText.includes("MaterialLuCI Classic"));
+  assert.deepEqual(await page.locator("[data-design-option]").evaluateAll(ns=>ns.map(n=>n.textContent.trim())),["Classic","M3E"]);
+  const other=design==="classic"?"m3e":"classic";
+  await page.locator('[data-design-option="'+other+'"]').click();
+  assert.equal(await page.evaluate(()=>localStorage.getItem("materialluci-design")),other);
+  assert.equal(await page.evaluate(()=>MaterialAppearance.activeDesign),design,"style applies on next full load");
+  await page.locator('[data-design-option="'+design+'"]').click();
   // Playwright selectors pierce official Material Web shadow roots. Check
   // form-associated hosts and light-DOM buttons, not their internal buttons.
   assert.equal(await page.evaluate(()=>[...document.querySelectorAll("#ml-appearance button,#ml-appearance md-outlined-button,#ml-appearance md-text-button")].every(n=>n.type==="button")),true);
