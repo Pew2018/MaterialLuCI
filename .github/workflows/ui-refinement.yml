@@ -2,7 +2,7 @@ name: Scoped UI refinement regression
 on:
   push:
     branches: [feature/m3e-theme]
-    paths: ["theme/**", "ci/ui-refinement.mjs", "ci/theme-coverage.mjs", "ci/user-feedback.mjs", "ci/followup*.mjs", "ci/performance-contracts.mjs", "ci/changes-scroll.mjs", "ci/changes-dialog.mjs", ".github/workflows/ui-refinement.yml"]
+    paths: ["theme/**", "ci/ui-refinement.mjs", "ci/theme-coverage.mjs", "ci/user-feedback.mjs", "ci/followup*.mjs", "ci/performance-contracts.mjs", "ci/changes-scroll.mjs", "ci/changes-dialog.mjs", "ci/changes-native.mjs", ".github/workflows/ui-refinement.yml"]
 permissions:
   contents: read
 jobs:
@@ -50,6 +50,8 @@ jobs:
           sudo apt-get install -y lua5.1
           python3 ci/ipk-audit.py dist/*.ipk --sha "$GITHUB_SHA" --run "$GITHUB_RUN_ID" --out build/feedback-audit.json --extract build/unpacked --candidate
           python3 ci/prepare.py
+      - run: node ci/changes-native.mjs
+        if: ${{ !cancelled() }}
       - run: node ci/changes-scroll.mjs
         if: ${{ !cancelled() }}
       - run: node ci/user-feedback.mjs

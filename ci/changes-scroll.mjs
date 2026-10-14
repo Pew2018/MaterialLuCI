@@ -75,12 +75,29 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]]){
   await page.mouse.move(width-80,400);
   for(let i=0;i<24;i++){await page.mouse.wheel(0,i<12?140:-140);await page.waitForTimeout(40);}
   await page.waitForTimeout(120);
+  let touch=null;
+  if(client&&width===390&&state==="idle"&&theme==="light"&&cards==="true"){
+   const target=page.locator("#view .ml-switch-hit, #view button.cbi-button").first();
+   if(await target.count()){
+    await target.scrollIntoViewIfNeeded();const r=await target.boundingBox();
+    if(r&&r.y>160){
+     const x=r.x+r.width/2,y=r.y+r.height/2;
+     const startScroll=await page.evaluate(()=>scrollY);
+     await client.send("Emulation.setTouchEmulationEnabled",{enabled:true,maxTouchPoints:1});
+     await client.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{x,y}]});
+     for(let i=1;i<=8;i++){await client.send("Input.dispatchTouchEvent",{type:"touchMove",touchPoints:[{x,y:y-i*18}]});await page.waitForTimeout(20);}
+     await client.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});await page.waitForTimeout(150);
+     touch={startScroll,endScroll:await page.evaluate(()=>scrollY),input:"Chromium CDP touch start/move/end over actual enhanced control"};
+     await client.send("Emulation.setTouchEmulationEnabled",{enabled:false});
+    }
+   }
+  }
   const sample=await page.evaluate(()=>{
    clearInterval(window.pollTimer);measure.active=false;sampleObserver.disconnect();window.taskObserver?.disconnect();
    const m=measure,a=m.frames.slice().sort((a,b)=>a-b);
    return {duration:performance.now()-m.start,mutations:m.mutations,updates:m.updates,longTasks:m.longTasks,raf:{count:a.length,p50:a[Math.floor(a.length*.5)],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],max:Math.max(0,...a),over20:a.filter(x=>x>20).length,over34:a.filter(x=>x>34).length,raw:m.frames},surfacePasses:MaterialSurfaces.count()-m.surfaces,instancesBefore:m.instances,instancesAfter:MaterialFeedback.counts(),waitInstances:MaterialWait.activeCount(),scrollTop:scrollY,clicks:fixtureClicks,overflow:document.documentElement.scrollWidth>innerWidth};
   });
-  assert.equal(sample.clicks,0);assert.equal(sample.overflow,false);
+  sample.touch=touch;assert.equal(sample.clicks,0);assert.equal(sample.overflow,false);
   const id=[engine,repeat,revision,design,theme,cards,width,kind,state].join("-");
   if(client){
    const done=new Promise(resolve=>client.once("Tracing.tracingComplete",resolve));await client.send("Tracing.end");const {stream}=await done;

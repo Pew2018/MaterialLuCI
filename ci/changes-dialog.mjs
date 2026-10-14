@@ -48,7 +48,7 @@ try{
   assert.equal(geometry.token,"transparent");assert.equal(geometry.border,"0px");assert.equal(geometry.shadow,"none");
   assert.ok(geometry.height>=48&&geometry.centerError<3,JSON.stringify(geometry));
   await secondary.hover();await page.screenshot({path:"dist/ui-refinement/changes-dialog/hover-"+design+"-"+theme+"-"+width+"-"+count+".png"});
-  await page.mouse.down();await page.screenshot({path:"dist/ui-refinement/changes-dialog/pressed-"+design+"-"+theme+"-"+width+"-"+count+".png"});await page.mouse.move(0,0);await page.mouse.up();
+  await page.mouse.down();await page.screenshot({path:"dist/ui-refinement/changes-dialog/pressed-"+design+"-"+theme+"-"+width+"-"+count+".png"});await page.mouse.move(0,0);await page.mouse.up();await page.waitForTimeout(350);
   const layout=await page.evaluate(()=>{const p=document.querySelector(".modal"),title=p.querySelector(":scope > h4"),a=p.querySelector(".right,.button-row"),apply=a.querySelector("button.cbi-button-positive.important");return {w:p.getBoundingClientRect().width,h:p.getBoundingClientRect().height,vw:innerWidth,vh:innerHeight,ch:p.clientHeight,sh:p.scrollHeight,overflowX:p.scrollWidth>p.clientWidth,order:[...a.children].map(n=>n.dataset.action||n.className),font:getComputedStyle(title).fontSize,applyParent:apply.parentElement.className};});
   assert.equal(await page.evaluate(()=>{
    const p=document.querySelector(".modal"),h=p.querySelector(":scope > h4"),a=p.querySelector(".right,.button-row");
