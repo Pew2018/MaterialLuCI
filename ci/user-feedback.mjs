@@ -144,6 +144,7 @@ try{for(const [engine,type] of [["chromium",chromium],["webkit",webkit]]){
    },{theme,count});
    await page.waitForFunction(()=>document.querySelector(".ml-changes-dialog .button-row").lastElementChild.classList.contains("cbi-dropdown"));
    const combo=page.locator(".ml-changes-dialog .button-row>.cbi-dropdown");
+   assert.equal(await page.evaluate(()=>comboChildren.every((n,i)=>nativeCombo.node.childNodes[i]===n)),true,"theme enhancement preserves native child indices");
    await combo.scrollIntoViewIfNeeded();
    await combo.locator(":scope > .open").click();
    await page.waitForFunction(()=>document.querySelector(".ml-action-menu.mdc-menu-surface--open"));
@@ -158,7 +159,9 @@ try{for(const [engine,type] of [["chromium",chromium],["webkit",webkit]]){
    assert.deepEqual(await page.evaluate(()=>comboCalls),["1"]);
    await page.locator(".ml-changes-dialog .button-row>.cbi-button-reset").click();
    assert.equal(await page.evaluate(()=>comboUndo),1);
-   assert.equal(await page.evaluate(()=>comboChildren.every((n,i)=>nativeCombo.node.childNodes[i]===n)),true,"native child index contract is preserved");
+   // Native toggleItem deliberately rebuilds preview/hidden values. Verify the
+   // stable native arrow rather than forbidding LuCI\'s own DOM update.
+   assert.equal(await combo.locator(":scope > .open").count(),1);
    await page.locator(".ml-changes-dialog .button-row>button").first().click();
    await page.waitForFunction(()=>!document.body.classList.contains("modal-overlay-active"));
    assert.equal(await page.locator(".ml-changes-dialog").count(),0);
