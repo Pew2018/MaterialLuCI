@@ -5,6 +5,15 @@
  sidebar=document.getElementById("ml-sidebar"),toolbar=document.querySelector(".ml-toolbar"),
  menuButton=document.getElementById("ml-menu-button"),scrim=document.getElementById("ml-drawer-scrim");
  if(!main||!appearance)return;
+ const themeColorMeta=document.querySelector('meta[name="theme-color"]');
+ function syncBrowserChromeColor(){
+  if(!themeColorMeta||!toolbar)return;
+  const color=getComputedStyle(toolbar).backgroundColor;
+  if(color&&color!=="rgba(0, 0, 0, 0)"&&themeColorMeta.content!==color)themeColorMeta.content=color;
+ }
+ syncBrowserChromeColor();
+ const themeColorObserver=new MutationObserver(syncBrowserChromeColor);
+ themeColorObserver.observe(document.documentElement,{attributes:true,attributeFilter:["data-theme","data-toolbar","style"]});
  function identifyPage(){
   const parts=route=>Array.isArray(route)?route.filter(Boolean):typeof route==="string"?route.split(/[\\/-]+/).filter(Boolean):[];
   const routes=[document.body.dataset.page,window.L?.env?.dispatchpath,window.L?.env?.requestpath,location.pathname];
