@@ -1117,3 +1117,9 @@ body #modal_overlay .ml-changes-dialog :is(.right,.button-row)>.cbi-dropdown.btn
  body.modal-overlay-active #modal_overlay.ml-changes-overlay{padding:8px;align-items:flex-start}
  body.modal-overlay-active #modal_overlay>.modal.uci-dialog.ml-changes-dialog:not(.alert-message){max-height:calc(var(--ml-vv-height) - 16px)}
 }
+
+/* Mobile drawer header follows the compact Material icon-button pattern.
+ * Keep a 48dp hit target around the 24dp close glyph. */
+.ml-sidebar-heading #ml-drawer-close{display:none;flex:none;width:48px;height:48px;min-width:48px;min-height:48px;margin:0;padding:12px;border:0;border-radius:50%;background:transparent;color:var(--muted);box-shadow:none}
+.ml-sidebar-heading #ml-drawer-close svg{display:block;width:24px;height:24px;fill:currentColor}
+@media(max-width:1023px){.ml-sidebar-heading #ml-drawer-close{display:inline-flex}}
