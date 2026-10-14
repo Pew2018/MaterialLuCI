@@ -18,6 +18,7 @@ try{for(const design of ["classic","m3e"])for(const theme of ["light","dark"])fo
  const id=[engine,design,theme,width,revision].join("-");
  const buttons=await page.locator("#modal_overlay .right > .btn").evaluateAll(ns=>ns.map(n=>{const r=n.getBoundingClientRect();return {text:n.textContent.trim(),height:r.height,width:r.width};}));
  assert.equal(buttons.length,2);
+ if(revision==="after"){const label=await page.locator("#autoremove-cb").evaluate(n=>{const r=n.parentElement.getBoundingClientRect();return {width:r.width,height:r.height};});assert.ok(label.width>200&&label.height<80,"native description must wrap as readable lines: "+JSON.stringify(label));}
  const checkbox=page.locator("#autoremove-cb");
  await checkbox.evaluate(n=>{window.changeCount=0;window.inputIdentity=n;window.nativeSibling=n.nextSibling;n.addEventListener("change",()=>changeCount++);});
  const action=design==="m3e"?page.locator("#modal_overlay md-checkbox"):checkbox;
