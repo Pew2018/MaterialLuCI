@@ -604,11 +604,6 @@ body.modal-overlay-active #modal_overlay>.modal.cbi-modal:not(.alert-message),
 body.modal-overlay-active #modal_overlay>.modal:has(.cbi-map):not(.alert-message){width:min(600px,100%);min-height:0;height:auto}
 body.modal-overlay-active #modal_overlay>.modal.uci-dialog:not(.alert-message){width:min(720px,100%);min-height:0;height:auto}
 body.modal-overlay-active #modal_overlay>.modal:has([data-tab-title]):not(.alert-message){width:min(760px,100%);min-height:min(420px,calc(var(--ml-vv-height) - 48px));height:auto}
-#modal_overlay .uci-dialog>.cbi-section>.right{align-items:center;padding:12px 0 0}
-#modal_overlay .uci-dialog>.cbi-section>.right>button{margin:0;min-height:48px;line-height:20px}
-#modal_overlay .uci-dialog>.cbi-section>.right>button.btn:not(.cbi-button){--button-bg:transparent;--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed);--button-ink:var(--accent-ink);background:transparent;color:var(--accent-ink)}
-#modal_overlay .uci-dialog>.cbi-section>.right>button.cbi-button-positive.important{--button-bg:var(--action-fill);--button-ink:var(--on-accent);background:var(--action-fill);color:var(--on-accent)}
-#modal_overlay .uci-dialog>.cbi-section>.right>button.cbi-button-reset{--button-bg:var(--action-tonal);--button-ink:var(--on-action-tonal);background:var(--action-tonal);color:var(--on-action-tonal)}
 
 @media(max-width:599px){
  body #modal_overlay>.modal.mdc-dialog__container{width:100%;max-width:480px}
@@ -1058,55 +1053,61 @@ body .ml-switch-hit .mdc-switch:focus-visible{outline:2px solid var(--control-ac
    grid headings. Override the UA dotted underline only on this native route. */
 body #maincontent[data-ml-page=leds] abbr[title]{text-decoration:none}
 
-/* Scoped UCI change review layout, identified from LuCI's actual change-list DOM. */
-body.modal-overlay-active #modal_overlay.ml-changes-overlay{padding:24px}
-body.modal-overlay-active #modal_overlay>.modal.ml-changes-dialog{--ml-changes-surface:var(--raised-surface,var(--surface));box-sizing:border-box;width:min(560px,100%);min-width:0;max-width:100%;max-height:calc(var(--ml-vv-height) - 48px);overflow-x:hidden;overflow-y:auto;padding:20px 24px 12px;background:var(--ml-changes-surface,var(--surface));color:var(--ink)}
-#modal_overlay .ml-changes-dialog>.cbi-section{min-width:0;margin:0;padding:0}
+/* Configuration review only: shared geometry, semantic action tokens.
+   Native contents and action nodes remain in LuCI's original hierarchy. */
+body.modal-overlay-active #modal_overlay.ml-changes-overlay{padding:16px}
+body.modal-overlay-active #modal_overlay>.modal.uci-dialog.ml-changes-dialog:not(.alert-message){
+ --ml-changes-surface:var(--raised-surface,var(--surface));
+ width:min(560px,calc(var(--ml-vv-width,100vw) - 32px));max-width:min(560px,calc(var(--ml-vv-width,100vw) - 32px));
+ min-width:0;min-height:0;height:auto;max-height:calc(var(--ml-vv-height,100vh) - 32px);
+ padding:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;background:var(--ml-changes-surface);color:var(--ink)
+}
+body #modal_overlay .ml-changes-dialog>:is(h3,h4){
+ position:sticky;top:0;z-index:3;margin:0;padding:20px 24px 16px;box-sizing:border-box;
+ font:500 20px/28px Roboto,"Noto Sans",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
+ color:var(--ink);background:var(--ml-changes-surface);letter-spacing:normal
+}
+#modal_overlay .ml-changes-dialog>.cbi-section{min-width:0;margin:0;padding:0 24px 16px}
 #modal_overlay .ml-changes-dialog>.cbi-section>strong{display:block;margin:0 0 6px;color:var(--muted);font-size:12px;font-weight:500;line-height:18px}
 #modal_overlay .ml-changes-dialog>.cbi-section>br{display:none}
 #modal_overlay .ml-changes-dialog .uci-change-legend{margin:0}
 #modal_overlay .ml-changes-dialog .uci-change-list{margin:16px 0 0}
 #modal_overlay .ml-changes-dialog .uci-change-list h5:first-child{margin-top:0}
-#modal_overlay .ml-changes-dialog .button-row,#modal_overlay .ml-changes-dialog>.cbi-section>.right{position:sticky;bottom:-12px;z-index:4;box-sizing:border-box;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;overflow:visible;margin:16px -24px -12px;padding:12px 24px 0;border-top:0;background:var(--ml-changes-surface,var(--surface))}
-#modal_overlay .ml-changes-dialog .button-row>button,#modal_overlay .ml-changes-dialog .right>button{flex:0 0 auto;min-height:48px;line-height:20px;margin:0}
-#modal_overlay .ml-changes-dialog .button-row>button:not(.cbi-button-positive):not(.cbi-button-reset),#modal_overlay .ml-changes-dialog .right>button:not(.cbi-button-positive):not(.cbi-button-reset),#modal_overlay .ml-changes-dialog .button-row .cbi-button-reset,#modal_overlay .ml-changes-dialog .right .cbi-button-reset{background:transparent;color:var(--accent-ink);box-shadow:none}
-#modal_overlay .ml-changes-dialog .button-row .cbi-button-positive.important,#modal_overlay .ml-changes-dialog .right .cbi-button-positive.important{background:var(--action-fill);color:var(--on-accent);box-shadow:none}
-#modal_overlay .ml-changes-dialog .button-row .cbi-combo-button{display:inline-flex;align-items:stretch;position:relative;overflow:visible;z-index:5}
-#modal_overlay .ml-changes-dialog .button-row .cbi-combo-button .dropdown{z-index:6}
-#modal_overlay .ml-changes-dialog .button-row :is(button,a):focus-visible,#modal_overlay .ml-changes-dialog .right :is(button,a):focus-visible{outline:2px solid var(--control-strong);outline-offset:2px}
-@media(max-width:599px){body.modal-overlay-active #modal_overlay.ml-changes-overlay{padding:16px}body.modal-overlay-active #modal_overlay>.modal.ml-changes-dialog{width:100%;max-width:100%;padding:16px 18px 12px;max-height:calc(var(--ml-vv-height) - 32px)}#modal_overlay .ml-changes-dialog .button-row,#modal_overlay .ml-changes-dialog>.cbi-section>.right{margin:16px -18px -12px;padding:12px 18px 0}}
-@media(max-height:480px){body.modal-overlay-active #modal_overlay.ml-changes-overlay{padding:8px;align-items:flex-start}body.modal-overlay-active #modal_overlay>.modal.ml-changes-dialog{max-height:calc(var(--ml-vv-height) - 16px)}}
-
-/* Change review uses a compact surface with a bounded, scrollable body. */
-body.modal-overlay-active #modal_overlay>.modal.uci-dialog.ml-changes-dialog:not(.alert-message){
- width:min(560px,calc(var(--ml-vv-width,100vw) - 32px));max-width:min(560px,calc(var(--ml-vv-width,100vw) - 32px));
- min-height:0;height:auto;padding:0;max-height:calc(var(--ml-vv-height,100vh) - 32px);overflow-y:auto;overscroll-behavior:contain
-}
-body #modal_overlay .ml-changes-dialog>:is(h3,h4){
- position:sticky;top:0;z-index:3;margin:0;padding:20px 24px 16px;
- box-sizing:border-box;font:500 20px/28px Roboto,"Noto Sans",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
- color:var(--ink);background:var(--ml-changes-surface,var(--raised-surface));letter-spacing:normal
-}
-body #modal_overlay .ml-changes-dialog>.cbi-section{padding:0 24px 20px;min-width:0}
 body #modal_overlay .ml-changes-dialog :is(.right,.button-row){
- position:sticky;bottom:0;z-index:2;display:flex;align-items:center;justify-content:flex-end;
- flex-wrap:wrap;gap:8px;margin:16px 0 0;padding:8px 0 0;background:var(--ml-changes-surface,var(--raised-surface))
+ position:sticky;bottom:-16px;z-index:4;box-sizing:border-box;display:flex;flex-wrap:wrap;
+ align-items:center;justify-content:flex-end;gap:8px;overflow:visible;
+ margin:16px -24px -16px;padding:8px 24px 16px;border:0;background:var(--ml-changes-surface)
 }
 body #modal_overlay .ml-changes-dialog :is(.right,.button-row)>button,
-body #modal_overlay .ml-changes-dialog .cbi-combo-button>button{min-height:48px;line-height:20px}
-body #modal_overlay .ml-changes-dialog :is(.right,.button-row)>button:not(.cbi-button-positive.important){font-size:14px}
-body #modal_overlay .ml-changes-dialog .cbi-combo-button{display:inline-flex;align-items:stretch;flex-wrap:nowrap}
-@media(max-width:599px){
- body.modal-overlay-active #modal_overlay>.modal.uci-dialog.ml-changes-dialog:not(.alert-message){
-  width:min(560px,calc(var(--ml-vv-width,100vw) - 32px));max-width:min(560px,calc(var(--ml-vv-width,100vw) - 32px))
- }
- body #modal_overlay .ml-changes-dialog>.cbi-section{padding-left:24px;padding-right:24px}
+body #modal_overlay .ml-changes-dialog .cbi-combo-button>button{
+ display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+ min-width:0;min-height:48px;height:auto;line-height:20px;padding:0 12px;margin:0;
+ font-size:14px;white-space:normal;text-align:center;border:0;border-radius:var(--ml-action-radius);box-shadow:none
 }
-
-/* Native UIComboButton is a cbi-dropdown div, not a wrapper of buttons. */
+/* Close/revert have no static fill. Both CSS states and official ripple use ink. */
+body #modal_overlay .ml-changes-dialog :is(.right,.button-row)>button:not(.cbi-button-positive.important){
+ --button-bg:transparent;--button-hover-bg:var(--hover);--button-pressed-bg:var(--pressed);
+ --button-ink:var(--accent-ink);--mdc-ripple-color:var(--accent-ink);
+ background:var(--button-bg);color:var(--button-ink)
+}
+body #modal_overlay .ml-changes-dialog :is(.right,.button-row)>.cbi-button-positive.important,
+body #modal_overlay .ml-changes-dialog .cbi-combo-button>.cbi-button-positive.important{
+ --button-bg:var(--action-fill);--button-hover-bg:var(--action-pressed);--button-pressed-bg:var(--action-pressed);
+ --button-ink:var(--on-accent);--mdc-ripple-color:var(--on-accent);
+ background:var(--button-bg);color:var(--button-ink);box-shadow:none
+}
+@media(hover:hover){body #modal_overlay .ml-changes-dialog :is(.right,.button-row)>button:not(:disabled):hover{background:var(--button-hover-bg)}}
+body #modal_overlay .ml-changes-dialog :is(.right,.button-row)>button:not(:disabled):active{background:var(--button-pressed-bg)}
+body #modal_overlay .ml-changes-dialog :is(.right,.button-row)>button:disabled{
+ --button-ink:var(--disabled);--mdc-ripple-color:var(--disabled);color:var(--disabled);
+ background:var(--button-bg);box-shadow:none
+}
+body #modal_overlay .ml-changes-dialog :is(.right,.button-row) :is(button,a,[tabindex]):focus-visible{outline:2px solid var(--control-strong);outline-offset:-2px}
+body #modal_overlay .ml-changes-dialog .cbi-combo-button{display:inline-flex;align-items:stretch;flex-wrap:nowrap;position:relative;overflow:visible}
 body #modal_overlay .ml-changes-dialog :is(.right,.button-row)>.cbi-dropdown.btn{
- min-height:48px;max-width:100%;margin:0;box-shadow:none
+ min-height:48px;max-width:100%;margin:0;box-shadow:none;flex:0 0 auto
 }
-body #modal_overlay .ml-changes-dialog :is(.right,.button-row)>.cbi-dropdown.cbi-button-positive.important{
- background:var(--action-fill);color:var(--on-accent)
+@media(max-height:480px){
+ body.modal-overlay-active #modal_overlay.ml-changes-overlay{padding:8px;align-items:flex-start}
+ body.modal-overlay-active #modal_overlay>.modal.uci-dialog.ml-changes-dialog:not(.alert-message){max-height:calc(var(--ml-vv-height) - 16px)}
 }

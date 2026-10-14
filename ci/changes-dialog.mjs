@@ -28,7 +28,7 @@ try{
    const root=document.documentElement;root.dataset.design=design;root.dataset.theme=theme;root.dataset.cards="true";
    for(const [k,v] of Object.entries({"--ml-vv-top":"0px","--ml-vv-left":"0px","--ml-vv-width":"100vw","--ml-vv-height":"100dvh"}))root.style.setProperty(k,v);
    window.MaterialAppearance={activeDesign:design};
-   const dark=theme==="dark",m3=design==="m3e"?MaterialM3Palette.generate("#42A5F5",dark):null,p=m3?m3.legacy:MaterialPalette.generate("#42A5F5",dark);
+   const dark=theme==="dark",m3=design==="m3e"?MaterialM3Palette.generate("#009688",dark):null,p=m3?m3.legacy:MaterialPalette.generate("#009688",dark);
    if(m3){for(const [k,v] of Object.entries(m3.system))root.style.setProperty("--md-sys-color-"+k.replace(/[A-Z]/g,c=>"-"+c.toLowerCase()),v);for(const [k,v] of Object.entries(m3.surfaces))root.style.setProperty("--"+k,v);}
    const map={accentInk:"accent-ink",controlAccent:"control-accent",controlStrong:"control-strong",actionPrimary:"action-fill",onActionPrimary:"on-accent",actionPrimaryPressed:"action-pressed",actionSecondary:"action-tonal",onActionSecondary:"on-action-tonal",actionSecondaryPressed:"tonal-pressed"};
    for(const [k,v] of Object.entries(map))root.style.setProperty("--"+v,p[k]);
@@ -38,6 +38,17 @@ try{
   for(const file of ["material-web.js","mdc-linear-progress.js","mdc-controls.js","runtime.js","components.js","surfaces.js","feedback.js","wait.js","controls.js"])await page.addScriptTag({path:base+file});
   await page.evaluate(()=>MaterialRuntime.start(document.body));
   await page.waitForFunction(()=>document.querySelector(".modal")?.classList.contains("ml-changes-dialog"));
+  const secondary=page.locator('[data-action="undo"]');
+  const geometry=await secondary.evaluate(n=>{
+   const s=getComputedStyle(n),r=n.getBoundingClientRect(),label=n.querySelector(".mdc-button__label")||n;
+   const range=document.createRange();range.selectNodeContents(label);const l=range.getBoundingClientRect();
+   return {bg:s.backgroundColor,border:s.borderTopWidth,shadow:s.boxShadow,token:s.getPropertyValue("--button-bg").trim(),height:r.height,centerError:Math.abs((l.top+l.bottom-r.top-r.bottom)/2)};
+  });
+  assert.equal(geometry.bg,"rgba(0, 0, 0, 0)",JSON.stringify(geometry));
+  assert.equal(geometry.token,"transparent");assert.equal(geometry.border,"0px");assert.equal(geometry.shadow,"none");
+  assert.ok(geometry.height>=48&&geometry.centerError<3,JSON.stringify(geometry));
+  await secondary.hover();await page.screenshot({path:"dist/ui-refinement/changes-dialog/hover-"+design+"-"+theme+"-"+width+"-"+count+".png"});
+  await page.mouse.down();await page.screenshot({path:"dist/ui-refinement/changes-dialog/pressed-"+design+"-"+theme+"-"+width+"-"+count+".png"});await page.mouse.move(0,0);await page.mouse.up();
   const layout=await page.evaluate(()=>{const p=document.querySelector(".modal"),title=p.querySelector(":scope > h4"),a=p.querySelector(".right,.button-row"),apply=a.querySelector("button.cbi-button-positive.important");return {w:p.getBoundingClientRect().width,h:p.getBoundingClientRect().height,vw:innerWidth,vh:innerHeight,ch:p.clientHeight,sh:p.scrollHeight,overflowX:p.scrollWidth>p.clientWidth,order:[...a.children].map(n=>n.dataset.action||n.className),font:getComputedStyle(title).fontSize,applyParent:apply.parentElement.className};});
   assert.equal(await page.evaluate(()=>{
    const p=document.querySelector(".modal"),h=p.querySelector(":scope > h4"),a=p.querySelector(".right,.button-row");

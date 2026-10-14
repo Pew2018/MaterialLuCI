@@ -1,66 +1,103 @@
-import {chromium} from "playwright";
+import {chromium,webkit} from "playwright";
 import {spawn,execFileSync} from "node:child_process";
 import fs from "node:fs";
-const server=spawn("python3",["ci/server.py"],{stdio:"inherit"});
-const origin="http://127.0.0.1:8765",base="build/stage/www/luci-static/materialluci/",baseline="ce53d2bcaea919f32c1465df82429740b9e18d1a";
-fs.mkdirSync("dist/ui-refinement",{recursive:true});
+import assert from "node:assert/strict";
+const baseline="1281eafc00f3656da591200c2d6eddde6dfa2a8b";
+const server=spawn("python3",["ci/server.py"],{stdio:"inherit"}),origin="http://127.0.0.1:8765";
+const out="dist/ui-refinement/scroll-v2";fs.mkdirSync(out,{recursive:true});
 for(let i=0;i<100;i++){try{await fetch(origin);break;}catch{await new Promise(r=>setTimeout(r,50));}}
-const browser=await chromium.launch(),results=[];
-try{
- for(const revision of ["before","after"])for(const design of ["classic","m3e"])for(const theme of ["light","dark"])for(const cards of ["true","false"]){
-  const page=await browser.newPage({viewport:{width:390,height:844}});
-  // Match scripts/build.py: inline base.css into cascade.css and minify JS
-  // for BOTH revisions. A raw cascade override leaves @import base.css missing
-  // from the packed fixture and makes style/paint comparisons invalid.
-  const source=file=>revision==="before"
-   ?execFileSync("git",["show",baseline+":theme/root/www/luci-static/materialluci/"+file],{encoding:"utf8"})
-   :fs.readFileSync("theme/root/www/luci-static/materialluci/"+file,"utf8");
+const results=[],sourceCache=new Map();
+function source(revision,file){
+ const key=revision+file;if(sourceCache.has(key))return sourceCache.get(key);
+ const read=f=>revision==="before"?execFileSync("git",["show",baseline+":theme/root/www/luci-static/materialluci/"+f],{encoding:"utf8"}):fs.readFileSync("theme/root/www/luci-static/materialluci/"+f,"utf8");
+ let body=read(file);if(file==="cascade.css")body=read("base.css")+body.replace('@import url("base.css");',"");
+ if(file.endsWith(".js"))body=execFileSync("node_modules/.bin/esbuild",["--minify","--target=es2020","--loader=js"],{input:body,encoding:"utf8"});
+ sourceCache.set(key,body);return body;
+}
+const configs=[];
+for(const design of ["classic","m3e"])for(const theme of ["light","dark"])for(const cards of ["true","false"])for(const width of [390,1280])configs.push({design,theme,cards,width});
+const scenarios=configs.flatMap(c=>["system","leases","chart"].map(kind=>({...c,kind,state:"idle"})));
+for(const design of ["classic","m3e"])for(const kind of ["system","leases","chart"])for(const state of ["loading","polling"])scenarios.push({design,theme:"light",cards:"true",width:390,kind,state});
+try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]]){
+ const browser=await type.launch();
+ try{for(let repeat=0;repeat<2;repeat++)for(const config of scenarios)for(const revision of repeat?["after","before"]:["before","after"]){
+  const {design,theme,cards,width,kind,state}=config;
+  const page=await browser.newPage({viewport:{width,height:844}});
   for(const file of ["runtime.js","surfaces.js","feedback.js","controls.js","app.js","cascade.css","design-m3.css"]){
-   let content=source(file);
-   if(file==="cascade.css")content=source("base.css")+content.replace('@import url("base.css");',"");
-   if(file.endsWith(".js"))content=execFileSync("node_modules/.bin/esbuild",["--minify","--target=es2020","--loader=js"],{input:content,encoding:"utf8"});
-   await page.route("**/luci-static/materialluci/"+file+"?**",route=>route.fulfill({body:content,contentType:file.endsWith(".css")?"text/css":"text/javascript"}));
+   await page.route("**/luci-static/materialluci/"+file+"?**",route=>route.fulfill({body:source(revision,file),contentType:file.endsWith(".css")?"text/css":"text/javascript"}));
   }
-  await page.addInitScript(({design,theme,cards})=>{localStorage.setItem("materialluci-design",design);localStorage.setItem("materialluci-mode",theme);localStorage.setItem("materialluci-cards",cards);},{design,theme,cards});
-  await page.goto(origin+"/upstream.html");await page.waitForSelector("#ml-appearance-entry");
-  await page.evaluate(()=>{
-   // Large lease/firewall-style table + real controls; no router RPC.
-   const table=document.createElement("table");table.className="table";table.id="polling";
-   table.innerHTML="<tr><th>Host</th><th>Address</th><th>Expires</th><th>Action</th></tr>";
-   for(let i=0;i<400;i++){const r=table.insertRow();r.innerHTML='<td>host-'+i+'</td><td>192.0.2.'+(i%255)+'</td><td class="clock">12h</td><td><button type="button" class="cbi-button">Edit</button></td>';}
-   const section=document.createElement("section");section.className="cbi-section";section.append(table);
-   document.getElementById("view").replaceChildren(section);MaterialSurfaces.prepare();
-  });
-  await page.waitForTimeout(1500);
-  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-  const client=await page.context().newCDPSession(page);
-  await client.send("Tracing.start",{categories:"devtools.timeline,v8,blink.user_timing",transferMode:"ReturnAsStream"});
-  const sample=await page.evaluate(async()=>{
-   const before=MaterialSurfaces.count(),instances=MaterialFeedback.counts(),long=[],frames=[];
-   const observer=new PerformanceObserver(list=>long.push(...list.getEntries().map(e=>({start:e.startTime,duration:e.duration}))));
-   observer.observe({type:"longtask",buffered:false});
-   let active=true,last=performance.now(),start=last,updates=0;
-   const frame=t=>{frames.push(t-last);last=t;if(active)requestAnimationFrame(frame);};requestAnimationFrame(frame);
-   const timer=setInterval(()=>{
-    updates++;
-    // LuCI polling replaces element content, not only textContent.
-    for(const cell of document.querySelectorAll("#polling .clock")){
-     const span=document.createElement("span");span.textContent=updates+"h";cell.replaceChildren(span);
-    }
+  await page.addInitScript(c=>{localStorage.setItem("materialluci-design",c.design);localStorage.setItem("materialluci-mode",c.theme);localStorage.setItem("materialluci-cards",c.cards);},config);
+  const client=engine==="chromium"?await page.context().newCDPSession(page):null;
+  if(client)await client.send("Tracing.start",{categories:"toplevel,devtools.timeline,disabled-by-default-devtools.timeline,disabled-by-default-devtools.timeline.frame,disabled-by-default-devtools.timeline.stack,blink.user_timing,cc,gpu,v8",transferMode:"ReturnAsStream"});
+  await page.goto(origin+(kind==="system"?"/system.html":"/upstream.html"));
+  await page.waitForSelector("#ml-appearance-entry");
+  if(kind==="system"){
+   await page.waitForSelector(".cbi-tabmenu");
+   // Actual pinned system view's NTP controls; extra rows use real LuCI Value/Flag,
+   // because a normal four-server NTP form does not fill a long desktop page.
+   await page.evaluate(async()=>{
+    const form=await L.require("form");
+    const data={ntp:{enabled:"1",server:"0.pool.ntp.org"}};
+    for(let i=0;i<40;i++)data.ntp["server"+i]=""+i+".pool.ntp.org";
+    const m=new form.JSONMap(data,"NTP long form"),s=m.section(form.NamedSection,"ntp","ntp","Time synchronization");
+    s.option(form.Flag,"enabled","Enable NTP");
+    for(let i=0;i<40;i++)s.option(form.Value,"server"+i,"NTP server "+i);
+    view.append(await m.render());
+   });
+  }else await page.evaluate(async kind=>{
+   const form=await L.require("form"),m=new form.JSONMap({settings:{enabled:"1"}},kind==="leases"?"DHCP leases":"Realtime status");
+   const s=m.section(form.NamedSection,"settings","settings","Status");s.option(form.Flag,"enabled","Enabled");
+   const opt=s.option(form.DummyValue,"status","Status");
+   opt.renderWidget=()=>{
+    const host=E("div");
+    if(kind==="leases"){
+     const table=E("table",{class:"table",id:"lease_status_table"},[E("tr",[E("th","Host"),E("th","Address"),E("th","Expires"),E("th","Action")])]);
+     for(let i=0;i<120;i++)table.append(E("tr",[E("td","host-"+i),E("td","192.0.2."+i),E("td",{class:"clock"},"12h"),E("td",[E("button",{class:"cbi-button",type:"button"},"Edit")])]));
+     host.append(table);
+    }else{
+     // Representative SVG graph structure, not a claim to reproduce collectd RPC.
+     for(let i=0;i<16;i++){const div=E("div");div.innerHTML='<svg viewBox="0 0 600 160"><line x1="0" y1="150" x2="600" y2="150" stroke="gray"/><text x="5" y="20">Traffic</text><polyline points="0,140 120,90 200,120 300,40 400,80 600,20" fill="none" stroke="teal"/></svg>';host.append(div);}
+    }return host;
+   };view.replaceChildren(await m.render());
+  },kind);
+  if(state!=="loading")await page.waitForTimeout(700);
+  await page.evaluate(state=>{
+   window.measure={frames:[],mutations:0,updates:0,longTasks:[],start:performance.now(),last:performance.now(),active:true,surfaces:MaterialSurfaces.count(),instances:MaterialFeedback.counts()};
+   const m=measure;window.sampleObserver=new MutationObserver(rs=>m.mutations+=rs.length);sampleObserver.observe(view,{subtree:true,childList:true});
+   if(PerformanceObserver.supportedEntryTypes.includes("longtask")){window.taskObserver=new PerformanceObserver(l=>m.longTasks.push(...l.getEntries().map(e=>({start:e.startTime,duration:e.duration}))));taskObserver.observe({type:"longtask"});}
+   const frame=t=>{m.frames.push(t-m.last);m.last=t;if(m.active)requestAnimationFrame(frame);};requestAnimationFrame(frame);
+   window.fixtureClicks=0;view.addEventListener("click",()=>fixtureClicks++);
+   if(state==="polling")window.pollTimer=setInterval(()=>{
+    m.updates++;for(const n of document.querySelectorAll(".clock"))n.replaceChildren(E("span",m.updates+"h"));
+    for(const n of document.querySelectorAll("svg polyline"))n.setAttribute("points","0,140 120,"+(m.updates%80)+" 200,120 300,40 400,80 600,20");
    },150);
-   for(let i=0;i<40;i++){window.scrollBy(0,i<20?220:-220);await new Promise(r=>setTimeout(r,40));}
-   clearInterval(timer);await new Promise(r=>setTimeout(r,300));active=false;observer.disconnect();
-   const sorted=frames.slice().sort((a,b)=>a-b);
-   return {duration:performance.now()-start,updates,surfacePasses:MaterialSurfaces.count()-before,instancesBefore:instances,instancesAfter:MaterialFeedback.counts(),waitInstances:MaterialWait.activeCount(),longTasks:long,frameCount:frames.length,frameP95:sorted[Math.floor(sorted.length*.95)],framesOver34:frames.filter(t=>t>34).length,scope:"Headless Chromium CI synthetic scrolling/polling fixture; not device FPS"};
+  },state);
+  await page.mouse.move(width-80,400);
+  for(let i=0;i<24;i++){await page.mouse.wheel(0,i<12?140:-140);await page.waitForTimeout(40);}
+  await page.waitForTimeout(120);
+  const sample=await page.evaluate(()=>{
+   clearInterval(window.pollTimer);measure.active=false;sampleObserver.disconnect();window.taskObserver?.disconnect();
+   const m=measure,a=m.frames.slice().sort((a,b)=>a-b);
+   return {duration:performance.now()-m.start,mutations:m.mutations,updates:m.updates,longTasks:m.longTasks,raf:{count:a.length,p50:a[Math.floor(a.length*.5)],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],max:Math.max(0,...a),over20:a.filter(x=>x>20).length,over34:a.filter(x=>x>34).length,raw:m.frames},surfacePasses:MaterialSurfaces.count()-m.surfaces,instancesBefore:m.instances,instancesAfter:MaterialFeedback.counts(),waitInstances:MaterialWait.activeCount(),scrollTop:scrollY,clicks:fixtureClicks,overflow:document.documentElement.scrollWidth>innerWidth};
   });
-  const complete=new Promise(resolve=>client.once("Tracing.tracingComplete",resolve));await client.send("Tracing.end");const {stream}=await complete;
-  let trace="";while(true){const part=await client.send("IO.read",{handle:stream});trace+=part.data;if(part.eof)break;}await client.send("IO.close",{handle:stream});
-  fs.writeFileSync("dist/ui-refinement/scroll-"+revision+"-"+design+"-"+theme+"-"+cards+"-trace.json",trace);
-  const events=JSON.parse(trace).traceEvents.filter(e=>e.ph==="X");
-  const totals={};for(const name of ["Layout","UpdateLayoutTree","Paint","RasterTask","FunctionCall","RunTask"]){const selected=events.filter(e=>e.name===name);totals[name]={count:selected.length,totalMs:selected.reduce((sum,e)=>sum+(e.dur||0)/1000,0),maxMs:Math.max(0,...selected.map(e=>(e.dur||0)/1000))};}
-  const stacks=events.filter(e=>e.name==="FunctionCall").sort((a,b)=>(b.dur||0)-(a.dur||0)).slice(0,10).map(e=>({durationMs:(e.dur||0)/1000,...e.args?.data}));
-  results.push({revision,design,theme,cards,browser:browser.version(),baseline,...sample,costs:totals,heaviestFunctions:stacks});
+  assert.equal(sample.clicks,0);assert.equal(sample.overflow,false);
+  const id=[engine,repeat,revision,design,theme,cards,width,kind,state].join("-");
+  if(client){
+   const done=new Promise(resolve=>client.once("Tracing.tracingComplete",resolve));await client.send("Tracing.end");const {stream}=await done;
+   let trace="";while(true){const part=await client.send("IO.read",{handle:stream});trace+=part.data;if(part.eof)break;}await client.send("IO.close",{handle:stream});
+   // Retain all raw paired traces, including thread metadata.
+   fs.writeFileSync(out+"/"+id+".json",trace);
+   const events=JSON.parse(trace).traceEvents,complete=events.filter(e=>e.ph==="X"),costs={};
+   for(const name of ["Layout","UpdateLayoutTree","Paint","RasterTask","FunctionCall","RunTask","ThreadControllerImpl::RunTask","CompositeLayers","DrawFrame"]){
+    const selected=complete.filter(e=>e.name===name);
+    costs[name]={count:selected.length,totalMs:selected.reduce((s,e)=>s+(e.dur||0)/1000,0),maxMs:Math.max(0,...selected.map(e=>(e.dur||0)/1000)),threads:[...new Set(selected.map(e=>e.pid+":"+e.tid))]};
+   }
+   sample.costs=costs;sample.heaviestFunctions=complete.filter(e=>e.name==="FunctionCall").sort((a,b)=>(b.dur||0)-(a.dur||0)).slice(0,8).map(e=>({durationMs:(e.dur||0)/1000,...e.args?.data}));
+   sample.eventNames=[...new Set(events.map(e=>e.name))].filter(n=>/Raster|Task|Composite|Frame/.test(n));
+  }
+  results.push({engine,browser:browser.version(),repeat,revision,baseline,...config,...sample});
   await page.close();
- }
-}finally{await browser.close();server.kill();fs.writeFileSync("dist/ui-refinement/scroll-comparison.json",JSON.stringify(results,null,2));}
-console.log(JSON.stringify(results));
+ }}finally{await browser.close();}
+}}finally{server.kill();fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));}
+fs.writeFileSync(out+"/scope.txt","Wheel input with direction reversal; two paired runs in opposite revision order. rAF intervals are main-thread callback intervals, NOT presented scroll FPS. Chromium traces contain main/compositor/raster categories and thread IDs; WebKit has no CDP trace and is NOT macOS Safari. System view is pinned native LuCI plus JSONMap long NTP extension. Lease/graph structures use native JSONMap controls but representative update fixtures. No router, macOS Safari, real touchpad inertia or WebKit hardware touch gesture validation. Loading starts immediately after native fixture render. No production performance optimization is asserted by this measurement alone.\n");
+console.log(JSON.stringify(results.map(({raf,costs,...r})=>({...r,raf:{...raf,raw:undefined},costs}))));

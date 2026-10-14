@@ -121,6 +121,10 @@ try{for(const [engine,type] of [["chromium",chromium],["webkit",webkit]]){
   await page.waitForFunction(()=>document.querySelector(".uci-dialog>.cbi-section>.right").lastElementChild.classList.contains("cbi-button-positive"));
   const actionClasses=await page.locator(".uci-dialog>.cbi-section>.right>button").evaluateAll(ns=>ns.map(n=>n.className));
   assert.ok(actionClasses[1].includes("cbi-button-reset"));assert.ok(actionClasses[2].includes("cbi-button-positive"));
+  for(const button of await page.locator(".uci-dialog>.cbi-section>.right>button").all()){
+   const isPrimary=await button.evaluate(n=>n.matches(".cbi-button-positive.important"));
+   if(!isPrimary)assert.equal(await button.evaluate(n=>getComputedStyle(n).backgroundColor),"rgba(0, 0, 0, 0)","actual displayChanges secondary background");
+  }
   const summary=await modal.boundingBox();assert.ok(summary.height<420);
   await page.screenshot({path:"dist/ui-refinement/feedback-"+engine+"-"+design+"-changes.png"});
   await page.evaluate(()=>fixtureUI.hideModal());
