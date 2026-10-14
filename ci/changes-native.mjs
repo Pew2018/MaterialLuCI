@@ -21,7 +21,7 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]]){
    await buttons.last().scrollIntoViewIfNeeded();
    await page.mouse.move(0,0);await page.waitForTimeout(350);
    const styles=await buttons.evaluateAll(ns=>ns.map(n=>{
-    const s=getComputedStyle(n),r=n.getBoundingClientRect(),range=document.createRange();range.selectNodeContents(n.querySelector(".mdc-button__label")||n);const l=range.getBoundingClientRect();
+    const s=getComputedStyle(n),r=n.getBoundingClientRect(),range=document.createRange();range.selectNodeContents(n.querySelector(".mdc-button__label")||[...n.childNodes].find(c=>c.nodeType===3&&c.textContent.trim()));const l=range.getBoundingClientRect();
     return {classes:n.className,bg:s.backgroundColor,border:s.borderTopWidth,shadow:s.boxShadow,token:s.getPropertyValue("--button-bg").trim(),height:r.height,center:Math.abs((l.top+l.bottom-r.top-r.bottom)/2),text:n.textContent.trim()};
    }));
    assert.equal(styles.length,3);assert.ok(styles[1].classes.includes("cbi-button-reset"));assert.ok(styles[2].classes.includes("cbi-button-positive"));

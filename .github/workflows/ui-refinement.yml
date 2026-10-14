@@ -2,7 +2,7 @@ name: Scoped UI refinement regression
 on:
   push:
     branches: [feature/m3e-theme]
-    paths: ["theme/**", "ci/ui-refinement.mjs", "ci/theme-coverage.mjs", "ci/user-feedback.mjs", "ci/followup*.mjs", "ci/performance-contracts.mjs", "ci/changes-scroll.mjs", "ci/changes-dialog.mjs", "ci/changes-native.mjs", ".github/workflows/ui-refinement.yml"]
+    paths: ["theme/**", "ci/ui-refinement.mjs", "ci/theme-coverage.mjs", "ci/user-feedback.mjs", "ci/followup*.mjs", "ci/performance-contracts.mjs", "ci/changes-scroll.mjs", "ci/changes-dialog.mjs", "ci/changes-native.mjs", "ci/scroll-report.mjs", ".github/workflows/ui-refinement.yml"]
 permissions:
   contents: read
 jobs:
@@ -55,6 +55,8 @@ jobs:
       - run: node ci/changes-scroll.mjs
         if: ${{ !cancelled() }}
       - run: node ci/user-feedback.mjs
+        if: ${{ !cancelled() }}
+      - run: node ci/scroll-report.mjs
         if: ${{ !cancelled() }}
       - uses: actions/upload-artifact@v4
         if: always()

@@ -40,7 +40,7 @@ try{
   await page.waitForFunction(()=>document.querySelector(".modal")?.classList.contains("ml-changes-dialog"));
   const secondary=page.locator('[data-action="undo"]');
   const geometry=await secondary.evaluate(n=>{
-   const s=getComputedStyle(n),r=n.getBoundingClientRect(),label=n.querySelector(".mdc-button__label")||n;
+   const s=getComputedStyle(n),r=n.getBoundingClientRect(),label=n.querySelector(".mdc-button__label")||[...n.childNodes].find(c=>c.nodeType===3&&c.textContent.trim());
    const range=document.createRange();range.selectNodeContents(label);const l=range.getBoundingClientRect();
    return {bg:s.backgroundColor,border:s.borderTopWidth,shadow:s.boxShadow,token:s.getPropertyValue("--button-bg").trim(),height:r.height,centerError:Math.abs((l.top+l.bottom-r.top-r.bottom)/2)};
   });
