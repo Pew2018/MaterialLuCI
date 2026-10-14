@@ -23,7 +23,7 @@ try{for(const design of ["classic","m3e"])for(const theme of ["light","dark"])fo
  const action=design==="m3e"?page.locator("#modal_overlay md-checkbox"):checkbox;
  const checked=await checkbox.isChecked();await action.click();
  await page.waitForTimeout(90);
- const ink=await checkbox.evaluate(n=>{const root=n.parentElement,s=getComputedStyle(root),p=getComputedStyle(root.querySelector(".mdc-checkbox__ripple"),"::after");return {rootWidth:root.getBoundingClientRect().width,fgSize:s.getPropertyValue("--mdc-ripple-fg-size"),fgScale:s.getPropertyValue("--mdc-ripple-fg-scale"),width:p.width,transform:p.transform,checked:n.checked,count:changeCount};});
+ const ink=await checkbox.evaluate(n=>{const root=n.parentElement,s=getComputedStyle(root),layer=root.querySelector(".mdc-checkbox__ripple"),p=layer?getComputedStyle(layer,"::after"):null;return {rootWidth:root.getBoundingClientRect().width,fgSize:s.getPropertyValue("--mdc-ripple-fg-size"),fgScale:s.getPropertyValue("--mdc-ripple-fg-scale"),width:p?.width,transform:p?.transform,checked:n.checked,count:changeCount};});
  await page.screenshot({path:out+"/"+id+"-pressed.png"});
  if(revision==="after"){
   assert.ok(Math.abs(buttons[0].height-buttons[1].height)<.5,JSON.stringify(buttons));assert.equal(buttons[0].height,48);
