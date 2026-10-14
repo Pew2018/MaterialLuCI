@@ -35,9 +35,10 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter((
    assert.equal(await page.locator(".mdc-ripple-upgraded--foreground-activation").count(),0);
    gestures.push({target,top,positions});
   }
-  await page.evaluate(async()=>{const ui=await L.require("ui"),host=E("div",{id:"gesture-dropdown"},new ui.Dropdown("wan",{wan:"WAN",lan:"LAN",other:"Other"},{optional:true}).render());view.prepend(host);});
+  await page.evaluate(async()=>{const ui=await L.require("ui"),host=E("div",{id:"gesture-dropdown"},(window.gestureDropdownWidget=new ui.Dropdown("wan",{wan:"WAN",lan:"LAN",other:"Other"},{optional:true})).render());view.prepend(host);});
   await page.locator("#gesture-dropdown .open").click();await page.mouse.move(width<600?8:264,400);await page.mouse.wheel(0,180);await page.waitForTimeout(300);
-  assert.equal(await page.locator("#gesture-dropdown .cbi-dropdown[open]").count(),0,"main scrolling closes native popup");
+  assert.equal(await page.evaluate(()=>gestureDropdownWidget.getValue()),"wan","scrolling must preserve native popup selection");
+  await page.mouse.click(width<600?8:264,150);
   await page.evaluate(()=>{const sidebar=document.querySelector(".ml-sidebar");for(let i=0;i<60;i++)sidebar.append(E("a",{href:"#"},"Extra menu "+i));});
   if(width<600)await page.locator("#ml-menu-button").click();
   const pageBefore=await page.evaluate(()=>scrollY);await page.mouse.move(100,400);for(let i=0;i<6;i++){await page.mouse.wheel(0,140);await page.waitForTimeout(70);}

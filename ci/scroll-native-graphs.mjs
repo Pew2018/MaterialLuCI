@@ -89,7 +89,7 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter((
     const selected=complete.filter(e=>e.name===name);
     costs[name]={count:selected.length,totalMs:selected.reduce((s,e)=>s+(e.dur||0)/1000,0),maxMs:Math.max(0,...selected.map(e=>(e.dur||0)/1000)),threads:[...new Set(selected.map(e=>e.pid+":"+e.tid))]};
    }
-   sample.costs=costs;sample.traceEvidence=traceCosts(events,start,end);sample.traceSha256=createHash("sha256").update(trace).digest("hex");sample.heaviestFunctions=complete.filter(e=>e.name==="FunctionCall").sort((a,b)=>(b.dur||0)-(a.dur||0)).slice(0,8).map(e=>({durationMs:(e.dur||0)/1000,...e.args?.data}));
+   sample.costs=costs;sample.traceEvidence=traceCosts(events,start,end);sample.traceFile=id+".json.gz";sample.traceSha256=createHash("sha256").update(trace).digest("hex");sample.heaviestFunctions=complete.filter(e=>e.name==="FunctionCall").sort((a,b)=>(b.dur||0)-(a.dur||0)).slice(0,8).map(e=>({durationMs:(e.dur||0)/1000,...e.args?.data}));
    sample.eventNames=[...new Set(events.map(e=>e.name))].filter(n=>/Raster|Task|Composite|Frame/.test(n));
   }
   sample.geometry=await page.evaluate(()=>({scrollY,scrollingTag:document.scrollingElement.tagName,scrollingHeight:document.scrollingElement.scrollHeight,viewport:innerHeight,body:getComputedStyle(document.body).overflow,html:getComputedStyle(document.documentElement).overflow,hit:document.elementFromPoint(innerWidth-80,400)?.outerHTML.slice(0,400)}));sample.validMovement=sample.scrollEvents.length>0&&Math.max(...sample.scrollEvents.map(e=>e.top))-Math.min(...sample.scrollEvents.map(e=>e.top))>200;
@@ -97,7 +97,7 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter((
   results.push({sourceSha:process.env.GITHUB_SHA,engine,browser:browser.version(),repeat,revision,baseline,...config,...sample});
   fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));console.log(id+" max="+sample.raf.max+" spikes="+sample.raf.over34+" graphs="+sample.graphUpdates.length+" scroll="+sample.scrollEvents.length);
   if(repeat===0&&config.clock==="native"&&config.cards==="true"){await page.screenshot({path:out+"/"+id+".png"});}
-  fs.writeFileSync(out+"/case-index.json",JSON.stringify(results.map(r=>({sourceSha:r.sourceSha,engine:r.engine,browser:r.browser,repeat:r.repeat,design:r.design,theme:r.theme,cards:r.cards,width:r.width,kind:r.kind,clock:r.clock,shadow:r.shadow,count:r.count,traceSha256:r.traceSha256,validMovement:r.validMovement})),null,2));
+  fs.writeFileSync(out+"/case-index.json",JSON.stringify(results.map(r=>({sourceSha:r.sourceSha,engine:r.engine,browser:r.browser,repeat:r.repeat,design:r.design,theme:r.theme,cards:r.cards,width:r.width,kind:r.kind,clock:r.clock,shadow:r.shadow,count:r.count,traceFile:r.traceFile??null,traceSha256:r.traceSha256??null,validMovement:r.validMovement})),null,2));
   await page.close();
  }}finally{await browser.close();}
 }}finally{server.kill();fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));}
