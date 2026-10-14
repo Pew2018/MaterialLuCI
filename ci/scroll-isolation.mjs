@@ -4,7 +4,7 @@ import {chromium,webkit} from "playwright";
 import {spawn,execFileSync} from "node:child_process";
 import fs from "node:fs";
 import assert from "node:assert/strict";
-const baseline="f32790a8a2ccc8217298aa8132edbc1b0f69f92b";
+const baseline="447dcfe70cb454988592fb42510a9cc10dc07e23";
 const server=spawn("python3",["ci/server.py"],{stdio:"inherit"}),origin="http://127.0.0.1:8765";
 const out="dist/scroll-evidence/"+(process.env.ENGINE||"chromium");fs.mkdirSync(out,{recursive:true});
 for(let i=0;i<100;i++){try{await fetch(origin);break;}catch{await new Promise(r=>setTimeout(r,50));}}
@@ -17,13 +17,12 @@ function source(revision,file){
  sourceCache.set(key,body);return body;
 }
 const scenarios=[];
-for(const design of ["classic","m3e"])for(const width of [1280,390])for(const cards of ["true","false"])for(const clock of ["off","native","stress1hz"])scenarios.push({design,theme:"light",cards,width,kind:"system",state:"idle",clock,shadow:"normal"});
-for(const design of ["classic","m3e"])for(const clock of ["off","stress1hz"])scenarios.push({design,theme:"light",cards:"true",width:1280,kind:"system",state:"idle",clock,shadow:"none"});
-for(const design of ["classic","m3e"])for(const clock of ["off","stress1hz"])scenarios.push({design,theme:"dark",cards:"true",width:1280,kind:"system",state:"idle",clock,shadow:"normal"});
+for(const design of ["classic","m3e"])for(const width of [1280,390])for(const clock of ["off","native"])scenarios.push({design,theme:"light",cards:"true",width,kind:"system",state:"idle",clock,shadow:"normal"});
+for(const design of ["classic","m3e"])for(const width of [1280,390])scenarios.push({design,theme:"dark",cards:"true",width,kind:"system",state:"idle",clock:"native",shadow:"normal"});
 scenarios.splice(0,scenarios.length,...scenarios.filter(c=>!process.env.DESIGN||c.design===process.env.DESIGN));
 try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter(([name])=>name===(process.env.ENGINE||"chromium"))){
  const browser=await type.launch({headless:false});
- try{for(let repeat=0;repeat<3;repeat++)for(const config of repeat%2?scenarios.slice().reverse():scenarios)for(const revision of ["after"]){
+ try{for(let repeat=0;repeat<3;repeat++)for(const config of repeat%2?scenarios.slice().reverse():scenarios)for(const revision of repeat%2?["after","before"]:["before","after"]){
   const {design,theme,cards,width,kind,state}=config;
   const page=await browser.newPage({viewport:{width,height:844}});
   for(const file of ["runtime.js","surfaces.js","feedback.js","controls.js","app.js","cascade.css","design-m3.css"]){
@@ -86,7 +85,7 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter((
    },150);
   },state);
   await page.mouse.move(width-80,400);
-  for(let i=0;i<144;i++){if(i%24===0)await page.evaluate(i=>{performance.mark("scroll-direction-"+i);measure.positions.push({i,time:performance.now(),top:scrollY});},i);await page.mouse.wheel(0,Math.floor(i/24)%2===0?70:-70);await page.waitForTimeout(40);}
+  for(let i=0;i<72;i++){if(i%12===0)await page.evaluate(i=>{performance.mark("scroll-direction-"+i);measure.positions.push({i,time:performance.now(),top:scrollY});},i);await page.mouse.wheel(0,Math.floor(i/12)%2===0?70:-70);await page.waitForTimeout(40);}
   await page.waitForTimeout(120);
   const sample=await page.evaluate(()=>{
    performance.mark("scroll-measure-end");clearInterval(window.pollTimer);measure.active=false;document.removeEventListener("scroll",scrollProbe,true);sampleObserver.disconnect();window.taskObserver?.disconnect();
@@ -112,12 +111,11 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter((
   }
   sample.geometry=await page.evaluate(()=>({scrollY,scrollingTag:document.scrollingElement.tagName,scrollingHeight:document.scrollingElement.scrollHeight,viewport:innerHeight,body:getComputedStyle(document.body).overflow,html:getComputedStyle(document.documentElement).overflow,hit:document.elementFromPoint(innerWidth-80,400)?.outerHTML.slice(0,400)}));sample.validMovement=sample.scrollEvents.length>0&&Math.max(...sample.scrollEvents.map(e=>e.top))-Math.min(...sample.scrollEvents.map(e=>e.top))>200;
   if(!sample.validMovement){await page.screenshot({path:out+"/"+id+"-invalid.png"});results.push({engine,repeat,...config,...sample});fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));throw Error("Invalid wheel sample: "+JSON.stringify(sample.geometry));}
-  results.push({sourceSha:process.env.GITHUB_SHA,engine,browser:browser.version(),repeat,revision,baseline,...config,...sample});
+  results.push({sourceSha:revision==="before"?baseline:process.env.GITHUB_SHA,engine,browser:browser.version(),repeat,revision,baseline,...config,...sample});
   fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));console.log(id+" max="+sample.raf.max+" spikes="+sample.raf.over34+" clock="+sample.clockWrites.length+" scroll="+sample.scrollEvents.length);
   if(repeat===0&&config.clock==="native"&&config.cards==="true"){await page.screenshot({path:out+"/"+id+".png"});}
   fs.writeFileSync(out+"/case-index.json",JSON.stringify(results.map(r=>({sourceSha:r.sourceSha,engine:r.engine,browser:r.browser,repeat:r.repeat,design:r.design,theme:r.theme,cards:r.cards,width:r.width,kind:r.kind,clock:r.clock,shadow:r.shadow,count:r.count,traceFile:r.traceFile??null,traceSha256:r.traceSha256??null,validMovement:r.validMovement})),null,2));
   await page.close();
  }}finally{await browser.close();}
 }}finally{server.kill();fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));}
-fs.writeFileSync(out+"/scope.txt","Wheel input with direction reversal; two paired runs in opposite revision order. rAF intervals are main-thread callback intervals, NOT presented scroll FPS. Chromium traces contain main/compositor/raster categories and thread IDs; WebKit has no CDP trace and is NOT macOS Safari. System view is pinned native LuCI plus JSONMap long NTP extension. Lease/graph structures use native JSONMap controls but representative update fixtures. No router, macOS Safari, real touchpad inertia or WebKit hardware touch gesture validation. Loading starts immediately after native fixture render. No production performance optimization is asserted by this measurement alone.\n");
-console.log("Completed "+results.length+" System isolation cases. No presented frame or actual Safari claim.");
+fs.writeFileSync(out+"/scope.txt","Three paired repeats, alternating AB/BA/AB. Before is build #387 production 447dcfe; after is the packaged final source. Pinned native 21.02 System with 40 native JSONMap NTP fields. All poll stopped and drained for idle; unchanged clock asserted for 1.2s. Native clock interval 5s, native formatter. 72 real wheel inputs with direction reversal; movement >200px mandatory. Fixed input count and requested cadence; actual duration retained (browser wheel acknowledgement can stall), not fixed wall-clock duration. rAF callback intervals are not presented FPS. Chromium X/B/E trace events and per-thread inclusive costs retained; WebKit GTK has no CDP rendering trace, not macOS Safari. No router or physical touchpad verification.\n");

@@ -1,3 +1,4 @@
+import {createHash} from "node:crypto";
 import {traceCosts} from "./trace-costs.mjs";
 import {chromium,webkit} from "playwright";
 import {spawn,execFileSync} from "node:child_process";
@@ -33,13 +34,13 @@ const scenarios=[];
 for(const design of ["classic","m3e"])for(const width of [390,1280])for(const state of ["loading"])scenarios.push({design,theme:"light",cards:"true",width,kind:"leases",state});
 try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter(([name])=>name===(process.env.ENGINE||"chromium"))){
  const browser=await type.launch({headless:false});
- try{for(let repeat=0;repeat<3;repeat++)for(const config of scenarios)for(const revision of repeat?["after","before"]:["before","after"]){
+ try{for(let repeat=0;repeat<3;repeat++)for(const config of scenarios)for(const revision of repeat%2?["after","before"]:["before","after"]){
   const {design,theme,cards,width,kind,state}=config;
   const page=await browser.newPage({viewport:{width,height:844}});
   for(const file of ["runtime.js","surfaces.js","feedback.js","controls.js","app.js","cascade.css","design-m3.css"]){
    await page.route("**/luci-static/materialluci/"+file+"?**",route=>route.fulfill({body:source(revision,file),contentType:file.endsWith(".css")?"text/css":"text/javascript"}));
   }
-  await page.addInitScript(c=>{window.__mlPerf={functions:[],jobs:[],enhance:[]};localStorage.setItem("materialluci-design",c.design);localStorage.setItem("materialluci-mode",c.theme);localStorage.setItem("materialluci-cards",c.cards);},config);
+  await page.addInitScript(c=>{window.__mlLoad={frames:[],start:performance.now(),last:performance.now(),active:true};performance.mark("fixture-load-start");const loadFrame=t=>{__mlLoad.frames.push({time:t,gap:t-__mlLoad.last});__mlLoad.last=t;if(__mlLoad.active)requestAnimationFrame(loadFrame);};requestAnimationFrame(loadFrame);window.__mlPerf={functions:[],jobs:[],enhance:[]};localStorage.setItem("materialluci-design",c.design);localStorage.setItem("materialluci-mode",c.theme);localStorage.setItem("materialluci-cards",c.cards);},config);
   const client=engine==="chromium"?await page.context().newCDPSession(page):null;
   if(client)await client.send("Tracing.start",{categories:"toplevel,devtools.timeline,disabled-by-default-devtools.timeline,disabled-by-default-devtools.timeline.frame,disabled-by-default-devtools.timeline.stack,blink.user_timing,cc,gpu,v8",transferMode:"ReturnAsStream"});
   await page.goto(origin+(kind==="system"?"/system.html":"/upstream.html"));
@@ -79,7 +80,7 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter((
   if(state!=="loading")await page.waitForTimeout(700);
   if(state==="menu")await page.locator("#view .cbi-dropdown").first().locator(":scope > .open").click();
   await page.evaluate(state=>{
-   performance.mark("scroll-measure-start");window.measure={frames:[],mutations:0,updates:0,longTasks:[],start:performance.now(),last:performance.now(),active:true,surfaces:MaterialSurfaces.count(),instances:MaterialFeedback.counts()};
+   __mlLoad.active=false;performance.mark("fixture-load-end");performance.mark("scroll-measure-start");window.measure={frames:[],mutations:0,updates:0,longTasks:[],start:performance.now(),last:performance.now(),active:true,surfaces:MaterialSurfaces.count(),instances:MaterialFeedback.counts()};
    const m=measure;window.sampleObserver=new MutationObserver(rs=>m.mutations+=rs.length);sampleObserver.observe(view,{subtree:true,childList:true});
    if(PerformanceObserver.supportedEntryTypes.includes("longtask")){window.taskObserver=new PerformanceObserver(l=>m.longTasks.push(...l.getEntries().map(e=>({start:e.startTime,duration:e.duration}))));taskObserver.observe({type:"longtask"});}
    const frame=t=>{m.frames.push(t-m.last);m.last=t;if(m.active)requestAnimationFrame(frame);};requestAnimationFrame(frame);
@@ -96,7 +97,8 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter((
   const sample=await page.evaluate(()=>{
    performance.mark("scroll-measure-end");clearInterval(window.pollTimer);measure.active=false;document.removeEventListener("scroll",scrollProbe,true);sampleObserver.disconnect();window.taskObserver?.disconnect();
    const m=measure,a=m.frames.slice().sort((a,b)=>a-b);
-   return {runtimeMetrics:__mlPerf,duration:performance.now()-m.start,mutations:m.mutations,updates:m.updates,longTasks:m.longTasks,raf:{count:a.length,p50:a[Math.floor(a.length*.5)],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],max:Math.max(0,...a),over20:a.filter(x=>x>20).length,over34:a.filter(x=>x>34).length,raw:m.frames},surfacePasses:MaterialSurfaces.count()-m.surfaces,instancesBefore:m.instances,instancesAfter:MaterialFeedback.counts(),waitInstances:MaterialWait.activeCount(),activeAnimations:document.getAnimations().filter(a=>a.playState==="running").map(a=>({name:a.animationName||a.constructor.name,target:a.effect?.target?.className||a.effect?.target?.tagName})),scrollTop:scrollY,scrollEvents:m.scrollEvents,sidebarScroll:document.querySelector(".ml-sidebar")?.scrollTop,modalScroll:document.querySelector(".modal")?.scrollTop,clicks:fixtureClicks,overflow:document.documentElement.scrollWidth>innerWidth};
+   const loadGaps=__mlLoad.frames.map(f=>f.gap).sort((a,b)=>a-b);
+   return {loading:{start:__mlLoad.start,end:m.start,duration:m.start-__mlLoad.start,raf:{raw:__mlLoad.frames,p50:loadGaps[Math.floor(loadGaps.length*.5)],p95:loadGaps[Math.floor(loadGaps.length*.95)],p99:loadGaps[Math.floor(loadGaps.length*.99)],max:Math.max(0,...loadGaps)}},measureStart:m.start,runtimeMetrics:__mlPerf,duration:performance.now()-m.start,mutations:m.mutations,updates:m.updates,longTasks:m.longTasks,raf:{count:a.length,p50:a[Math.floor(a.length*.5)],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],max:Math.max(0,...a),over20:a.filter(x=>x>20).length,over34:a.filter(x=>x>34).length,raw:m.frames},surfacePasses:MaterialSurfaces.count()-m.surfaces,instancesBefore:m.instances,instancesAfter:MaterialFeedback.counts(),waitInstances:MaterialWait.activeCount(),activeAnimations:document.getAnimations().filter(a=>a.playState==="running").map(a=>({name:a.animationName||a.constructor.name,target:a.effect?.target?.className||a.effect?.target?.tagName})),scrollTop:scrollY,scrollEvents:m.scrollEvents,sidebarScroll:document.querySelector(".ml-sidebar")?.scrollTop,modalScroll:document.querySelector(".modal")?.scrollTop,clicks:fixtureClicks,overflow:document.documentElement.scrollWidth>innerWidth};
   });
   let touch=null;
   if(client&&width===390&&state==="idle"&&theme==="light"&&cards==="true"){
@@ -128,13 +130,13 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter((
     const selected=complete.filter(e=>e.name===name);
     costs[name]={count:selected.length,totalMs:selected.reduce((s,e)=>s+(e.dur||0)/1000,0),maxMs:Math.max(0,...selected.map(e=>(e.dur||0)/1000)),threads:[...new Set(selected.map(e=>e.pid+":"+e.tid))]};
    }
-   sample.costs=costs;sample.traceEvidence=traceCosts(events,start,end);sample.heaviestFunctions=complete.filter(e=>e.name==="FunctionCall").sort((a,b)=>(b.dur||0)-(a.dur||0)).slice(0,8).map(e=>({durationMs:(e.dur||0)/1000,...e.args?.data}));
+   sample.traceFile=id+".json.gz";sample.traceSha256=createHash("sha256").update(trace).digest("hex");sample.loading.traceEvidence=traceCosts(events,events.find(e=>e.name==="fixture-load-start")?.ts,start);sample.costs=costs;sample.traceEvidence=traceCosts(events,start,end);sample.heaviestFunctions=complete.filter(e=>e.name==="FunctionCall").sort((a,b)=>(b.dur||0)-(a.dur||0)).slice(0,8).map(e=>({durationMs:(e.dur||0)/1000,...e.args?.data}));
    sample.eventNames=[...new Set(events.map(e=>e.name))].filter(n=>/Raster|Task|Composite|Frame/.test(n));
   }
-  results.push({sourceSha:process.env.GITHUB_SHA,baselineScrollNormalization:"root overscroll containment removed in test route for comparable wheel movement",engine,browser:browser.version(),repeat,revision,baseline,...config,...sample});
+  results.push({sourceSha:revision==="before"?baseline:process.env.GITHUB_SHA,baselineScrollNormalization:"root overscroll containment removed in test route for comparable wheel movement",engine,browser:browser.version(),repeat,revision,baseline,...config,...sample});
   fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));console.log(id+" raf="+sample.raf.max+" flush="+Math.max(...sample.runtimeMetrics.functions.filter(x=>x.name==="flush").map(x=>x.duration)));
+  fs.writeFileSync(out+"/case-index.json",JSON.stringify(results.map(r=>({sourceSha:r.sourceSha,baseline:r.baseline,engine:r.engine,browser:r.browser,repeat:r.repeat,revision:r.revision,design:r.design,width:r.width,traceFile:r.traceFile??null,traceSha256:r.traceSha256??null})),null,2));
   await page.close();
  }}finally{await browser.close();}
 }}finally{server.kill();fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));}
-fs.writeFileSync(out+"/scope.txt","Wheel input with direction reversal; two paired runs in opposite revision order. rAF intervals are main-thread callback intervals, NOT presented scroll FPS. Chromium traces contain main/compositor/raster categories and thread IDs; WebKit has no CDP trace and is NOT macOS Safari. System view is pinned native LuCI plus JSONMap long NTP extension. Lease/graph structures use native JSONMap controls but representative update fixtures. No router, macOS Safari, real touchpad inertia or WebKit hardware touch gesture validation. Loading starts immediately after native fixture render. No production performance optimization is asserted by this measurement alone.\n");
-console.log("runtime sampling complete");
+fs.writeFileSync(out+"/scope.txt","Three paired repeats AB/BA/AB; historical f327 theme versus final theme, root overscroll normalized for valid baseline movement. Instrumented wrappers measure discover/collect/flush/owner/prepareRecords/updateSurfaces and adapter calls, default production instrumentation absent. Loading rAF starts before document scripts, ends at native fixture render; loading includes browser/theme initialization and fixture preparation, not theme-only JS cost. Scroll phase starts immediately after native 120-row lease fixture insertion, no settling delay. Raw trace and wrapper timestamps distinguish initialization, construction and scroll; no presented FPS claim. Chromium X/B/E per-thread traces; WebKit GTK is not macOS Safari and lacks rendering traces. No router/physical trackpad verification.\n");

@@ -1,6 +1,7 @@
 /* Shared shell geometry stays in cascade.css. Only M3-owned controls here. */
 :root[data-design=m3e]{
  --ml-card-radius:16px;
+ --ml-card-shadow-image:url("icons/card-shadow-m3e-light-v1.svg");--ml-card-shadow-slice:24;--ml-card-shadow-border:24px;
  --ml-action-radius:24px;--ml-item-radius:8px;
  --md-sys-typescale-label-large-font:Roboto,"Noto Sans",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
  --md-sys-typescale-label-large-size:14px;
@@ -8,6 +9,7 @@
  --md-switch-track-width:48px;
  --md-linear-progress-track-height:4px;
 }
+:root[data-design=m3e][data-theme=dark]{--ml-card-shadow-image:url("icons/card-shadow-m3e-dark-v1.svg")}
 :root[data-design=m3e] body md-outlined-button.ml-mode-option{
  display:inline-flex;flex:1;min-width:0;min-height:48px;padding:0;margin:0;
  border:0;background:transparent;box-shadow:none;font:inherit;color:var(--ink);

@@ -3,6 +3,9 @@ on:
   push:
     branches: [feature/m3e-theme]
     paths: ["theme/**", "ci/selection-dialog.mjs", ".github/workflows/selection-dialog.yml"]
+concurrency:
+  group: selection-dialog-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:

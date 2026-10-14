@@ -66,10 +66,13 @@ fieldset{border:0;padding:0;margin:0 0 16px;min-width:0}
 .cbi-map>.cbi-section+.cbi-section,.cbi-map>fieldset+fieldset{margin-top:16px;border-top:1px solid var(--divider)}
 :root[data-cards=true]{--page:#fafafa}
 :root[data-theme=dark][data-cards=true]{--page:#121212}
-:root{--ml-card-radius:2px;--ml-card-padding:18px;--ml-card-gap:16px;--ml-card-shadow:0 1px 3px rgba(0,0,0,.16)}
-:root[data-theme=dark]{--ml-card-shadow:0 1px 3px rgba(0,0,0,.3)}
+:root{--ml-card-radius:2px;--ml-card-padding:18px;--ml-card-gap:16px;--ml-card-shadow:0 1px 3px rgba(0,0,0,.16);--ml-card-shadow-image:url("icons/card-shadow-classic-light-v1.svg");--ml-card-shadow-slice:10;--ml-card-shadow-border:10px}
+:root[data-theme=dark]{--ml-card-shadow:0 1px 3px rgba(0,0,0,.3);--ml-card-shadow-image:url("icons/card-shadow-classic-dark-v1.svg")}
 @media(max-width:599px){:root{--ml-card-padding:16px}}
-:root[data-cards=true] .ml-card-surface{background:var(--card);padding:16px var(--ml-card-padding);margin:0 0 var(--ml-card-gap);border:0;border-radius:var(--ml-card-radius);box-shadow:var(--ml-card-shadow)}
+/* A cached 80px shadow image stretches only its straight edges. Native
+   box-shadow on tall cards repeatedly blurred the full surface in WebKit
+   wheel tests; border-image preserves radius, spacing and scroll containers. */
+:root[data-cards=true] .ml-card-surface{background:var(--card);padding:16px var(--ml-card-padding);margin:0 0 var(--ml-card-gap);border:0;border-radius:var(--ml-card-radius);box-shadow:none;border-image:var(--ml-card-shadow-image) var(--ml-card-shadow-slice) / var(--ml-card-shadow-border) / 8px stretch}
 :root[data-cards=true] .ml-card-surface>.right{margin-left:0}
 .cbi-value{display:flex;align-items:flex-start;gap:24px;min-height:56px;padding:10px 0;margin:0;clear:both}
 .cbi-value-title{display:block;float:none;width:240px;max-width:35%;flex:none;min-width:0;margin:0;padding:8px 0 0;text-align:left;font-size:14px;font-weight:400;line-height:1.4;color:var(--ink);overflow-wrap:anywhere}
@@ -889,7 +892,7 @@ body .ml-text-field.mdc-text-field--filled:not(.mdc-text-field--disabled) .mdc-t
 
 /* Flat Lua content uses maincontent itself as its surface. The ID-level
    shell rule otherwise overrides the shared card class with transparency. */
-:root[data-cards=true] #maincontent.container.ml-card-surface{width:calc(100% - 64px);margin:16px 32px;padding:16px var(--ml-card-padding);background:var(--card);border:0;border-radius:var(--ml-card-radius);box-shadow:var(--ml-card-shadow)}
+:root[data-cards=true] #maincontent.container.ml-card-surface{width:calc(100% - 64px);margin:16px 32px;padding:16px var(--ml-card-padding);background:var(--card);border:0;border-radius:var(--ml-card-radius);box-shadow:none;border-image:var(--ml-card-shadow-image) var(--ml-card-shadow-slice) / var(--ml-card-shadow-border) / 8px stretch}
 @media(max-width:599px){:root[data-cards=true] #maincontent.container.ml-card-surface{width:calc(100% - 32px);margin:16px;padding:16px}}
 
 /* State parity for native widgets: their basic ink must not depend on MDC.
