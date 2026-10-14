@@ -85,7 +85,7 @@
   panel.classList.toggle("ml-changes-dialog",changeReview);root.classList.toggle("ml-changes-overlay",changeReview);
   // Reorder existing action groups only; preserve LuCI nodes and combo internals.
   const actions=changeReview?panel.querySelector(":scope > .cbi-section > .right,:scope > .cbi-section > .button-row,:scope > .button-row"):null;
-  const apply=actions?.querySelector("button.cbi-button-positive.important"),undo=actions?.querySelector("button.cbi-button-reset");
+  const apply=actions?.querySelector("button.cbi-button-positive.important,.cbi-dropdown.cbi-button-positive.important"),undo=actions?.querySelector("button.cbi-button-reset");
   if(actions?.classList.contains("button-row")&&apply&&undo){
    const directChild=node=>{while(node&&node.parentElement!==actions)node=node.parentElement;return node||null;};
    const applyGroup=directChild(apply),undoGroup=directChild(undo);
