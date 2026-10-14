@@ -118,6 +118,45 @@ try{for(const [engine,type] of [["chromium",chromium],["webkit",webkit]]){
   const summary=await modal.boundingBox();assert.ok(summary.height<420);
   await page.screenshot({path:"dist/ui-refinement/feedback-"+engine+"-"+design+"-changes.png"});
   await page.evaluate(()=>fixtureUI.hideModal());
+  // Real LuCI ComboButton internals, native selection event and portal hit test.
+  for(const width of [1280,390])for(const theme of ["light","dark"])for(const count of [2,60]){
+   await page.setViewportSize({width,height:width===390?844:900});
+   await page.evaluate(({theme,count})=>{
+    MaterialAppearance.set("mode",theme);
+    fixtureUI.changes.changes={network:Array.from({length:count},(_,i)=>["set","lan","value"+i,"设备 "+i+" long configuration value"])};
+    fixtureUI.changes.displayChanges();
+    const panel=document.querySelector("#modal_overlay>.modal"),old=panel.querySelector(".right");
+    window.comboCalls=[];window.comboUndo=0;
+    window.nativeCombo=new fixtureUI.ComboButton("0",{"0":"Save & Apply","1":"Apply unchecked"},{
+     classes:{"0":"btn cbi-button cbi-button-positive important","1":"btn cbi-button cbi-button-negative important"},
+     click(ev,mode){comboCalls.push(mode);}
+    });
+    const close=E("button",{class:"btn cbi-button",click:()=>fixtureUI.hideModal()},"Close");
+    const undo=E("button",{class:"btn cbi-button cbi-button-reset",click:()=>comboUndo++},"Revert");
+    const actions=E("div",{class:"button-row"},[close,nativeCombo.render(),undo]);old.replaceWith(actions);
+    window.comboChildren=[...nativeCombo.node.childNodes];
+   },{theme,count});
+   await page.waitForFunction(()=>document.querySelector(".ml-changes-dialog .button-row").lastElementChild.classList.contains("cbi-dropdown"));
+   const combo=page.locator(".ml-changes-dialog .button-row>.cbi-dropdown");
+   await combo.scrollIntoViewIfNeeded();
+   await combo.locator(":scope > .open").click();
+   await page.waitForFunction(()=>document.querySelector(".ml-action-menu.mdc-menu-surface--open"));
+   const unchecked=page.locator(".ml-action-menu.mdc-menu-surface--open [data-value='1']");
+   await unchecked.waitFor({state:"visible"});
+   assert.ok(await unchecked.evaluate(n=>{const r=n.getBoundingClientRect();const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return n.contains(hit);}),"portal option is not clipped or covered");
+   await page.screenshot({path:"dist/ui-refinement/native-combo-"+engine+"-"+design+"-"+theme+"-"+width+"-"+count+".png"});
+   await unchecked.click();
+   assert.equal(await page.evaluate(()=>nativeCombo.getValue()),"1");
+   assert.deepEqual(await page.evaluate(()=>comboCalls),[],"choosing mode does not prematurely apply");
+   await combo.click({position:{x:30,y:24}});
+   assert.deepEqual(await page.evaluate(()=>comboCalls),["1"]);
+   await page.locator(".ml-changes-dialog .button-row>.cbi-button-reset").click();
+   assert.equal(await page.evaluate(()=>comboUndo),1);
+   assert.equal(await page.evaluate(()=>comboChildren.every((n,i)=>nativeCombo.node.childNodes[i]===n)),true,"native child index contract is preserved");
+   await page.locator(".ml-changes-dialog .button-row>button").first().click();
+   await page.waitForFunction(()=>!document.body.classList.contains("modal-overlay-active"));
+   assert.equal(await page.locator(".ml-changes-dialog").count(),0);
+  }
   await page.setViewportSize({width:390,height:844});
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   assert.deepEqual(errors,[]);
