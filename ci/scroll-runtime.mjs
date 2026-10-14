@@ -31,7 +31,7 @@ function instrument(body,file){
  return body;
 }
 const scenarios=[];
-for(const design of ["classic","m3e"])for(const width of [390,1280])for(const state of ["loading"])scenarios.push({design,theme:"light",cards:"true",width,kind:"leases",state});
+for(const design of ["classic","m3e"])for(const width of [390,1280])for(const state of ["loading","polling"])scenarios.push({design,theme:"light",cards:"true",width,kind:"leases",state});
 try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter(([name])=>name===(process.env.ENGINE||"chromium"))){
  const browser=await type.launch({headless:false});
  try{for(let repeat=0;repeat<3;repeat++)for(const config of scenarios)for(const revision of repeat%2?["after","before"]:["before","after"]){
@@ -134,7 +134,7 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter((
    sample.eventNames=[...new Set(events.map(e=>e.name))].filter(n=>/Raster|Task|Composite|Frame/.test(n));
   }
   results.push({sourceSha:revision==="before"?baseline:process.env.GITHUB_SHA,baselineScrollNormalization:"root overscroll containment removed in test route for comparable wheel movement",engine,browser:browser.version(),repeat,revision,baseline,...config,...sample});
-  fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));console.log(id+" raf="+sample.raf.max+" flush="+Math.max(...sample.runtimeMetrics.functions.filter(x=>x.name==="flush").map(x=>x.duration)));
+  fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));const frameSummary=Object.fromEntries(["p50","p95","p99","max","over20","over34"].map(k=>[k,sample.raf[k]]));const traceSummary=sample.costs?Object.fromEntries(Object.entries(sample.costs).map(([k,v])=>[k,{count:v.count,totalMs:+v.totalMs.toFixed(2),maxMs:+v.maxMs.toFixed(2)}])):null;console.log("SCROLL_EVIDENCE "+JSON.stringify({id,revision,design,width,state,frameMs:frameSummary,mutations:sample.mutations,updates:sample.updates,longTasks:sample.longTasks.length,surfacePasses:sample.surfacePasses,trace:traceSummary,hotFunctions:sample.traceEvidence?.hotFunctions?.slice(0,5)}));
   fs.writeFileSync(out+"/case-index.json",JSON.stringify(results.map(r=>({sourceSha:r.sourceSha,baseline:r.baseline,engine:r.engine,browser:r.browser,repeat:r.repeat,revision:r.revision,design:r.design,width:r.width,traceFile:r.traceFile??null,traceSha256:r.traceSha256??null})),null,2));
   await page.close();
  }}finally{await browser.close();}
