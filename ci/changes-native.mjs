@@ -30,7 +30,7 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]]){
    const id=[engine,design,theme,width,count].join("-");
    await page.screenshot({path:out+"/"+id+".png"});
    if(count===1){
-    const undo=buttons.nth(1);await undo.focus();assert.notEqual(await undo.evaluate(n=>getComputedStyle(n).outlineStyle),"none");
+    const undo=buttons.nth(1);await buttons.first().focus();await page.keyboard.press("Tab");assert.equal(await undo.evaluate(n=>document.activeElement===n),true,"DOM Tab order follows actions");assert.notEqual(await undo.evaluate(n=>getComputedStyle(n).outlineStyle),"none");
     await undo.evaluate(n=>n.disabled=true);
     assert.equal(await undo.evaluate(n=>getComputedStyle(n).backgroundColor),"rgba(0, 0, 0, 0)");
     await undo.evaluate(n=>n.disabled=false);
