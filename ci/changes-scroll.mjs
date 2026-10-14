@@ -93,12 +93,13 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]]){
     await target.scrollIntoViewIfNeeded();const r=await target.boundingBox();
     if(r&&r.y>160){
      const x=r.x+r.width/2,y=r.y+r.height/2;
-     const startScroll=await page.evaluate(()=>scrollY);
+     const startScroll=await page.evaluate(()=>scrollY),clickBefore=await page.evaluate(()=>fixtureClicks),checkedBefore=await target.evaluate(n=>n.querySelector("input")?.checked);
      await client.send("Emulation.setTouchEmulationEnabled",{enabled:true,maxTouchPoints:1});
      await client.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{x,y}]});
      for(let i=1;i<=8;i++){await client.send("Input.dispatchTouchEvent",{type:"touchMove",touchPoints:[{x,y:y-i*18}]});await page.waitForTimeout(20);}
      await client.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});await page.waitForTimeout(150);
-     touch={startScroll,endScroll:await page.evaluate(()=>scrollY),input:"Chromium CDP touch start/move/end over actual enhanced control"};
+     touch={startScroll,endScroll:await page.evaluate(()=>scrollY),clickDelta:(await page.evaluate(()=>fixtureClicks))-clickBefore,checkedChanged:(await target.evaluate(n=>n.querySelector("input")?.checked))!==checkedBefore,input:"Chromium CDP touch start/move/end over actual enhanced control"};
+     assert.equal(touch.clickDelta,0,"touch scroll must not click a control");assert.equal(touch.checkedChanged,false,"touch scroll must not toggle a flag");
      await client.send("Emulation.setTouchEmulationEnabled",{enabled:false});
     }
    }
