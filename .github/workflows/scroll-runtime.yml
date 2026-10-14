@@ -2,7 +2,7 @@ name: Runtime enhancement scroll evidence
 on:
   push:
     branches: [feature/m3e-theme]
-    paths: ["ci/scroll-runtime.mjs", "ci/scroll-runtime.mjs", ".github/workflows/scroll-runtime.yml"]
+    paths: ["ci/scroll-runtime.mjs", ".github/workflows/scroll-runtime.yml"]
 permissions:
   contents: read
 jobs:
@@ -38,8 +38,7 @@ jobs:
           sudo apt-get install -y lua5.1
           python3 ci/ipk-audit.py dist/*.ipk --sha "$GITHUB_SHA" --run "$GITHUB_RUN_ID" --out build/isolation-audit.json --extract build/unpacked --candidate
           python3 ci/prepare.py
-          python3 ci/prepare-graphs.py
-      - run: xvfb-run -a node ci/scroll-native-graphs.mjs
+      - run: xvfb-run -a node ci/scroll-runtime.mjs
         env:
           ENGINE: ${{ matrix.engine }}
       - uses: actions/upload-artifact@v4
