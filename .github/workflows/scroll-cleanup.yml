@@ -1,0 +1,28 @@
+name: Retire superseded scroll measurements
+on:
+  push:
+    branches: [feature/m3e-theme]
+    paths: [".github/workflows/scroll-cleanup.yml"]
+permissions:
+  actions: write
+  contents: read
+jobs:
+  cleanup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Cancel only explicitly superseded feature measurements
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json,subprocess
+          for run_id in [38510533262,38510533296,38510533312,38511437807,38511437708,38511650535,38511650475]:
+              run=json.loads(subprocess.check_output(["gh","api",f"repos/Pew2018/MaterialLuCI/actions/runs/{run_id}"],text=True))
+              assert run["head_branch"]=="feature/m3e-theme"
+              if run["status"] not in ("queued","in_progress"):
+                  print(run_id,run["status"],"retained");continue
+              result=subprocess.run(["gh","api","-X","POST",f"repos/Pew2018/MaterialLuCI/actions/runs/{run_id}/cancel"],capture_output=True,text=True)
+              print(run_id,"cancel requested" if result.returncode==0 else result.stderr)
+          PY
