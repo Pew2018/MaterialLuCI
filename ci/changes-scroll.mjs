@@ -18,6 +18,7 @@ const configs=[];
 for(const design of ["classic","m3e"])for(const theme of ["light","dark"])for(const cards of ["true","false"])for(const width of [390,1280])configs.push({design,theme,cards,width});
 const scenarios=configs.flatMap(c=>["system","leases","chart"].map(kind=>({...c,kind,state:"idle"})));
 for(const design of ["classic","m3e"])for(const kind of ["system","leases","chart"])for(const state of ["loading","polling"])scenarios.push({design,theme:"light",cards:"true",width:390,kind,state});
+for(const design of ["classic","m3e"])for(const state of ["menu","sidebar","modal"])scenarios.push({design,theme:"light",cards:"true",width:1280,kind:"system",state});
 try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]]){
  const browser=await type.launch();
  try{for(let repeat=0;repeat<2;repeat++)for(const config of scenarios)for(const revision of repeat?["after","before"]:["before","after"]){
@@ -60,25 +61,30 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]]){
     }return host;
    };view.replaceChildren(await m.render());
   },kind);
+  if(state==="sidebar")await page.evaluate(()=>{const sidebar=document.querySelector(".ml-sidebar");for(let i=0;i<80;i++)sidebar.append(E("a",{href:"#"},"Menu group "+i));sidebar.scrollTop=0;});
+  if(state==="menu")await page.evaluate(async()=>{const ui=await L.require("ui");const row=E("div",{class:"cbi-value"},[E("label",{class:"cbi-value-title"},"Device"),E("div",{class:"cbi-value-field"})]);row.lastElementChild.append(new ui.Dropdown("wan",{"wan":"WAN","lan":"LAN","other":"Other"},{optional:true}).render());view.prepend(row);});
+  if(state==="modal")await page.evaluate(async()=>{const ui=await L.require("ui");ui.changes.changes={system:Array.from({length:60},(_,i)=>["set","ntp","server"+i,"0.pool.ntp.org long entry "+i])};ui.changes.displayChanges();});
   if(state!=="loading")await page.waitForTimeout(700);
+  if(state==="menu")await page.locator("#view .cbi-dropdown").first().locator(":scope > .open").click();
   await page.evaluate(state=>{
    performance.mark("scroll-measure-start");window.measure={frames:[],mutations:0,updates:0,longTasks:[],start:performance.now(),last:performance.now(),active:true,surfaces:MaterialSurfaces.count(),instances:MaterialFeedback.counts()};
    const m=measure;window.sampleObserver=new MutationObserver(rs=>m.mutations+=rs.length);sampleObserver.observe(view,{subtree:true,childList:true});
    if(PerformanceObserver.supportedEntryTypes.includes("longtask")){window.taskObserver=new PerformanceObserver(l=>m.longTasks.push(...l.getEntries().map(e=>({start:e.startTime,duration:e.duration}))));taskObserver.observe({type:"longtask"});}
    const frame=t=>{m.frames.push(t-m.last);m.last=t;if(m.active)requestAnimationFrame(frame);};requestAnimationFrame(frame);
+   m.scrollEvents=[];window.scrollProbe=e=>m.scrollEvents.push({time:performance.now()-m.start,target:e.target.id||e.target.className||e.target.nodeName,top:e.target===document?scrollY:e.target.scrollTop});document.addEventListener("scroll",scrollProbe,{capture:true,passive:true});
    window.fixtureClicks=0;view.addEventListener("click",()=>fixtureClicks++);
    if(state==="polling")window.pollTimer=setInterval(()=>{
-    m.updates++;for(const n of document.querySelectorAll(".clock"))n.replaceChildren(E("span",m.updates+"h"));
+    m.updates++;const clock=document.querySelector("#localtime");if(clock)clock.value="2026-10-14 03:"+String(m.updates).padStart(2,"0")+":00";for(const n of document.querySelectorAll(".clock"))n.replaceChildren(E("span",m.updates+"h"));
     for(const n of document.querySelectorAll("svg polyline"))n.setAttribute("points","0,140 120,"+(m.updates%80)+" 200,120 300,40 400,80 600,20");
    },150);
   },state);
-  await page.mouse.move(width-80,400);
+  await page.mouse.move(state==="sidebar"?100:state==="modal"?width/2:width-80,400);
   for(let i=0;i<24;i++){await page.mouse.wheel(0,i<12?140:-140);await page.waitForTimeout(40);}
   await page.waitForTimeout(120);
   const sample=await page.evaluate(()=>{
-   performance.mark("scroll-measure-end");clearInterval(window.pollTimer);measure.active=false;sampleObserver.disconnect();window.taskObserver?.disconnect();
+   performance.mark("scroll-measure-end");clearInterval(window.pollTimer);measure.active=false;document.removeEventListener("scroll",scrollProbe,true);sampleObserver.disconnect();window.taskObserver?.disconnect();
    const m=measure,a=m.frames.slice().sort((a,b)=>a-b);
-   return {duration:performance.now()-m.start,mutations:m.mutations,updates:m.updates,longTasks:m.longTasks,raf:{count:a.length,p50:a[Math.floor(a.length*.5)],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],max:Math.max(0,...a),over20:a.filter(x=>x>20).length,over34:a.filter(x=>x>34).length,raw:m.frames},surfacePasses:MaterialSurfaces.count()-m.surfaces,instancesBefore:m.instances,instancesAfter:MaterialFeedback.counts(),waitInstances:MaterialWait.activeCount(),activeAnimations:document.getAnimations().filter(a=>a.playState==="running").map(a=>({name:a.animationName||a.constructor.name,target:a.effect?.target?.className||a.effect?.target?.tagName})),scrollTop:scrollY,clicks:fixtureClicks,overflow:document.documentElement.scrollWidth>innerWidth};
+   return {duration:performance.now()-m.start,mutations:m.mutations,updates:m.updates,longTasks:m.longTasks,raf:{count:a.length,p50:a[Math.floor(a.length*.5)],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],max:Math.max(0,...a),over20:a.filter(x=>x>20).length,over34:a.filter(x=>x>34).length,raw:m.frames},surfacePasses:MaterialSurfaces.count()-m.surfaces,instancesBefore:m.instances,instancesAfter:MaterialFeedback.counts(),waitInstances:MaterialWait.activeCount(),activeAnimations:document.getAnimations().filter(a=>a.playState==="running").map(a=>({name:a.animationName||a.constructor.name,target:a.effect?.target?.className||a.effect?.target?.tagName})),scrollTop:scrollY,scrollEvents:m.scrollEvents,sidebarScroll:document.querySelector(".ml-sidebar")?.scrollTop,modalScroll:document.querySelector(".modal")?.scrollTop,clicks:fixtureClicks,overflow:document.documentElement.scrollWidth>innerWidth};
   });
   let touch=null;
   if(client&&width===390&&state==="idle"&&theme==="light"&&cards==="true"){
