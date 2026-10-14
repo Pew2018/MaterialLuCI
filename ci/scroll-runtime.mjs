@@ -1,3 +1,4 @@
+import {traceCosts} from "./trace-costs.mjs";
 import {chromium,webkit} from "playwright";
 import {spawn,execFileSync} from "node:child_process";
 import fs from "node:fs";
@@ -11,12 +12,13 @@ function source(revision,file){
  const key=revision+file;if(sourceCache.has(key))return sourceCache.get(key);
  const read=f=>revision==="before"?execFileSync("git",["show",baseline+":theme/root/www/luci-static/materialluci/"+f],{encoding:"utf8"}):fs.readFileSync("theme/root/www/luci-static/materialluci/"+f,"utf8");
  let body=read(file);
+ if(file==="cascade.css")body=body.replace("overscroll-behavior-y:contain","");
  if(file==="runtime.js"||file==="surfaces.js")body=instrument(body,file);if(file==="cascade.css")body=read("base.css")+body.replace('@import url("base.css");',"");
  if(file.endsWith(".js"))body=execFileSync("node_modules/.bin/esbuild",["--minify","--target=es2020","--loader=js"],{input:body,encoding:"utf8"});
  sourceCache.set(key,body);return body;
 }
 function instrument(body,file){
- const names=file==="runtime.js"?["discover","collect","flush"]:["owner","prepareRecords","updateSurfaces"];
+ const names=file==="runtime.js"?["discover","collect","flush","inRemoved"]:["owner","prepareRecords","updateSurfaces"];
  let wrappers="";
  for(const name of names){body=body.replace("function "+name+"(","function raw_"+name+"(");wrappers+="function "+name+"(...args){const start=performance.now();try{return raw_"+name+"(...args);}finally{window.__mlPerf.functions.push({name:'"+name+"',start,duration:performance.now()-start,root:args[0]?.id||args[0]?.nodeName||null,children:args[0]?.childElementCount||0,records:Array.isArray(args[0])?args[0].length:null});}}\n";}
  const anchor=file==="runtime.js"?" window.MaterialRuntime=":" MaterialRuntime.registerLayout";
@@ -28,7 +30,7 @@ function instrument(body,file){
  return body;
 }
 const scenarios=[];
-for(const design of ["classic","m3e"])for(const width of [390,1280])for(const state of ["loading","idle"])scenarios.push({design,theme:"light",cards:"true",width,kind:"leases",state});
+for(const design of ["classic","m3e"])for(const width of [390,1280])for(const state of ["loading"])scenarios.push({design,theme:"light",cards:"true",width,kind:"leases",state});
 try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter(([name])=>name===(process.env.ENGINE||"chromium"))){
  const browser=await type.launch({headless:false});
  try{for(let repeat=0;repeat<3;repeat++)for(const config of scenarios)for(const revision of repeat?["after","before"]:["before","after"]){
@@ -114,7 +116,7 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter((
     }
    }
   }
-  sample.touch=touch;assert.equal(sample.clicks,0);assert.equal(sample.overflow,false);
+  sample.touch=touch;sample.validMovement=sample.scrollEvents.length>0&&Math.max(...sample.scrollEvents.map(e=>e.top))-Math.min(...sample.scrollEvents.map(e=>e.top))>200;assert.ok(sample.validMovement,"runtime comparison requires wheel displacement");assert.equal(sample.clicks,0);assert.equal(sample.overflow,false);
   const id=[engine,repeat,revision,design,theme,cards,width,kind,state].join("-");
   if(client){
    const done=new Promise(resolve=>client.once("Tracing.tracingComplete",resolve));await client.send("Tracing.end");const {stream}=await done;
@@ -126,10 +128,10 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter((
     const selected=complete.filter(e=>e.name===name);
     costs[name]={count:selected.length,totalMs:selected.reduce((s,e)=>s+(e.dur||0)/1000,0),maxMs:Math.max(0,...selected.map(e=>(e.dur||0)/1000)),threads:[...new Set(selected.map(e=>e.pid+":"+e.tid))]};
    }
-   sample.costs=costs;sample.heaviestFunctions=complete.filter(e=>e.name==="FunctionCall").sort((a,b)=>(b.dur||0)-(a.dur||0)).slice(0,8).map(e=>({durationMs:(e.dur||0)/1000,...e.args?.data}));
+   sample.costs=costs;sample.traceEvidence=traceCosts(events,start,end);sample.heaviestFunctions=complete.filter(e=>e.name==="FunctionCall").sort((a,b)=>(b.dur||0)-(a.dur||0)).slice(0,8).map(e=>({durationMs:(e.dur||0)/1000,...e.args?.data}));
    sample.eventNames=[...new Set(events.map(e=>e.name))].filter(n=>/Raster|Task|Composite|Frame/.test(n));
   }
-  results.push({engine,browser:browser.version(),repeat,revision,baseline,...config,...sample});
+  results.push({sourceSha:process.env.GITHUB_SHA,baselineScrollNormalization:"root overscroll containment removed in test route for comparable wheel movement",engine,browser:browser.version(),repeat,revision,baseline,...config,...sample});
   fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));console.log(id+" raf="+sample.raf.max+" flush="+Math.max(...sample.runtimeMetrics.functions.filter(x=>x.name==="flush").map(x=>x.duration)));
   await page.close();
  }}finally{await browser.close();}

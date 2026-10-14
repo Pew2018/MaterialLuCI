@@ -1,3 +1,5 @@
+import {traceCosts} from "./trace-costs.mjs";
+import {createHash} from "node:crypto";
 import {chromium,webkit} from "playwright";
 import {spawn,execFileSync} from "node:child_process";
 import fs from "node:fs";
@@ -18,6 +20,7 @@ const scenarios=[];
 for(const design of ["classic","m3e"])for(const width of [1280,390])for(const cards of ["true","false"])for(const clock of ["off","native","stress1hz"])scenarios.push({design,theme:"light",cards,width,kind:"system",state:"idle",clock,shadow:"normal"});
 for(const design of ["classic","m3e"])for(const clock of ["off","stress1hz"])scenarios.push({design,theme:"light",cards:"true",width:1280,kind:"system",state:"idle",clock,shadow:"none"});
 for(const design of ["classic","m3e"])for(const clock of ["off","stress1hz"])scenarios.push({design,theme:"dark",cards:"true",width:1280,kind:"system",state:"idle",clock,shadow:"normal"});
+scenarios.splice(0,scenarios.length,...scenarios.filter(c=>!process.env.DESIGN||c.design===process.env.DESIGN));
 try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter(([name])=>name===(process.env.ENGINE||"chromium"))){
  const browser=await type.launch({headless:false});
  try{for(let repeat=0;repeat<3;repeat++)for(const config of repeat%2?scenarios.slice().reverse():scenarios)for(const revision of ["after"]){
@@ -88,10 +91,11 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter((
   const sample=await page.evaluate(()=>{
    performance.mark("scroll-measure-end");clearInterval(window.pollTimer);measure.active=false;document.removeEventListener("scroll",scrollProbe,true);sampleObserver.disconnect();window.taskObserver?.disconnect();
    const m=measure,a=m.frames.slice().sort((a,b)=>a-b);
-   return {clockWrites:clockWrites.slice(m.clockStart),idleProof,positions:m.positions,duration:performance.now()-m.start,mutations:m.mutations,updates:m.updates,longTasks:m.longTasks,raf:{count:a.length,p50:a[Math.floor(a.length*.5)],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],max:Math.max(0,...a),over20:a.filter(x=>x>20).length,over34:a.filter(x=>x>34).length,raw:m.frames},surfacePasses:MaterialSurfaces.count()-m.surfaces,instancesBefore:m.instances,instancesAfter:MaterialFeedback.counts(),waitInstances:MaterialWait.activeCount(),activeAnimations:document.getAnimations().filter(a=>a.playState==="running").map(a=>({name:a.animationName||a.constructor.name,target:a.effect?.target?.className||a.effect?.target?.tagName})),scrollTop:scrollY,scrollEvents:m.scrollEvents,sidebarScroll:document.querySelector(".ml-sidebar")?.scrollTop,modalScroll:document.querySelector(".modal")?.scrollTop,clicks:fixtureClicks,overflow:document.documentElement.scrollWidth>innerWidth};
+   return {measureStart:m.start,clockWrites:clockWrites.slice(m.clockStart),idleProof,positions:m.positions,duration:performance.now()-m.start,mutations:m.mutations,updates:m.updates,longTasks:m.longTasks,raf:{count:a.length,p50:a[Math.floor(a.length*.5)],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],max:Math.max(0,...a),over20:a.filter(x=>x>20).length,over34:a.filter(x=>x>34).length,raw:m.frames},surfacePasses:MaterialSurfaces.count()-m.surfaces,instancesBefore:m.instances,instancesAfter:MaterialFeedback.counts(),waitInstances:MaterialWait.activeCount(),activeAnimations:document.getAnimations().filter(a=>a.playState==="running").map(a=>({name:a.animationName||a.constructor.name,target:a.effect?.target?.className||a.effect?.target?.tagName})),scrollTop:scrollY,scrollEvents:m.scrollEvents,sidebarScroll:document.querySelector(".ml-sidebar")?.scrollTop,modalScroll:document.querySelector(".modal")?.scrollTop,clicks:fixtureClicks,overflow:document.documentElement.scrollWidth>innerWidth};
   });
   let touch=null;
   sample.touch=touch;assert.equal(sample.clicks,0);assert.equal(sample.overflow,false);
+  let frameTime=0;sample.frameSpikes=sample.raf.raw.flatMap(gap=>{frameTime+=gap;return gap>34?[{time:frameTime,gap}]:[];});
   const id=[engine,repeat,revision,design,theme,cards,width,kind,state,config.clock,config.shadow].join("-");
   if(client){
    const done=new Promise(resolve=>client.once("Tracing.tracingComplete",resolve));await client.send("Tracing.end");const {stream}=await done;
@@ -103,13 +107,15 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter((
     const selected=complete.filter(e=>e.name===name);
     costs[name]={count:selected.length,totalMs:selected.reduce((s,e)=>s+(e.dur||0)/1000,0),maxMs:Math.max(0,...selected.map(e=>(e.dur||0)/1000)),threads:[...new Set(selected.map(e=>e.pid+":"+e.tid))]};
    }
-   sample.costs=costs;sample.heaviestFunctions=complete.filter(e=>e.name==="FunctionCall").sort((a,b)=>(b.dur||0)-(a.dur||0)).slice(0,8).map(e=>({durationMs:(e.dur||0)/1000,...e.args?.data}));
+   sample.costs=costs;sample.traceEvidence=traceCosts(events,start,end);sample.traceSha256=createHash("sha256").update(trace).digest("hex");sample.heaviestFunctions=complete.filter(e=>e.name==="FunctionCall").sort((a,b)=>(b.dur||0)-(a.dur||0)).slice(0,8).map(e=>({durationMs:(e.dur||0)/1000,...e.args?.data}));
    sample.eventNames=[...new Set(events.map(e=>e.name))].filter(n=>/Raster|Task|Composite|Frame/.test(n));
   }
   sample.geometry=await page.evaluate(()=>({scrollY,scrollingTag:document.scrollingElement.tagName,scrollingHeight:document.scrollingElement.scrollHeight,viewport:innerHeight,body:getComputedStyle(document.body).overflow,html:getComputedStyle(document.documentElement).overflow,hit:document.elementFromPoint(innerWidth-80,400)?.outerHTML.slice(0,400)}));sample.validMovement=sample.scrollEvents.length>0&&Math.max(...sample.scrollEvents.map(e=>e.top))-Math.min(...sample.scrollEvents.map(e=>e.top))>200;
   if(!sample.validMovement){await page.screenshot({path:out+"/"+id+"-invalid.png"});results.push({engine,repeat,...config,...sample});fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));throw Error("Invalid wheel sample: "+JSON.stringify(sample.geometry));}
-  results.push({engine,browser:browser.version(),repeat,revision,baseline,...config,...sample});
+  results.push({sourceSha:process.env.GITHUB_SHA,engine,browser:browser.version(),repeat,revision,baseline,...config,...sample});
   fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));console.log(id+" max="+sample.raf.max+" spikes="+sample.raf.over34+" clock="+sample.clockWrites.length+" scroll="+sample.scrollEvents.length);
+  if(repeat===0&&config.clock==="native"&&config.cards==="true"){await page.screenshot({path:out+"/"+id+".png"});}
+  fs.writeFileSync(out+"/case-index.json",JSON.stringify(results.map(r=>({sourceSha:r.sourceSha,engine:r.engine,browser:r.browser,repeat:r.repeat,design:r.design,theme:r.theme,cards:r.cards,width:r.width,kind:r.kind,clock:r.clock,shadow:r.shadow,count:r.count,traceSha256:r.traceSha256,validMovement:r.validMovement})),null,2));
   await page.close();
  }}finally{await browser.close();}
 }}finally{server.kill();fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));}
