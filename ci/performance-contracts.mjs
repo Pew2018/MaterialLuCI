@@ -347,4 +347,19 @@ const f=fixture();f.load("runtime.js");let fields=0,buttons=0,ranges=0;
  assert.equal(binds,2,"replacement has exactly one feedback binding");
  assert.equal(next.getAttribute("aria-label"),"Resume automatic refresh");
 }
+{
+ const f=fixture();f.load("runtime.js");let cleanups=0,created=0;
+ f.window.MaterialRuntime.register({selector:"button.control",enhance(){created++;},cleanup(){cleanups++;}});
+ f.window.MaterialRuntime.start(f.document.body);f.drain();
+ const status=f.document.createElement("div");f.document.body.append(status);f.drain();
+ for(let i=0;i<400;i++)status.append(f.document.createElement("span"));f.drain();
+ for(const leaf of [...status.children])leaf.remove();f.drain();
+ assert.equal(cleanups,0,"plain polling leaves must not enqueue adapter destruction");
+ const button=f.document.createElement("button");button.className="control";status.append(button);f.drain();
+ assert.equal(created,1);button.className="";button.remove();f.drain();
+ assert.equal(cleanups,1,"remember enhanced controls when their selector changes before removal");
+ let later=0;f.window.MaterialRuntime.register({selector:"input",enhance(){later++;}});
+ status.append(f.document.createElement("input"));f.drain();
+ assert.equal(later,1,"late adapter registration invalidates cached discovery plans");
+}
 console.log("Runtime lifecycle, discovery dispatch, branding, viewport and LED scope contracts passed (no browser rendering).");
