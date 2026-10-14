@@ -39,7 +39,7 @@ jobs:
           python3 ci/ipk-audit.py dist/*.ipk --sha "$GITHUB_SHA" --run "$GITHUB_RUN_ID" --out build/isolation-audit.json --extract build/unpacked --candidate
           python3 ci/prepare.py
           python3 ci/prepare-graphs.py
-      - run: node ci/scroll-native-graphs.mjs
+      - run: xvfb-run -a node ci/scroll-native-graphs.mjs
         env:
           ENGINE: ${{ matrix.engine }}
       - uses: actions/upload-artifact@v4

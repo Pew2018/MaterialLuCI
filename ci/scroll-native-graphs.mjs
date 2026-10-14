@@ -17,7 +17,7 @@ function source(revision,file){
 const scenarios=[];
 for(const design of ["classic","m3e"])for(const count of [1,4])for(const clock of ["off","native","pressure150ms"])scenarios.push({design,theme:"light",cards:"true",width:1280,kind:"native-chart",state:"idle",count,clock,shadow:"normal"});
 try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter(([name])=>name===(process.env.ENGINE||"chromium"))){
- const browser=await type.launch();
+ const browser=await type.launch({headless:false});
  try{for(let repeat=0;repeat<3;repeat++)for(const config of repeat%2?scenarios.slice().reverse():scenarios)for(const revision of ["after"]){
   const {design,theme,cards,width,kind,state}=config;
   const page=await browser.newPage({viewport:{width,height:844}});
@@ -88,7 +88,8 @@ try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter((
    sample.costs=costs;sample.heaviestFunctions=complete.filter(e=>e.name==="FunctionCall").sort((a,b)=>(b.dur||0)-(a.dur||0)).slice(0,8).map(e=>({durationMs:(e.dur||0)/1000,...e.args?.data}));
    sample.eventNames=[...new Set(events.map(e=>e.name))].filter(n=>/Raster|Task|Composite|Frame/.test(n));
   }
-  assert.ok(sample.scrollEvents.length>0&&Math.max(...sample.scrollEvents.map(e=>e.top))-Math.min(...sample.scrollEvents.map(e=>e.top))>200,"wheel must move main scrolling container");
+  sample.geometry=await page.evaluate(()=>({scrollY,scrollingTag:document.scrollingElement.tagName,scrollingHeight:document.scrollingElement.scrollHeight,viewport:innerHeight,body:getComputedStyle(document.body).overflow,html:getComputedStyle(document.documentElement).overflow,hit:document.elementFromPoint(innerWidth-80,400)?.outerHTML.slice(0,400)}));sample.validMovement=sample.scrollEvents.length>0&&Math.max(...sample.scrollEvents.map(e=>e.top))-Math.min(...sample.scrollEvents.map(e=>e.top))>200;
+  if(!sample.validMovement){await page.screenshot({path:out+"/"+id+"-invalid.png"});results.push({engine,repeat,...config,...sample});fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));throw Error("Invalid wheel sample: "+JSON.stringify(sample.geometry));}
   results.push({engine,browser:browser.version(),repeat,revision,baseline,...config,...sample});
   fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));console.log(id+" max="+sample.raf.max+" spikes="+sample.raf.over34+" graphs="+sample.graphUpdates.length+" scroll="+sample.scrollEvents.length);
   await page.close();
