@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import http.server,json,pathlib,os
+import http.server,json,pathlib,os,time
 os.chdir(pathlib.Path(__file__).resolve().parents[1]/"build/preview")
 def menu_node(title,children=None,order=10):
  return {"title":title,"satisfied":True,"order":order,"children":children or {}}
@@ -21,7 +21,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
   req=json.loads(self.rfile.read(int(self.headers.get("Content-Length","0"))))
   def respond(msg):
    params=msg.get("params",[]);method=params[2] if len(params)>2 else ""
-   values={"getFeatures":{},"getMountPoints":{"result":[{"mount":"/overlay","size":100000000,"free":80000000}]},"list":{"entries":[]},"changes":{"changes":{}},"access":{"access":True}}
+   values={"info":{"localtime":1700000000+int(time.monotonic())}, "getRealtimeStats":{"result":[[1700000000+int(time.monotonic())-1,100,80,60],[1700000000+int(time.monotonic()),120,90,70]]}, "getFeatures":{},"getMountPoints":{"result":[{"mount":"/overlay","size":100000000,"free":80000000}]},"list":{"entries":[]},"changes":{"changes":{}},"access":{"access":True}}
    if method in ("set","add","delete","apply","commit"):raise RuntimeError("Unexpected write in preview")
    return {"jsonrpc":"2.0","id":msg.get("id"),"result":[0,values.get(method,{})]}
   self.send_json([respond(x) for x in req] if isinstance(req,list) else respond(req))

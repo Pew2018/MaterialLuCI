@@ -23,7 +23,6 @@ return view.extend({
   Object.getPrototypeOf(L).hasSystemFeature=function(name){return name==='zram'||name==='sysntpd';};
   // Network discovery is unrelated to system geometry and would require RPC.
   widgets.NetworkSelect=form.Value;
-  poll.add(function(){const time=document.getElementById('localtime');if(time)time.value=new Date().toISOString();},1);
   return systemRenderer.render([1,{'Asia/Shanghai':{tzstring:'CST-8'}},1700000000]);
  },
  handleSaveApply:null,handleSave:null,handleReset:null
