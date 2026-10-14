@@ -1060,7 +1060,7 @@ body #maincontent[data-ml-page=leds] abbr[title]{text-decoration:none}
 
 /* Scoped UCI change review layout, identified from LuCI's actual change-list DOM. */
 body.modal-overlay-active #modal_overlay.ml-changes-overlay{padding:24px}
-body.modal-overlay-active #modal_overlay>.modal.ml-changes-dialog{box-sizing:border-box;width:min(560px,100%);min-width:0;max-width:100%;max-height:calc(var(--ml-vv-height) - 48px);overflow-x:hidden;overflow-y:auto;padding:20px 24px 12px;background:var(--ml-changes-surface,var(--surface));color:var(--ink)}
+body.modal-overlay-active #modal_overlay>.modal.ml-changes-dialog{--ml-changes-surface:var(--raised-surface,var(--surface));box-sizing:border-box;width:min(560px,100%);min-width:0;max-width:100%;max-height:calc(var(--ml-vv-height) - 48px);overflow-x:hidden;overflow-y:auto;padding:20px 24px 12px;background:var(--ml-changes-surface,var(--surface));color:var(--ink)}
 #modal_overlay .ml-changes-dialog>.cbi-section{min-width:0;margin:0;padding:0}
 #modal_overlay .ml-changes-dialog>.cbi-section>strong{display:block;margin:0 0 6px;color:var(--muted);font-size:12px;font-weight:500;line-height:18px}
 #modal_overlay .ml-changes-dialog>.cbi-section>br{display:none}
