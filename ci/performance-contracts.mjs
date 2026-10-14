@@ -159,7 +159,9 @@ function fixture(){
  assert.equal(decorations,0);
  f.window.MaterialSurfaces.ensure(view);f.drain();
  const passes=f.window.MaterialSurfaces.count(),writes=section.attributeWrites;
- const text=f.document.createElement("span");value.append(text);f.drain();
+ const text=f.document.createElement("span");let leafScans=0;const leafQuery=text.querySelectorAll;
+ text.querySelectorAll=function(s){leafScans++;return leafQuery.call(this,s);};value.append(text);f.drain();
+ assert.equal(leafScans,0,"plain polling leaves have no structural descendants to scan");text.querySelectorAll=leafQuery;
  text.textContent="12:34";f.notify({type:"characterData",target:text,addedNodes:[],removedNodes:[]});f.drain();
  const svg=f.document.createElement("svg"),path=f.document.createElement("path");value.append(svg);svg.append(path);f.drain();
  assert.equal(f.window.MaterialSurfaces.count(),passes,"text and SVG-path updates must not rescan card ownership");

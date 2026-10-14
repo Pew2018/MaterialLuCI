@@ -113,8 +113,9 @@
    // independently discover any real fields inserted outside those SVGs.
    if(svg?.parentElement?.classList.contains("ml-chart-surface"))continue;
    const firstPlot=svg&&!svg.parentElement?.classList.contains("ml-chart-surface")&&isPlot(svg);
-   // Reuse one structural/plot discovery per changed subtree.
-   const candidates=elements.flatMap(n=>[...(n.matches(structural+",svg")?[n]:[]),...n.querySelectorAll(structural+",svg")]).filter(n=>!n.closest?.(decoration));
+   // Reuse one structural/plot discovery per changed subtree. A leaf has no
+   // descendants to classify; keep root matching for late sections and plots.
+   const candidates=elements.flatMap(n=>[...(n.matches(structural+",svg")?[n]:[]),...(n.children.length?n.querySelectorAll(structural+",svg"):[])]).filter(n=>!n.closest?.(decoration));
    const newPlot=!svg&&candidates.some(plot=>plot.matches("svg")&&!plot.parentElement?.classList.contains("ml-chart-surface")&&isPlot(plot));
    if(r.target.id==="view"||r.target===main||firstRows||firstPlot||newPlot||candidates.some(n=>n.matches(structural))){
     const root=owner(r.target);if(root)roots.add(root);
