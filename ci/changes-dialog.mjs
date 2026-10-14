@@ -39,6 +39,10 @@ try{
   await page.evaluate(()=>MaterialRuntime.start(document.body));
   await page.waitForFunction(()=>document.querySelector(".modal")?.classList.contains("ml-changes-dialog"));
   const layout=await page.evaluate(()=>{const p=document.querySelector(".modal"),title=p.querySelector(":scope > h4"),a=p.querySelector(".right,.button-row"),apply=a.querySelector("button.cbi-button-positive.important");return {w:p.getBoundingClientRect().width,h:p.getBoundingClientRect().height,vw:innerWidth,vh:innerHeight,ch:p.clientHeight,sh:p.scrollHeight,overflowX:p.scrollWidth>p.clientWidth,order:[...a.children].map(n=>n.dataset.action||n.className),font:getComputedStyle(title).fontSize,applyParent:apply.parentElement.className};});
+  assert.equal(await page.evaluate(()=>{
+   const p=document.querySelector(".modal"),h=p.querySelector(":scope > h4"),a=p.querySelector(".right,.button-row");
+   return getComputedStyle(p).backgroundColor===getComputedStyle(h).backgroundColor&&getComputedStyle(p).backgroundColor===getComputedStyle(a).backgroundColor;
+  }),true,"title, body and action surfaces match");
   assert.equal(layout.overflowX,false,design+" "+theme+" "+width+"px horizontal overflow");
   assert.deepEqual(layout.order.map(item=>item==="cbi-combo-button"?"apply":item),["close","undo","apply"],"visual and keyboard action order");
   assert.ok(layout.w<=Math.min(560,layout.vw-32)+1,JSON.stringify(layout));
