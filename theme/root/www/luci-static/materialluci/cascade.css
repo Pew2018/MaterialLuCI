@@ -263,7 +263,14 @@ button>span:not(.tap-ripple),button>svg{position:relative;z-index:2}
 
 /* Keep modal commands in sight while the keyboard reduces the scroll surface. */
 #modal_overlay .modal>h4,#modal_overlay .modal>h3{position:sticky;top:-20px;z-index:3;background:var(--surface);margin:-20px -24px 12px;padding:20px 24px 12px}
-#modal_overlay .modal>.right>button{min-height:48px;line-height:20px}
+/* opkg uses native div.btn actions nested next to a checkbox label. */
+#modal_overlay .modal .right>:is(button,.btn):not(.cbi-dropdown){
+ display:inline-flex;align-items:center;justify-content:center;
+ min-height:48px;height:auto;min-width:64px;padding:0 12px;margin:0;line-height:20px;border:0
+}
+#modal_overlay .modal .right:has(>button,>.btn){
+ display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px
+}
 #modal_overlay .modal>.right{position:sticky;bottom:-12px;z-index:3;background:var(--surface);border-top:1px solid var(--divider);margin-bottom:-12px;padding:12px 0}
 body.modal-overlay-active #modal_overlay>.modal{scroll-padding-top:64px;scroll-padding-bottom:72px}
 @media(max-width:599px){
@@ -1037,14 +1044,8 @@ body .cbi-dynlist>.item[data-key] :is(strong,small,code){white-space:normal;over
 
 
 /* Dedicated adapters own switch and drawer states; generic buttons exclude them. */
-body .ml-switch-hit .mdc-switch .mdc-switch__ripple{display:none}
-body .ml-switch-hit .mdc-switch::before,body .ml-switch-hit .mdc-switch::after{background:transparent}
-body .ml-switch-hit md-switch{
- --md-switch-hover-state-layer-opacity:0;--md-switch-pressed-state-layer-opacity:0;
- --md-switch-selected-hover-state-layer-opacity:0;--md-switch-selected-pressed-state-layer-opacity:0;
- --md-switch-hover-state-layer-color:transparent;--md-switch-pressed-state-layer-color:transparent;
- --md-switch-selected-hover-state-layer-color:transparent;--md-switch-selected-pressed-state-layer-color:transparent;
-}
+/* Official state layers remain attached to the thumb; hover is feedback,
+   never a selected-state transition. MDC/M3 own their bounded ripple. */
 body .ml-sidebar button.ml-nav-parent{overflow:hidden;isolation:isolate;position:relative}
 body .ml-sidebar button.ml-nav-parent>.ml-nav-parent-label,
 body .ml-sidebar button.ml-nav-parent>.ml-nav-chevron{pointer-events:none;border-radius:0;background:transparent}

@@ -1,7 +1,7 @@
 "use strict";
 /* MDC enhancement layer. No cloned form values, RPC, ACL or route changes. */
 (function(){
- const {MDCCheckbox,MDCRadio,MDCFormField,MDCDialog}=MaterialMDCControls;
+ const {MDCCheckbox,MDCRadio,MDCFormField,MDCDialog,MDCRipple,MDCRippleFoundation}=MaterialMDCControls;
  const selections=new Map(),dialogs=new Map(),indicators=new Map();
  function element(tag,cls){const el=document.createElement(tag);el.className=cls;el.setAttribute("aria-hidden","true");return el;}
  function selection(input){
@@ -29,16 +29,33 @@
   const instance=radio?new MDCRadio(root):new MDCCheckbox(root);
   if(!radio)instance.indeterminate=indeterminate;
   root._mlMdcSelection=instance;input._mlMdcSelection=instance;
+  // The native label may span an entire sentence. MDC's default ripple
+  // measures that label; feedback must measure the 48px control layer instead.
+  // Use the public foundation adapter while keeping the original input/siblings.
+  let selectionRipple=null,disposed=false;
+  instance.ripple.destroy();
+  const rippleFrame=requestAnimationFrame(()=>{
+   if(disposed)return;
+   const adapter=MDCRipple.createAdapter({root,disabled:false,unbounded:true});
+   selectionRipple=new MDCRipple(root,new MDCRippleFoundation({...adapter,
+    computeBoundingRect:()=>ripple.getBoundingClientRect(),
+    isUnbounded:()=>true,isSurfaceDisabled:()=>input.matches(":disabled"),
+    isSurfaceActive:()=>input.matches(":active"),
+    registerInteractionHandler:(type,handler)=>input.addEventListener(type,handler,{passive:true}),
+    deregisterInteractionHandler:(type,handler)=>input.removeEventListener(type,handler)
+   }));
+   selectionRipple.unbounded=true;
+  });
   let formField=null;
   const label=root.querySelector("label");
-  if(label){root.classList.add("mdc-form-field");formField=new MDCFormField(root);formField.input=instance;}
-  function geometry(){MaterialRuntime.position(input,()=>input.isConnected?[input.offsetLeft,input.offsetTop]:null,([x,y])=>{MaterialRuntime.setStyle(root,"--ml-selection-left",x+"px");MaterialRuntime.setStyle(root,"--ml-selection-top",y+"px");});}
+  if(label){root.classList.add("mdc-form-field");formField=new MDCFormField(root);formField.input={get ripple(){return selectionRipple||undefined;}};}
+  function geometry(){MaterialRuntime.position(input,()=>input.isConnected?[input.offsetLeft,input.offsetTop]:null,([x,y])=>{MaterialRuntime.setStyle(root,"--ml-selection-left",x+"px");MaterialRuntime.setStyle(root,"--ml-selection-top",y+"px");selectionRipple?.layout();});}
   const unwatch=MaterialRuntime.watchSize(root,geometry);geometry();
   const sync=()=>{if(radio){if(root.classList.contains("mdc-radio--disabled")!==input.disabled)instance.disabled=input.disabled;}else{if(instance.checked!==input.checked)instance.checked=input.checked;if(instance.indeterminate!==input.indeterminate)instance.indeterminate=input.indeterminate;}};
   const attrs=new MutationObserver(sync);attrs.observe(input,{attributes:true,attributeFilter:["checked","disabled"]});
   const reset=()=>setTimeout(sync,0);document.addEventListener("reset",reset,true);
   selections.set(input,{destroy(){
-   attrs.disconnect();unwatch();MaterialRuntime.dropPosition(input);document.removeEventListener("reset",reset,true);formField?.destroy();instance.destroy();
+   disposed=true;cancelAnimationFrame(rippleFrame);selectionRipple?.destroy();attrs.disconnect();unwatch();MaterialRuntime.dropPosition(input);document.removeEventListener("reset",reset,true);formField?.destroy();instance.destroy();
    root._mlMdcSelection=null;input._mlMdcSelection=null;input.classList.remove(prefix+"__native-control");root.classList.remove(prefix,"ml-mdc-selection","mdc-form-field");background.remove();ripple.remove();focus.remove();selections.delete(input);
   }});
  }
