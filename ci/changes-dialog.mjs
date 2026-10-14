@@ -46,7 +46,8 @@ try{
   assert.equal(layout.overflowX,false,design+" "+theme+" "+width+"px horizontal overflow");
   assert.deepEqual(layout.order.map(item=>item==="cbi-combo-button"?"apply":item),["close","undo","apply"],"visual and keyboard action order");
   assert.ok(layout.w<=Math.min(560,layout.vw-32)+1,JSON.stringify(layout));
-  if(count===60){assert.ok(layout.sh>layout.ch,"large summaries must scroll");await page.evaluate(()=>document.querySelector(".modal").scrollTop=99999);const sticky=await page.evaluate(()=>({top:document.querySelector(".modal>h4").getBoundingClientRect().top,bottom:document.querySelector(".modal .right,.modal .button-row").getBoundingClientRect().bottom,vh:innerHeight}));assert.ok(sticky.top>=-1&&sticky.top<100,JSON.stringify(sticky));assert.ok(sticky.bottom<=sticky.vh+1,JSON.stringify(sticky));}
+  if(count===60){assert.ok(layout.sh>layout.ch,"large summaries must scroll");await page.evaluate(()=>document.querySelector(".modal").scrollTop=99999);const sticky=await page.evaluate(()=>({top:document.querySelector(".modal>h4").getBoundingClientRect().top,bottom:document.querySelector(".modal .right,.modal .button-row").getBoundingClientRect().bottom,vh:innerHeight}));assert.ok(sticky.top>=-1&&sticky.top<100,JSON.stringify(sticky));assert.ok(sticky.bottom<=sticky.vh+1,JSON.stringify(sticky));
+   assert.equal(await page.evaluate(()=>{const p=document.querySelector(".modal"),h=p.querySelector(":scope > h4"),r=p.getBoundingClientRect(),hr=h.getBoundingClientRect();return Math.abs(hr.top-r.top)<2&&h.contains(document.elementFromPoint(r.x+r.width/2,r.y+4));}),true,"sticky title covers the surface top without leaking command rows");}
   await page.screenshot({path:"dist/ui-refinement/changes-dialog/"+design+"-"+theme+"-"+width+"px-"+count+".png"});
   if(count===2||count===60){
    if(actions==="button-row"&&count===60)await page.locator('[data-action="menu"]').click();
