@@ -5,6 +5,15 @@
  sidebar=document.getElementById("ml-sidebar"),toolbar=document.querySelector(".ml-toolbar"),
  menuButton=document.getElementById("ml-menu-button"),scrim=document.getElementById("ml-drawer-scrim");
  if(!main||!appearance)return;
+ const themeColorMeta=document.querySelector('meta[name="theme-color"]');
+ function syncBrowserChromeColor(){
+  if(!themeColorMeta||!toolbar)return;
+  const color=getComputedStyle(toolbar).backgroundColor;
+  if(color&&color!=="rgba(0, 0, 0, 0)"&&themeColorMeta.content!==color)themeColorMeta.content=color;
+ }
+ syncBrowserChromeColor();
+ const themeColorObserver=new MutationObserver(syncBrowserChromeColor);
+ themeColorObserver.observe(document.documentElement,{attributes:true,attributeFilter:["data-theme","data-toolbar","style"]});
  function identifyPage(){
   const parts=route=>Array.isArray(route)?route.filter(Boolean):typeof route==="string"?route.split(/[\\/-]+/).filter(Boolean):[];
   const routes=[document.body.dataset.page,window.L?.env?.dispatchpath,window.L?.env?.requestpath,location.pathname];
@@ -15,7 +24,7 @@
  const zh=document.documentElement.lang.startsWith("zh"),t=(cn,en)=>zh?cn:en;
  const node=(tag,attrs={},children=[])=>{const el=document.createElement(tag);for(const [key,val] of Object.entries(attrs)){if(key==="text")el.textContent=val;else if(key==="class")el.className=val;else el.setAttribute(key,String(val));}for(const child of children)el.append(child);return el;};
  const textButton=(text,fn,cls="text-action")=>{if(cls==="text-action"&&MaterialComponents.isM3())return MaterialComponents.button(text,fn,cls,"text");const b=node("button",{type:"button",class:cls},[node("span",{text})]);b.addEventListener("click",fn);return b;};
- const switches=new Map();
+ const switches=new Map(),disclosures=new Map();
  function switchControl(input,label){
   {const entry=MaterialComponents.switchControl(input,label);if(entry){const cleanup=entry.destroy;entry.destroy=()=>{cleanup();switches.delete(input);};switches.set(input,entry);return entry.control;}}
   const control=node("button",{type:"button",class:"mdc-switch "+(input.checked?"mdc-switch--selected":"mdc-switch--unselected"),role:"switch","aria-label":label,"aria-checked":String(!!input.checked)},[
@@ -64,7 +73,7 @@
   sync();return control;
  }
  
- window.addEventListener("pagehide",event=>{if(!event.persisted)for(const entry of [...switches.values()])entry.destroy();});
+ window.addEventListener("pagehide",event=>{if(!event.persisted){for(const entry of [...switches.values()])entry.destroy();for(const entry of [...disclosures.values()])entry.destroy();}});
 
  // Keep LuCI's span and first text node: ui.showIndicator updates them in place.
  // Only poll-status is an automatic-refresh action; other indicators keep their semantics.
@@ -73,10 +82,11 @@
   const el=indicators?.querySelector('[data-indicator="poll-status"]');
   if(!el)return;
   const paused=el.getAttribute("data-style")==="inactive";
-  el.classList.add("ml-poll-action");el.setAttribute("role","button");el.tabIndex=0;
-  el.setAttribute("aria-label",paused?t("恢复自动刷新","Resume automatic refresh"):t("暂停自动刷新","Pause automatic refresh"));
-  el.title=paused?t("已暂停自动刷新","Automatic refresh paused"):t("正在自动刷新","Automatic refresh running");
-  el.dataset.paused=String(paused);
+  if(!el.classList.contains("ml-poll-action"))el.classList.add("ml-poll-action");MaterialRuntime.setAttr(el,"role","button");MaterialRuntime.setAttr(el,"tabindex",0);
+  MaterialRuntime.setAttr(el,"aria-label",paused?t("恢复自动刷新","Resume automatic refresh"):t("暂停自动刷新","Pause automatic refresh"));
+  const label=paused?t("已暂停自动刷新","Automatic refresh paused"):t("正在自动刷新","Automatic refresh running");
+  if(window.MaterialExtras)MaterialExtras.setTooltip(el,label);else MaterialRuntime.setAttr(el,"title",label);
+  MaterialRuntime.setAttr(el,"data-paused",paused);
   if(!pollBound.has(el)){pollBound.add(el);el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();if(!e.repeat)el.click();}});MaterialFeedback.bind(el);}
   // LuCI creates an inactive indicator without a click handler. It does not
   // retrofit one when polling resumes, so provide the same Poll start/stop
@@ -197,9 +207,9 @@
   const general=group(t("界面","Appearance"));general.dataset.group="general";
   const design=node("div",{class:"ml-mode-options ml-design-options",role:"group","aria-label":t("界面风格","Interface style")});
   const pending=node("small",{class:"ml-design-notice",role:"status"});
-  const syncDesign=()=>{design.querySelectorAll("[data-design-option]").forEach(el=>el.setAttribute("aria-pressed",String(el.dataset.designOption===appearance.prefs.design)));pending.textContent=appearance.prefs.design!==appearance.activeDesign?t("已保存。下次打开页面时生效；当前未保存的设置会保留。","Saved. Applies on the next page load; unsaved settings remain on this page."):t("风格选择仅保存于当前浏览器。","Style selection is saved in this browser only.");};
-  for(const [key,label] of [["classic","Classic"],["m3e",t("M3E（实验）","M3E (experimental)")]]){const option=MaterialComponents.button(label,()=>{appearance.set("design",key);syncDesign();},"ml-mode-option");option.dataset.designOption=key;design.append(option);}
-  general.append(row(t("界面风格","Interface style"),t("共享原有导航与页面布局。","Shared navigation and page layout."),design),pending);syncDesign();
+  const syncDesign=()=>{design.querySelectorAll("[data-design-option]").forEach(el=>el.setAttribute("aria-pressed",String(el.dataset.designOption===appearance.prefs.design)));pending.textContent=appearance.prefs.design!==appearance.activeDesign?t("已保存。下次打开页面时生效；当前未保存的设置会保留。","Saved. Applies on the next page load; unsaved settings remain on this page."):t("仅在此浏览器生效。","Applies in this browser only.");};
+  for(const [key,label] of [["classic","Classic"],["m3e","M3E"]]){const option=MaterialComponents.button(label,()=>{appearance.set("design",key);syncDesign();},"ml-mode-option");option.dataset.designOption=key;design.append(option);}
+  general.append(row(t("界面风格","Interface style"),t("选择控件与表面的设计风格。","Choose the design of controls and surfaces."),design),pending);syncDesign();
   const modeLabels={system:t("跟随系统","System"),light:t("浅色","Light"),dark:t("深色","Dark")};
   const mode=node("div",{class:"ml-mode-options",role:"radiogroup","aria-label":t("显示模式","Display mode")});
   for(const [key,label] of Object.entries(modeLabels)){
@@ -207,7 +217,7 @@
    if(option.tagName==="BUTTON")option.setAttribute("role","radio");else mode.setAttribute("role","group");option.setAttribute("aria-checked",String(key===appearance.prefs.mode));option.setAttribute("aria-pressed",String(key===appearance.prefs.mode));mode.append(option);
   }
   general.append(row(t("显示模式","Display mode"),t("仅改变当前浏览器的界面外观。","Changes appearance in this browser only."),mode));
-  general.append(prefSwitch("cards",t("分组卡片","Grouped cards"),t("为设置分组添加小圆角表面。","Use small cornered surfaces for groups.")));
+  general.append(prefSwitch("cards",t("分组卡片","Grouped cards"),t("使用卡片区分设置与状态分组。","Separate settings and status into cards.")));
   const identity=group(t("标题与设备名称","Title and device name"));identity.dataset.group="identity";
   identity.append(node("small",{class:"ml-design-notice",text:t("以下偏好仅保存在当前浏览器。","These preferences are stored in this browser only.")}));
   function brandRow(title,description,control){const setting=row(title,description,control);setting.classList.add("ml-brand-row");return setting;}
@@ -226,7 +236,8 @@
   const colorError=node("div",{id:"ml-brand-title-color-error",class:"ml-field-error",role:"alert","aria-live":"polite"});
   const colorWarning=node("div",{id:"ml-brand-title-color-warning",class:"ml-brand-warning",role:"status","aria-live":"polite"});
   const colorFields=node("div",{id:"ml-brand-title-color-fields",class:"ml-brand-color-fields"},[colorText,colorPicker]);
-  function updateColorFeedback(){const custom=colorMode.value==="custom";colorFields.hidden=!custom;colorWarning.hidden=true;if(!custom)return;const contrast=window.MaterialBranding.contrastAgainstToolbar(window.MaterialBranding.prefs.toolbarTitleColorValue);if(contrast!==null&&contrast<4.5){colorWarning.hidden=false;colorWarning.textContent=t("与当前顶栏背景的对比度低于 4.5:1。仍按你的选择应用。","Contrast against the current toolbar is below 4.5:1. Your choice remains applied.");}}
+  let customColorRow=null;
+  function updateColorFeedback(){const custom=colorMode.value==="custom";colorFields.hidden=!custom;if(customColorRow)customColorRow.hidden=!custom;colorWarning.hidden=true;if(!custom)return;const contrast=window.MaterialBranding.contrastAgainstToolbar(window.MaterialBranding.prefs.toolbarTitleColorValue);if(contrast!==null&&contrast<4.5){colorWarning.hidden=false;colorWarning.textContent=t("与当前顶栏背景的对比度低于 4.5:1。仍按你的选择应用。","Contrast against the current toolbar is below 4.5:1. Your choice remains applied.");}}
   function applyBrandColor(value,source){if(!/^#[0-9a-f]{6}$/i.test(value)){colorError.textContent=t("请输入 #RRGGBB 格式的 6 位 HEX 颜色。","Enter a six-digit HEX color in #RRGGBB format.");colorText.setAttribute("aria-invalid","true");return;}const normalized=value.toUpperCase();colorError.textContent="";colorText.setAttribute("aria-invalid","false");if(source!=="text")colorText.value=normalized;if(source!=="picker")colorPicker.value=normalized;window.MaterialBranding.set("toolbarTitleColorValue",normalized);updateColorFeedback();}
   colorText.value=window.MaterialBranding.prefs.toolbarTitleColorValue;colorPicker.value=colorText.value;
   colorText.addEventListener("input",()=>applyBrandColor(colorText.value,"text"));colorText.addEventListener("blur",()=>{if(/^#[0-9a-f]{6}$/i.test(colorText.value))colorText.value=colorText.value.toUpperCase();});
@@ -234,7 +245,7 @@
   colorMode.addEventListener("change",()=>{window.MaterialBranding.set("toolbarTitleColor",colorMode.value);colorError.textContent="";colorText.setAttribute("aria-invalid","false");updateColorFeedback();});
   colorText.addEventListener("keydown",event=>{if(event.key==="Enter")event.preventDefault();});
   const autoColor=textButton(t("恢复自动","Restore automatic"),()=>{window.MaterialBranding.set("toolbarTitleColor","auto");colorMode.value="auto";colorError.textContent="";colorText.setAttribute("aria-invalid","false");updateColorFeedback();});
-  identity.append(brandRow(t("自定义颜色","Custom color"),t("本地颜色选择器；仅改变标题文字。","Local color picker; changes only the title text."),node("div",{class:"ml-brand-controls ml-brand-color-control"},[colorFields,autoColor])));
+  customColorRow=brandRow(t("自定义颜色","Custom color"),t("仅调整顶栏标题文字。","Changes only the toolbar title text."),node("div",{class:"ml-brand-controls ml-brand-color-control"},[colorFields,autoColor]));identity.append(customColorRow);
   identity.append(colorError,colorWarning);updateColorFeedback();window.addEventListener("materialluci:appearance",updateColorFeedback);
 
   const visibility=node("input",{id:"ml-brand-sidebar-visible",type:"checkbox",class:"ml-switch","data-ml-owner":"appearance","aria-label":t("显示侧边栏设备名称","Show sidebar device name")});
@@ -243,19 +254,21 @@
   const nameInput=brandTextField("ml-brand-sidebar-name",t("侧边栏显示名称","Sidebar display name"),window.MaterialBranding.prefs.sidebarName,document.getElementById("ml-sidebar-name")?.dataset.defaultName||"");
   nameInput.disabled=!visibility.checked;bindBrandText(nameInput,"sidebarName");
   visibility.addEventListener("change",()=>{window.MaterialBranding.set("sidebarNameVisible",visibility.checked);nameInput.disabled=!visibility.checked;});
-  identity.append(brandRow(t("显示侧边栏设备名称","Show sidebar device name"),t("关闭仅隐藏名称；手机抽屉关闭按钮仍保留。","Hides only the name; the mobile drawer close button remains."),visibilityControl));
+  identity.append(brandRow(t("显示侧边栏设备名称","Show sidebar device name"),t("在侧边栏顶部显示设备名称。","Show the device name above navigation."),visibilityControl));
   const restoreName=textButton(t("恢复设备名称","Restore device name"),()=>{window.MaterialBranding.set("sidebarName","");nameInput.value="";});
-  identity.append(brandRow(t("侧边栏显示名称","Sidebar display name"),t("留空时使用当前真实 hostname。","Blank uses the current router hostname."),node("div",{class:"ml-brand-controls"},[nameInput,restoreName])));
-  const palettes=[["OnePlus Classic",[["OnePlus Blue","#42A5F5"],["Golden","#CC6F4E"],["Lemon Yellow","#E6A545"],["Grass Green","#7DC22F"],["Charm Purple","#9575CD"],["Sky Blue","#26C6DA"],["Vigour Red","#F06292"],["Fashion Pink","#BA68C8"]]],["Material Colors",[["Blue","#2196F3"],["Teal","#009688"],["Green","#4CAF50"],["Red","#F44336"],["Orange","#FF9800"],["Purple","#9C27B0"],["Cyan","#00BCD4"],["Indigo","#3F51B5"],["Pink","#E91E63"],["Blue Grey","#607D8B"],["Deep Orange","#FF5722"],["Light Green","#8BC34A"]]]];
-  function updateSwatches(){host.querySelectorAll(".ml-swatch-item").forEach(b=>{const active=b.dataset.seed===appearance.prefs.seed;b.setAttribute("aria-pressed",String(active));const s=b.querySelector(".ml-swatch");s.textContent=active?"✓":"";s.style.color=MaterialPalette.generate(b.dataset.seed,false).swatchForeground;});}
-  for(const [title,colors] of palettes){const g=group(title);g.dataset.group=title==="OnePlus Classic"?"oneplus":"material";const grid=node("div",{class:"ml-swatches"});for(const [label,color] of colors){const b=textButton(label,()=>{appearance.set("seed",color);hex.value=color;error.textContent="";hex.setAttribute("aria-invalid","false");updateSwatches();},"ml-swatch-item");b.dataset.seed=color;const sw=node("span",{class:"ml-swatch","aria-hidden":"true"});sw.style.background=color;b.prepend(sw);grid.append(b);}g.append(grid);}
+  identity.append(brandRow(t("侧边栏显示名称","Sidebar display name"),t("留空时使用设备主机名。","Leave blank to use the router hostname."),node("div",{class:"ml-brand-controls"},[nameInput,restoreName])));
+  const palettes=[["MaterialLuCI Classic",[[t("经典蓝","Classic Blue"),"#42A5F5"],["Golden","#CC6F4E"],["Lemon Yellow","#E6A545"],["Grass Green","#7DC22F"],["Charm Purple","#9575CD"],["Sky Blue","#26C6DA"],["Vigour Red","#F06292"],["Fashion Pink","#BA68C8"]]],["Material Colors",[["Blue","#2196F3"],["Teal","#009688"],["Green","#4CAF50"],["Red","#F44336"],["Orange","#FF9800"],["Purple","#9C27B0"],["Cyan","#00BCD4"],["Indigo","#3F51B5"],["Pink","#E91E63"],["Blue Grey","#607D8B"],["Deep Orange","#FF5722"],["Light Green","#8BC34A"]]]];
+  function updateSwatches(){host.querySelectorAll(".ml-swatch-item").forEach(b=>{const active=b.dataset.seed===appearance.prefs.seed;b.setAttribute("aria-pressed",String(active));const s=b.querySelector(".ml-swatch");if(s.textContent)s.textContent="";if(s.getAttribute("data-selected")!==String(active))s.setAttribute("data-selected",String(active));s.style.color=MaterialPalette.swatchForeground(b.dataset.seed);});}
+  for(const [title,colors] of palettes){const g=group(title);g.dataset.group=title==="MaterialLuCI Classic"?"classic":"material";const grid=node("div",{class:"ml-swatches"});for(const [label,color] of colors){const b=textButton(label,()=>{appearance.set("seed",color);hex.value=color;error.textContent="";hex.setAttribute("aria-invalid","false");updateSwatches();},"ml-swatch-item");b.dataset.seed=color;const sw=node("span",{class:"ml-swatch","aria-hidden":"true"});sw.style.background=color;b.prepend(sw);grid.append(b);}g.append(grid);}
   const custom=group(t("自定义强调色","Custom accent")),label=node("label",{for:"ml-hex",text:"HEX"}),hex=node("input",{id:"ml-hex",type:"text",maxlength:7,autocomplete:"off",spellcheck:"false","aria-describedby":"ml-hex-error"}),error=node("div",{id:"ml-hex-error",class:"ml-field-error",role:"status"});
   hex.value=appearance.prefs.seed;hex.addEventListener("input",()=>{const pos=hex.selectionStart;hex.value="#"+hex.value.replace(/[^0-9a-f]/gi,"").slice(0,6).toUpperCase();hex.setSelectionRange(Math.min(pos,hex.value.length),Math.min(pos,hex.value.length));const valid=/^#[0-9A-F]{6}$/.test(hex.value);hex.setAttribute("aria-invalid",String(!valid));error.textContent=valid?"":t("请输入 6 位 HEX 颜色值","Enter a 6 digit HEX color");if(valid){appearance.set("seed",hex.value);updateSwatches();}});
   custom.dataset.group="custom";custom.append(label,hex,error);
-  const ranges=group(t("额外着色范围","Additional accent areas"));ranges.dataset.group="ranges";general.after(ranges);host.append(custom);
-  ranges.append(prefSwitch("toolbar",t("顶栏背景","Toolbar background"),t("使用派生主表面和对应文字色。","Use the derived primary surface.")),prefSwitch("categories",t("分组标题","Section headings"),t("使用可读的强调色文字。","Use contrast adjusted accent text.")),prefSwitch("icons",t("导航与返回图标","Navigation and back icons"),t("为中性顶栏图标着色。","Accent icons in the neutral toolbar.")));
+  const ranges=group(t("强调色应用","Accent areas"));ranges.dataset.group="ranges";general.after(ranges);host.append(custom);
+  ranges.append(prefSwitch("toolbar",t("顶栏背景","Toolbar background"),t("将强调色用于顶栏背景。","Use the accent color for the toolbar.")),prefSwitch("categories",t("分组标题","Section headings"),t("将强调色用于分组标题。","Use the accent color for section headings.")),prefSwitch("icons",t("导航与返回图标","Navigation and back icons"),t("为中性顶栏图标着色。","Accent icons in the neutral toolbar.")));
 
-  updateSwatches();MaterialFeedback.bind(host);
+  updateSwatches();
+  // The runtime discovers each feedback control separately. Binding the whole
+  // palette here constructed every official ripple in one uninterruptible job.
  }
  function allFields(root){
   const selector='[id],[name]';
@@ -273,8 +286,10 @@
   const details=node("details",{id:"ml-appearance-entry",class:"ml-appearance-entry",open:"true"},[node("summary",{text:t("主题外观（此浏览器）","Theme appearance (this browser)")})]);
   const desktop=matchMedia("(min-width:1024px)");
   const syncDisclosure=()=>{if(desktop.matches)details.open=true;};
-  field.after(details);details.addEventListener("toggle",()=>{if(desktop.matches&&!details.open)details.open=true;if(details.open)openAppearance(details);});
+  const toggle=()=>{if(desktop.matches&&!details.open)details.open=true;if(details.open)openAppearance(details);};
+  field.after(details);details.addEventListener("toggle",toggle);
   if(desktop.addEventListener)desktop.addEventListener("change",syncDisclosure);else desktop.addListener(syncDisclosure);
+  disclosures.set(details,{destroy(){details.removeEventListener("toggle",toggle);if(desktop.removeEventListener)desktop.removeEventListener("change",syncDisclosure);else desktop.removeListener(syncDisclosure);disclosures.delete(details);}});
   syncDisclosure();if(details.open)openAppearance(details);
  }
  function enhanceSwitch(input){
@@ -327,8 +342,12 @@
  if(document.querySelector('input[name="luci_password"]'))document.body.classList.add("ml-login");
  MaterialSurfaces.prepare(main);
  enhance(main);
- MaterialRuntime.register({range:true,discoverSelector:'div.btn,.cbi-page-actions>input,.ifacebox-head[style],select,[id$=mediaurlbase],[name$=mediaurlbase]',priority:-20,initial:false,enhance(root){if(root.closest?.("#maincontent,#modal_overlay,.ml-backdrop"))enhance(root);},cleanup(root){MaterialRuntime.cleanup(root,switches,"input");}});
+ MaterialRuntime.register({range:true,discoverSelector:'div.btn,.cbi-page-actions>input,.ifacebox-head[style],select,[id$=mediaurlbase],[name$=mediaurlbase]',priority:-20,initial:false,enhance(root){if(root.closest?.("#maincontent,#modal_overlay,.ml-backdrop"))enhance(root);},cleanup(root){MaterialRuntime.cleanup(root,switches,"input");MaterialRuntime.cleanup(root,disclosures,"#ml-appearance-entry");}});
  MaterialRuntime.register({priority:-10,selector:'.cbi-checkbox>input[type="checkbox"],input.cbi-input-checkbox,.cbi-value-field input[type="checkbox"]',enhance:enhanceSwitch});
+ MaterialRuntime.registerLayout(records=>{
+  if(!disclosures.size||!records.some(r=>[...r.removedNodes].some(n=>n.nodeType===1)))return;
+  for(const [details,entry] of [...disclosures])if(!details.isConnected)entry.destroy();
+ });
  MaterialRuntime.start(document.body);
  const vv=window.visualViewport,root=document.documentElement;let viewportFrame=0;
  const editorSelector='input:not([type]),input[type=""],input[type=text],input[type=password],input[type=email],input[type=url],input[type=tel],input[type=search],input[type=number],textarea';

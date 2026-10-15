@@ -44,6 +44,7 @@ jobs:
           sh -n theme/root/etc/uci-defaults/95-materialluci
           python3 ci/template-syntax.py
           node ci/performance-contracts.mjs
+          node ci/swatch-contract.mjs
       - name: Build and audit actual IPK
         env:
           GITHUB_SHA: ${{ env.SOURCE_SHA }}

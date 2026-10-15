@@ -10,7 +10,14 @@ if source.suffix==".zip":
  assert len(names)==1,names
  name=pathlib.PurePosixPath(names[0]).name;raw=z.read(names[0])
 else:name=source.name;raw=source.read_bytes()
+meta=json.loads(pathlib.Path("theme/package.json").read_text())
+assert json.loads(pathlib.Path("package.json").read_text())["version"]==meta["version"]
+assert name==f'{meta["name"]}_{meta["version"]}_{meta["architecture"]}.ipk'
 outer=tarfile.open(fileobj=io.BytesIO(raw))
+ctrl=tarfile.open(fileobj=io.BytesIO(outer.extractfile("./control.tar.gz").read()))
+control=ctrl.extractfile("./control").read().decode()
+for key,field in (("name","Package"),("version","Version"),("architecture","Architecture"),("dependencies","Depends")):
+ assert f'{field}: {meta[key]}\n' in control,(field,meta[key])
 data=tarfile.open(fileobj=io.BytesIO(outer.extractfile("./data.tar.gz").read()))
 files={}
 for member in data:
@@ -34,6 +41,7 @@ for template_path, payload in files.items():
  if not template_path.endswith(".htm"):continue
  for resource in re.findall(r'<%=media%>/([^"<>?]+)[?]v=',payload.decode()):assert assets+resource in files,resource
 checks={
+ "package_metadata_matches_payload":True,
  "neutral_browser_hints":'#FAFAFA' in header and ('#121212' in header or '#121212' in files[assets+"startup.js"].decode()),
  "appearance_present":"ml-appearance-entry" in files[assets+"app.js"].decode(),
  "view_observer_present":"view" in files[assets+"wait.js"].decode(),
@@ -74,7 +82,14 @@ if a.candidate:
   assert 'MaterialComponents.progress' in wait and 'MDCLinearProgress' in adapter and 'ml-wavy-progress' in adapter
   assert "ml-wave-travel" in files[assets+"design-m3.css"].decode()
   assert "md-ripple" in files[assets+"material-web.js"].decode()
+  assert 'scene:"view"' in wait and 'scene:"modal"' in wait
+  assert re.search(r'\.scene\s*!==?\s*["\x27]view["\x27]',adapter), "view must bypass wavy engine"
+  assert re.search(r'\.scene\s*!==?\s*["\x27]modal["\x27]',adapter), "modal must bypass wavy engine"
+  checks["view_and_modal_official_mdc_scene_contract_packaged"]=True
   checks["dual_style_progress_adapter_packaged"]=True
+  assert "mdc-linear-progress-primary-indeterminate-translate" in shared_css
+  assert "height:4px" in files[assets+"design-m3.css"].decode() and "height:16px" in files[assets+"design-m3.css"].decode()
+  checks["official_animation_and_progress_hosts_packaged"]=True
   checks["expressive_wave_and_official_ripple_packaged"]=True
  else:assert 'MDCLinearProgress' in wait
  assert '<svg' in files[assets+"icons/pause.svg"].decode()

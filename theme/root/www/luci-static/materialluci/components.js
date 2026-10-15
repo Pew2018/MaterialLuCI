@@ -106,8 +106,9 @@
   if(old!==group){if(old){old.delete(input);queueGroup(old);pruneGroup(old);}group.add(input);membership.set(input,group);}
   queueGroup(group);
  }
- function progress(node){
-  if(m3()){
+ function progress(node,options={}){
+  // View and modal waits use official MDC; general task feedback retains its engine.
+  if(m3()&&options.scene!=="view"&&options.scene!=="modal"){
    // Project-owned M3 Expressive adapter: Material Web 2.5 has no wavy API.
    // Native host retains the accessible indeterminate progress semantics.
    node.classList.remove("mdc-linear-progress","mdc-linear-progress--indeterminate","mdc-linear-progress--closed");
@@ -127,7 +128,7 @@
    const resize=new ResizeObserver(paint);resize.observe(node);paint();
    return {determinate:false,buffer:1,open(){},destroy(){resize.disconnect();svg.remove();}};
   }
-  if(window.MaterialMDC?.MDCLinearProgress){node.dataset.mlProgressEngine="mdc";return new MaterialMDC.MDCLinearProgress(node);}
+  if(window.MaterialMDC?.MDCLinearProgress){node.dataset.mlProgressEngine="mdc";node.dataset.mlComponent="progress";return new MaterialMDC.MDCLinearProgress(node);}
   node.dataset.mlProgressFallback="true";node.textContent="";return {open(){},destroy(){}};
  }
  function enhance(root){

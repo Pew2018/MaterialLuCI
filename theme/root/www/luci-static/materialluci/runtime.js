@@ -14,31 +14,50 @@
  }
  // One discovery query per new subtree, then dispatch only matching adapters.
  // Never memoize a container as complete: later real fields must be found.
- const discovery={};
+ const discovery={},enhanced=new WeakSet();
+ let discoveryPlans=new Map();
+ function plan(initial){
+  if(!discoveryPlans.has(initial)){
+   const active=adapters.filter(a=>!initial||a.initial!==false);
+   discoveryPlans.set(initial,{active,selector:[...new Set(active.map(a=>a.discoverSelector||a.selector).filter(Boolean))].join(",")});
+  }
+  return discoveryPlans.get(initial);
+ }
  function collect(root,initial=false){
   enqueue(discovery,root,()=>{
-   const active=adapters.filter(a=>!initial||a.initial!==false);
-   const selectors=[...new Set(active.map(a=>a.discoverSelector||a.selector).filter(Boolean))];
-   const selector=selectors.join(",");
-   const candidates=selector?[...(root.matches?.(selector)?[root]:[]),...root.querySelectorAll(selector)].filter(n=>!decorative(n)):[];
+   const {active,selector}=plan(initial);
+   if(!selector)return;
+   const matchesRoot=!!root.matches?.(selector);
+   // Polling often replaces a leaf status node. It cannot contain controls.
+   // Still test the root itself so newly inserted native controls are found.
+   if(!matchesRoot&&!root.children?.length)return;
+   const candidates=(matchesRoot?[root]:[]).concat(root.children?.length?[...root.querySelectorAll(selector)]:[]).filter(n=>!decorative(n));
+   if(!candidates.length)return;
    for(const a of active){
     const gate=a.discoverSelector||a.selector;
     const nodes=gate?candidates.filter(n=>n.matches(gate)):[];
     if(a.range){
-     if(!gate||nodes.length)enqueue(a,root,()=>a.enhance(root));
+     if(!gate||nodes.length)enqueue(a,root,()=>{enhanced.add(root);a.enhance(root);});
      continue;
     }
     for(const n of nodes){
      if(!a.pending)a.pending=new WeakSet();
      if(a.pending.has(n))continue;a.pending.add(n);
-     jobs.push(()=>{a.pending.delete(n);if(n.isConnected&&!decorative(n))a.enhance(n);});
+     jobs.push(()=>{a.pending.delete(n);if(n.isConnected&&!decorative(n)){enhanced.add(n);a.enhance(n);}});
     }
    }
   });
  }
  function flush(){
   timer=0;if(stopped)return;
-  for(const n of compact(removed))if(!n.isConnected)for(const a of adapters)if(a.cleanup)jobs.push(()=>{if(!n.isConnected)a.cleanup(n);});
+  for(const n of compact(removed))if(!n.isConnected){
+   // Polling replaces hundreds of plain spans. A leaf which never matched a
+   // discovery gate cannot own an adapter. Remember enhanced nodes so changing
+   // a control\'s class before removal does not bypass its destruction.
+   const selector=plan(false).selector;
+   if(!n.children?.length&&!enhanced.has(n)&&selector&&!n.matches?.(selector))continue;
+   for(const a of adapters)if(a.cleanup)jobs.push(()=>{if(!n.isConnected)a.cleanup(n);});
+  }
   for(const n of compact(added))if(n.isConnected&&!decorative(n))collect(n);
   const until=performance.now()+8;
   // Cooperative budget: a single selector query/component constructor cannot
@@ -80,7 +99,7 @@
   let callbacks=sizeCallbacks.get(root);if(!callbacks){callbacks=new Set();sizeCallbacks.set(root,callbacks);resize.observe(root);}callbacks.add(callback);
   return ()=>{callbacks.delete(callback);if(!callbacks.size){resize.unobserve(root);sizeCallbacks.delete(root);sizes.delete(root);}};
  }
- window.MaterialRuntime={registerLayout(prepare){layouts.push(prepare);},preparePending(){const records=observer.takeRecords();if(records.length)discover(records);},register(a){adapters.push(a);adapters.sort((a,b)=>(a.priority||0)-(b.priority||0));},start(root){if(started)return;started=true;collect(root,true);observer.observe(document.body,{childList:true,subtree:true});schedule();},cleanup:inRemoved,position,watchSize,dropPosition(key){geometryJobs.delete(key);},setStyle(el,key,value){if(el.style.getPropertyValue(key)!==value)el.style.setProperty(key,value);},setAttr(el,key,value){if(el.getAttribute(key)!==String(value))el.setAttribute(key,String(value));}};
+ window.MaterialRuntime={registerLayout(prepare){layouts.push(prepare);},preparePending(){const records=observer.takeRecords();if(records.length)discover(records);},register(a){discoveryPlans.clear();adapters.push(a);adapters.sort((a,b)=>(a.priority||0)-(b.priority||0));},start(root){if(started)return;started=true;collect(root,true);observer.observe(document.body,{childList:true,subtree:true});schedule();},cleanup:inRemoved,position,watchSize,dropPosition(key){geometryJobs.delete(key);},setStyle(el,key,value){if(el.style.getPropertyValue(key)!==value)el.style.setProperty(key,value);},setAttr(el,key,value){if(el.getAttribute(key)!==String(value))el.setAttribute(key,String(value));}};
  window.addEventListener("pagehide",event=>{
   if(event.persisted){clearTimeout(timer);timer=0;cancelAnimationFrame(geometryFrame);geometryFrame=0;return;}
   stopped=true;observer.disconnect();resize.disconnect();clearTimeout(timer);cancelAnimationFrame(geometryFrame);added.clear();removed.clear();jobs.length=0;geometryJobs.clear();

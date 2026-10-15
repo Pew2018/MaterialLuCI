@@ -1,8 +1,8 @@
 "use strict";
 /* MDC enhancement layer. No cloned form values, RPC, ACL or route changes. */
 (function(){
- const {MDCCheckbox,MDCRadio,MDCFormField,MDCDialog}=MaterialMDCControls;
- const selections=new Map(),dialogs=new Map();
+ const {MDCCheckbox,MDCRadio,MDCFormField,MDCDialog,MDCRipple,MDCRippleFoundation}=MaterialMDCControls;
+ const selections=new Map(),dialogs=new Map(),indicators=new Map();
  function element(tag,cls){const el=document.createElement(tag);el.className=cls;el.setAttribute("aria-hidden","true");return el;}
  function selection(input){
   if(selections.has(input)){window.MaterialComponents?.syncSelections(input);return;}
@@ -29,16 +29,33 @@
   const instance=radio?new MDCRadio(root):new MDCCheckbox(root);
   if(!radio)instance.indeterminate=indeterminate;
   root._mlMdcSelection=instance;input._mlMdcSelection=instance;
+  // The native label may span an entire sentence. MDC's default ripple
+  // measures that label; feedback must measure the 48px control layer instead.
+  // Use the public foundation adapter while keeping the original input/siblings.
+  let selectionRipple=null,disposed=false;
+  instance.ripple.destroy();
+  const rippleFrame=requestAnimationFrame(()=>{
+   if(disposed)return;
+   const adapter=MDCRipple.createAdapter({root,disabled:false,unbounded:true});
+   selectionRipple=new MDCRipple(root,new MDCRippleFoundation({...adapter,
+    computeBoundingRect:()=>ripple.getBoundingClientRect(),
+    isUnbounded:()=>true,isSurfaceDisabled:()=>input.matches(":disabled"),
+    isSurfaceActive:()=>input.matches(":active"),
+    registerInteractionHandler:(type,handler)=>input.addEventListener(type,handler,{passive:true}),
+    deregisterInteractionHandler:(type,handler)=>input.removeEventListener(type,handler)
+   }));
+   selectionRipple.unbounded=true;
+  });
   let formField=null;
   const label=root.querySelector("label");
-  if(label){root.classList.add("mdc-form-field");formField=new MDCFormField(root);formField.input=instance;}
-  function geometry(){MaterialRuntime.position(input,()=>input.isConnected?[input.offsetLeft,input.offsetTop]:null,([x,y])=>{MaterialRuntime.setStyle(root,"--ml-selection-left",x+"px");MaterialRuntime.setStyle(root,"--ml-selection-top",y+"px");});}
+  if(label){root.classList.add("mdc-form-field");formField=new MDCFormField(root);formField.input={get ripple(){return selectionRipple||undefined;}};}
+  function geometry(){MaterialRuntime.position(input,()=>input.isConnected?[input.offsetLeft,input.offsetTop]:null,([x,y])=>{MaterialRuntime.setStyle(root,"--ml-selection-left",x+"px");MaterialRuntime.setStyle(root,"--ml-selection-top",y+"px");selectionRipple?.layout();});}
   const unwatch=MaterialRuntime.watchSize(root,geometry);geometry();
   const sync=()=>{if(radio){if(root.classList.contains("mdc-radio--disabled")!==input.disabled)instance.disabled=input.disabled;}else{if(instance.checked!==input.checked)instance.checked=input.checked;if(instance.indeterminate!==input.indeterminate)instance.indeterminate=input.indeterminate;}};
   const attrs=new MutationObserver(sync);attrs.observe(input,{attributes:true,attributeFilter:["checked","disabled"]});
   const reset=()=>setTimeout(sync,0);document.addEventListener("reset",reset,true);
   selections.set(input,{destroy(){
-   attrs.disconnect();unwatch();MaterialRuntime.dropPosition(input);document.removeEventListener("reset",reset,true);formField?.destroy();instance.destroy();
+   disposed=true;cancelAnimationFrame(rippleFrame);selectionRipple?.destroy();attrs.disconnect();unwatch();MaterialRuntime.dropPosition(input);document.removeEventListener("reset",reset,true);formField?.destroy();instance.destroy();
    root._mlMdcSelection=null;input._mlMdcSelection=null;input.classList.remove(prefix+"__native-control");root.classList.remove(prefix,"ml-mdc-selection","mdc-form-field");background.remove();ripple.remove();focus.remove();selections.delete(input);
   }});
  }
@@ -77,25 +94,59 @@
  }
  function syncLuCI(){
   const root=document.getElementById("modal_overlay"),panel=root?.querySelector(":scope > .modal");
-  if(!root||!panel){if(root)dialogs.get(root)?.destroy();return;}
+  if(!root||!panel){if(root){root.classList.remove("ml-changes-overlay");dialogs.get(root)?.destroy();}return;}
   const active=document.body.classList.contains("modal-overlay-active"),current=dialogs.get(root);
-  if(!active){current?.destroy();return;}
+  if(!active){panel.classList.remove("ml-changes-dialog");root.classList.remove("ml-changes-overlay");current?.destroy();return;}
   for(const cls of ["mdc-dialog__container","mdc-dialog__surface","mdc-dialog__content"])if(!panel.classList.contains(cls))panel.classList.add(cls);
+  const changeReview=panel.matches(".uci-dialog")&&!!panel.querySelector(".uci-change-list,.uci-change-legend");
+  panel.classList.toggle("ml-changes-dialog",changeReview);root.classList.toggle("ml-changes-overlay",changeReview);
+  // Reorder existing action groups only; preserve LuCI nodes and combo internals.
+  const actions=changeReview?panel.querySelector(":scope > .cbi-section > .right,:scope > .cbi-section > .button-row,:scope > .button-row"):null;
+  const apply=actions?.querySelector("button.cbi-button-positive.important,.cbi-dropdown.cbi-button-positive.important"),undo=actions?.querySelector("button.cbi-button-reset");
+  if(actions?.classList.contains("button-row")&&apply&&undo){
+   const directChild=node=>{while(node&&node.parentElement!==actions)node=node.parentElement;return node||null;};
+   const applyGroup=directChild(apply),undoGroup=directChild(undo);
+   if(applyGroup&&undoGroup&&applyGroup!==undoGroup&&undoGroup.nextElementSibling!==applyGroup)actions.insertBefore(undoGroup,applyGroup);
+  }else if(actions&&apply&&apply.parentElement===actions&&actions.lastElementChild!==apply)actions.append(apply);
   const title=panel.querySelector(":scope > h4,:scope > h3");
   if(title){if(!title.id)title.id="ml-luci-modal-title";MaterialRuntime.setAttr(panel,"aria-labelledby",title.id);}
   if(current&&current.panel!==panel)current.destroy();
   if(!dialogs.has(root))dialog(root,panel,true);
  }
- let scheduled=false,modalActive=document.body.classList.contains("modal-overlay-active");
+ let scheduled=false,modalActive=document.body.classList.contains("modal-overlay-active"),observedOverlay=null;
+ function scheduleModal(){if(!scheduled){scheduled=true;queueMicrotask(()=>{scheduled=false;syncLuCI();});}}
  const modalObserver=new MutationObserver(records=>{
-  const active=document.body.classList.contains("modal-overlay-active");
-  const changed=active!==modalActive;modalActive=active;
-  if(!changed&&!records.some(r=>r.type==="childList"&&(r.target.id==="modal_overlay"||[...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&(n.id==="modal_overlay"||n.matches?.(".modal,h3,h4"))))))return;
-  if(!scheduled){scheduled=true;queueMicrotask(()=>{scheduled=false;syncLuCI();});}
+  if(records.some(r=>r.target===observedOverlay||r.target.matches?.(".modal")||[...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&n.matches?.(".modal,.uci-change-list,.uci-change-legend,h3,h4"))))scheduleModal();
  });
- modalObserver.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["class"]});
+ function observeOverlay(root){
+  if(root===observedOverlay)return;
+  modalObserver.disconnect();observedOverlay=root;
+  if(root)modalObserver.observe(root,{childList:true,subtree:true});
+  scheduleModal();
+ }
+ const visibilityObserver=new MutationObserver(()=>{
+  const active=document.body.classList.contains("modal-overlay-active");
+  if(active!==modalActive){modalActive=active;scheduleModal();}
+ });
+ visibilityObserver.observe(document.body,{attributes:true,attributeFilter:["class"]});
+ MaterialRuntime.register({range:true,discoverSelector:"#modal_overlay",enhance(root){const overlay=root.id==="modal_overlay"?root:root.querySelector("#modal_overlay");if(overlay)observeOverlay(overlay);},cleanup(root){if(observedOverlay&&!observedOverlay.isConnected&&(root===observedOverlay||root.contains(observedOverlay)))observeOverlay(document.getElementById("modal_overlay"));}});
+ observeOverlay(document.getElementById("modal_overlay"));
  MaterialRuntime.register({selector:'input[type="checkbox"],input[type="radio"]',enhance,cleanup(root){MaterialRuntime.cleanup(root,selections,'input');MaterialRuntime.cleanup(root,dialogs,'#modal_overlay,.ml-backdrop');}});
- window.addEventListener("pagehide",event=>{if(!event.persisted){modalObserver.disconnect();for(const entry of [...dialogs.values()])entry.destroy();for(const entry of [...selections.values()])entry.destroy();}});
+ 
+ // A native indicator is a span with a click callback. Add keyboard access
+ // without replacing its first text node or registering another click handler.
+ function indicator(node){
+  if(indicators.has(node))return;
+  const oldRole=node.getAttribute("role"),oldTab=node.getAttribute("tabindex");
+  if(oldRole===null)node.setAttribute("role","button");
+  if(oldTab===null)node.tabIndex=0;
+  const key=event=>{if((event.key==="Enter"||event.key===" ")&&!event.repeat&&!node.closest('[inert],[aria-disabled="true"]')){event.preventDefault();node.click();}};
+  node.addEventListener("keydown",key);
+  indicators.set(node,{destroy(){node.removeEventListener("keydown",key);for(const [key,value] of [["role",oldRole],["tabindex",oldTab]])if(value===null)node.removeAttribute(key);else node.setAttribute(key,value);indicators.delete(node);}});
+ }
+ MaterialRuntime.register({selector:'[data-indicator="uci-changes"]',enhance(root){if(root.matches?.('[data-indicator="uci-changes"]'))indicator(root);root.querySelectorAll?.('[data-indicator="uci-changes"]').forEach(indicator);},cleanup(root){MaterialRuntime.cleanup(root,indicators,'[data-indicator="uci-changes"]');}});
+
+ window.addEventListener("pagehide",event=>{if(!event.persisted){for(const entry of [...indicators.values()])entry.destroy();modalObserver.disconnect();visibilityObserver.disconnect();for(const entry of [...dialogs.values()])entry.destroy();for(const entry of [...selections.values()])entry.destroy();}});
  window.MaterialControls={enhance,dialog,closeDialog(root){dialogs.get(root)?.destroy();},count(){return {selections:selections.size,dialogs:dialogs.size};}};
  syncLuCI();
 })();

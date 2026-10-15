@@ -1,16 +1,20 @@
 /* Shared shell geometry stays in cascade.css. Only M3-owned controls here. */
 :root[data-design=m3e]{
- --md-sys-typescale-label-large-font:Roboto,"Noto Sans",system-ui,sans-serif;
+ --ml-card-radius:16px;
+ --ml-card-shadow-image:url("icons/card-shadow-m3e-light-v1.svg");--ml-card-shadow-slice:24;--ml-card-shadow-border:24px;
+ --ml-action-radius:24px;--ml-item-radius:8px;
+ --md-sys-typescale-label-large-font:Roboto,"Noto Sans",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
  --md-sys-typescale-label-large-size:14px;
  --md-sys-typescale-label-large-line-height:20px;
  --md-switch-track-width:48px;
  --md-linear-progress-track-height:4px;
 }
+:root[data-design=m3e][data-theme=dark]{--ml-card-shadow-image:url("icons/card-shadow-m3e-dark-v1.svg")}
 :root[data-design=m3e] body md-outlined-button.ml-mode-option{
  display:inline-flex;flex:1;min-width:0;min-height:48px;padding:0;margin:0;
  border:0;background:transparent;box-shadow:none;font:inherit;color:var(--ink);
  --md-outlined-button-container-height:48px;
- --md-outlined-button-container-shape:8px;
+ --md-outlined-button-container-shape:24px;
  --md-outlined-button-label-text-color:var(--md-sys-color-on-surface);
  --md-outlined-button-outline-color:var(--md-sys-color-outline);
 }
@@ -26,6 +30,9 @@
 /* The shared style selector also needs a visible Classic selection state. */
 body .ml-design-options button[aria-pressed=true]{background:var(--action-tonal);color:var(--on-action-tonal);border-color:var(--control-accent);--button-ink:var(--on-action-tonal)}
 
+:root[data-design=m3e] body .ml-mode-options button.ml-mode-option{border-radius:24px}
+:root[data-design=m3e] body .ml-swatch{border-radius:8px}
+:root[data-design=m3e] body .ml-swatch-item{border-radius:12px}
 /* Official M3 controls own their shadow-tree shapes and animation. */
 :root[data-design=m3e] [data-ml-progress-engine=m3]{
  display:block;min-height:4px;height:4px;padding:0;border:0;background:transparent;
@@ -55,16 +62,34 @@ body .ml-design-options button[aria-pressed=true]{background:var(--action-tonal)
    interaction adapters; these are theme styles, not official M3 web fields. */
 :root[data-design=m3e] body .ml-m3-feedback{position:relative;isolation:isolate}
 :root[data-design=m3e] body .ml-m3-feedback>md-ripple{position:absolute;inset:0;border-radius:inherit;pointer-events:none;--md-ripple-hover-color:currentColor;--md-ripple-pressed-color:currentColor}
-:root[data-design=m3e] body :is(button.cbi-button,a.cbi-button,div.btn,.ml-native-button,.cbi-page-actions button){border-radius:24px;min-height:48px;padding:12px 24px;font-weight:500;letter-spacing:.1px}
+/* Business controls only. Shell, selections, tabs and field icons keep their geometry. */
+:root[data-design=m3e] body :is(#maincontent,#modal_overlay) :is(button,a.btn,a.cbi-button,div.btn,input[type=button],input[type=submit],input[type=reset]):not(:where(.mdc-switch,.ml-icon-button,.ml-poll-action,.ml-nav-parent,.ml-option,.ml-choice,.ml-swatch-item,.ml-mode-option,.text-action,div.cbi-button-add:not(.cbi-button),.cbi-button-up,.cbi-button-down,.ml-text-field *,.ml-mdc-select *,.ml-mdc-menu *,#ml-appearance *)){
+ border-radius:24px;min-height:48px;padding:12px 24px;font-weight:500;letter-spacing:.1px;line-height:20px;text-align:center
+}
+:root[data-design=m3e] body :is(#maincontent,#modal_overlay) :is(button,a.btn,a.cbi-button,div.btn):not(:where(.mdc-switch,.ml-nav-parent,.ml-option,.ml-choice,.ml-swatch-item,.ml-mode-option,.ml-text-field *,.ml-mdc-select *,.ml-mdc-menu *,#ml-appearance *)){
+ display:inline-flex;align-items:center;justify-content:center
+}
+:root[data-design=m3e] body .ml-native-button{border-radius:24px}
+:root[data-design=m3e] body :is(#maincontent,#modal_overlay) :is(.cbi-section-table,.table,table,.cbi-dynlist>.item) :is(button.cbi-button,a.cbi-button,a.btn,input.cbi-button):not(:where(.cbi-dropdown,.cbi-button-add,.cbi-button-up,.cbi-button-down,.ml-icon-button,.cbi-dynlist>.add-item *)){
+ min-width:36px;width:auto;min-height:36px;padding:8px 12px;border:0;border-radius:18px
+}
+:root[data-design=m3e] body :is(div.cbi-button-add:not(.cbi-button),.cbi-button-up,.cbi-button-down,.ml-icon-button,.ml-text-field button){border-radius:50%;min-width:36px;min-height:36px;padding:8px}
+:root[data-design=m3e] body :is(#maincontent,#modal_overlay) .text-action{border-radius:20px;min-height:40px;padding:10px 12px}
+:root[data-design=m3e] body :is(#maincontent,#modal_overlay) :is(button,a.btn,a.cbi-button,div.btn,input[type=button],input[type=submit],input[type=reset]):focus-visible{outline:2px solid var(--control-strong);outline-offset:2px}
+:root[data-design=m3e] body :is(a.btn,a.cbi-button,div.btn):is([aria-disabled=true],[disabled]){background:var(--pressed);color:var(--disabled);box-shadow:none;cursor:default}
 :root[data-design=m3e] body .ml-native-button{padding:0}
 :root[data-design=m3e] body .ml-native-button>input{border-radius:inherit}
+/* Readonly fields paint correctly before deferred enhancement. */
+:root[data-design=m3e] body .cbi-value-field :is(input[readonly],textarea[readonly]):not(:where(.ml-text-field *,.cbi-dropdown *,.cbi-dynlist *)){background:var(--md-sys-color-surface-container-highest);padding-left:16px;padding-right:16px}
+/* Match eligible native fields before deferred MDC decoration. Focused fields
+   keep their native node and the adapter still defers moving them until blur. */
+:root[data-design=m3e] body .cbi-value-field :is(input:not([type]),input[type=text],input[type=password],input[type=email],input[type=url],input[type=tel],input[type=search],input[type=number]):not(:where(.cbi-dynlist *,.cbi-dropdown *,.ml-text-field *)){height:56px;min-height:56px;box-sizing:border-box}
 :root[data-design=m3e] body .ml-text-field.mdc-text-field--filled{height:56px;min-height:56px;padding:0 16px;border-radius:4px 4px 0 0;background:var(--md-sys-color-surface-container-highest)}
 :root[data-design=m3e] body .ml-text-field.mdc-text-field--textarea{height:auto;align-items:flex-start}
 :root[data-design=m3e] body .ml-text-field>textarea{flex:none;display:block;min-height:144px}
 :root[data-design=m3e] body .ml-mdc-select.mdc-select .mdc-select__anchor{height:56px;padding:8px 16px;border-radius:4px 4px 0 0;background:var(--md-sys-color-surface-container-highest)}
 :root[data-design=m3e] body .cbi-dropdown:not(.btn):not(.cbi-button){border-radius:8px 8px 0 0;background:var(--md-sys-color-surface-container-highest)}
 :root[data-design=m3e] body .ml-mdc-menu{border-radius:12px;background:var(--md-sys-color-surface-container)}
-:root[data-design=m3e][data-cards=true] body .ml-card-surface{border-radius:16px}
 :root[data-design=m3e] body #modal_overlay>.modal{border-radius:28px;background:var(--md-sys-color-surface-container-high)}
 :root[data-design=m3e] body :is(.tabs,.cbi-tabmenu)>li>a{position:relative;border-bottom:0;min-height:48px;font-weight:500}
 :root[data-design=m3e] body :is(.tabs>li.active,.cbi-tabmenu>li.cbi-tab)>a::after{content:"";position:absolute;bottom:0;left:16px;right:16px;height:3px;border-radius:3px 3px 0 0;background:var(--md-sys-color-primary)}
@@ -76,7 +101,10 @@ body .ml-design-options button[aria-pressed=true]{background:var(--action-tonal)
 :root[data-design=m3e] body .cbi-dynlist>.add-item{width:100%;flex-wrap:wrap;align-items:center;gap:12px}
 :root[data-design=m3e] body .cbi-dynlist>.add-item>input{flex:1 1 220px;width:auto;min-width:0;min-height:48px;padding:12px 16px;background:var(--md-sys-color-surface-container-highest);border-radius:4px 4px 0 0}
 :root[data-design=m3e] body .cbi-dynlist>.add-item>button{flex:0 0 auto;width:auto;min-width:112px;height:auto;min-height:48px;padding:12px 20px;border-radius:24px;overflow:visible;white-space:normal}
-:root[data-design=m3e] .ml-progress-host,:root[data-design=m3e] #maincontent .ml-view-progress{height:16px;min-height:16px;overflow:visible}
+:root[data-design=m3e] .ml-progress-host:has(>[data-ml-progress-engine=m3e]){height:16px;min-height:16px;overflow:visible}
+:root[data-design=m3e] [data-ml-progress-engine=mdc]{height:4px;min-height:4px;overflow:hidden}
+:root[data-design=m3e] [data-ml-progress-engine=mdc] .mdc-linear-progress__bar-inner{border-color:var(--md-sys-color-primary)}
+:root[data-design=m3e] [data-ml-progress-engine=mdc] .mdc-linear-progress__buffer-bar{background:var(--md-sys-color-primary-container)}
 :root[data-design=m3e] [data-ml-progress-engine=m3e]{display:block;width:100%;height:16px;min-height:16px;overflow:hidden;background:transparent}
 :root[data-design=m3e] .ml-wavy-progress{display:block;width:100%;height:16px;overflow:hidden}
 .ml-wavy-progress path{fill:none;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
@@ -98,3 +126,9 @@ body .ml-design-options button[aria-pressed=true]{background:var(--action-tonal)
 /* Drawer feedback is bounded by the entire rectangular toggle. */
 :root[data-design=m3e] body button.ml-nav-parent>md-ripple{border-radius:0;--md-ripple-hover-opacity:0}
 :root[data-design=m3e] [data-ml-progress-engine=m3e][hidden] .ml-wave-active{animation:none}
+
+:root[data-design=m3e] body.modal-overlay-active #modal_overlay>.modal.ml-changes-dialog{--ml-changes-surface:var(--md-sys-color-surface-container-high);color:var(--md-sys-color-on-surface);border-radius:28px}
+:root[data-design=m3e] #modal_overlay .ml-changes-dialog>h4,:root[data-design=m3e] #modal_overlay .ml-changes-dialog>h3{font:400 24px/32px var(--md-sys-typescale-headline-small-font,Roboto,"Noto Sans",system-ui,sans-serif);color:var(--md-sys-color-on-surface);background:var(--ml-changes-surface)}
+:root[data-design=m3e] #modal_overlay .ml-changes-dialog>.cbi-section>strong,:root[data-design=m3e] #modal_overlay .ml-changes-dialog .uci-change-list h5{color:var(--md-sys-color-on-surface-variant)}
+:root[data-design=m3e] #modal_overlay .ml-changes-dialog .button-row,:root[data-design=m3e] #modal_overlay .ml-changes-dialog>.cbi-section>.right{background:var(--ml-changes-surface)}
+:root[data-design=m3e] #modal_overlay .ml-changes-dialog .button-row .cbi-button-positive.important,:root[data-design=m3e] #modal_overlay .ml-changes-dialog .right .cbi-button-positive.important{border-radius:24px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary)}

@@ -39,6 +39,9 @@
   if(el.matches("button")&&el.firstElementChild?.tagName==="SPAN"&&!el.firstElementChild.matches(".mdc-button__ripple,.mdc-icon-button__ripple,.ml-radio"))el.firstElementChild.classList.add("mdc-button__label");
  }
  function bind(el){
+  // Native touchsort previews clone the handle and its decorations. They are
+  // inert, temporary presentation nodes and must not own another ripple.
+  if(el.closest(".touchsort-element"))return;
   if(el.closest("[data-ml-component],.mdc-switch,.ml-mdc-selection,.ml-m3-selection,.ml-mdc-select,.ml-mdc-menu"))return;
   if(el.matches("button")&&el.closest(".ml-native-button"))return;
   if(!entries.has(el)&&window.__mlControlAudit&&el.isConnected){const s=getComputedStyle(el),r=el.getBoundingClientRect();el._mlBeforeMDC={width:r.width,height:r.height,fontFamily:s.fontFamily,fontSize:s.fontSize,fontWeight:s.fontWeight,color:s.color,radius:s.borderRadius,firstChild:el.firstChild};}

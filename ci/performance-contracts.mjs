@@ -159,7 +159,9 @@ function fixture(){
  assert.equal(decorations,0);
  f.window.MaterialSurfaces.ensure(view);f.drain();
  const passes=f.window.MaterialSurfaces.count(),writes=section.attributeWrites;
- const text=f.document.createElement("span");value.append(text);f.drain();
+ const text=f.document.createElement("span");let leafScans=0;const leafQuery=text.querySelectorAll;
+ text.querySelectorAll=function(s){leafScans++;return leafQuery.call(this,s);};value.append(text);f.drain();
+ assert.equal(leafScans,0,"plain polling leaves have no structural descendants to scan");text.querySelectorAll=leafQuery;
  text.textContent="12:34";f.notify({type:"characterData",target:text,addedNodes:[],removedNodes:[]});f.drain();
  const svg=f.document.createElement("svg"),path=f.document.createElement("path");value.append(svg);svg.append(path);f.drain();
  assert.equal(f.window.MaterialSurfaces.count(),passes,"text and SVG-path updates must not rescan card ownership");
@@ -280,7 +282,18 @@ function fixture(){
  f.window.dispatchEvent({type:"pageshow",persisted:true});f.drain();assert.equal(replacement.style.getPropertyValue("color"),"","bfcache must restore natural theme ink");
 }
 {
- const f=fixture();f.load("runtime.js");let fields=0,buttons=0,ranges=0;
+ {
+ const f=fixture();f.load("runtime.js");let fields=0;
+ f.window.MaterialRuntime.register({selector:"input,select,button",enhance(){fields++;}});
+ f.window.MaterialRuntime.start(f.document.body);f.drain();
+ const leaf=f.document.createElement("span");let leafQueries=0;const query=leaf.querySelectorAll.bind(leaf);
+ leaf.querySelectorAll=selector=>{leafQueries++;return query(selector);};
+ f.document.body.append(leaf);f.drain();assert.equal(leafQueries,0,"empty leaf updates should skip descendant selector scans");
+ f.document.body.append(f.document.createElement("input"));f.drain();assert.equal(fields,1,"direct dynamic controls are still discovered");
+ const wrapper=f.document.createElement("div");wrapper.append(f.document.createElement("button"));f.document.body.append(wrapper);f.drain();
+ assert.equal(fields,2,"nested dynamic controls are still discovered");
+}
+const f=fixture();f.load("runtime.js");let fields=0,buttons=0,ranges=0;
  f.window.MaterialRuntime.register({selector:"input,select",enhance(){fields++;}});
  f.window.MaterialRuntime.register({selector:"button",enhance(){buttons++;}});
  f.window.MaterialRuntime.register({range:true,discoverSelector:"#view,.alert-message.danger",enhance(){ranges++;}});
@@ -320,4 +333,35 @@ function fixture(){
  main.setAttribute("data-ml-page","system");assert.ok(abbreviations.every(n=>!n.matches(ledRules[0].selector)),"other routes must retain their abbreviation styles");
 }
 
+{
+ const f=fixture();f.load("runtime.js");
+ const host=f.document.createElement("div");host.id="indicators";
+ const el=f.document.createElement("span");el.setAttribute("data-indicator","poll-status");el.setAttribute("data-style","inactive");host.append(el);f.document.body.append(host);
+ let binds=0;f.context.MaterialFeedback={bind(){binds++;}};f.context.MaterialExtras={setTooltip(n,label){f.window.MaterialRuntime.setAttr(n,"data-test-tip",label);}};
+ const app=fs.readFileSync(base+"app.js","utf8");
+ vm.runInContext('(function(){const t=(a,b)=>b;'+app.slice(app.indexOf(" const indicators="),app.indexOf(" const narrow="))+'window.syncPoll=syncPollIndicator;})();',f.context);
+ f.drain();const writes=el.attributeWrites;
+ for(let i=0;i<20;i++)f.window.syncPoll();f.drain();
+ assert.equal(el.attributeWrites,writes,"same refresh state must perform zero attribute writes");
+ assert.equal(binds,1);
+ el.setAttribute("data-style","active");f.drain();assert.equal(el.getAttribute("aria-label"),"Pause automatic refresh");
+ const next=f.document.createElement("span");next.setAttribute("data-indicator","poll-status");next.setAttribute("data-style","inactive");next.setAttribute("data-clickable","true");el.remove();host.append(next);f.drain();
+ assert.equal(binds,2,"replacement has exactly one feedback binding");
+ assert.equal(next.getAttribute("aria-label"),"Resume automatic refresh");
+}
+{
+ const f=fixture();f.load("runtime.js");let cleanups=0,created=0;
+ f.window.MaterialRuntime.register({selector:"button.control",enhance(){created++;},cleanup(){cleanups++;}});
+ f.window.MaterialRuntime.start(f.document.body);f.drain();
+ const status=f.document.createElement("div");f.document.body.append(status);f.drain();
+ for(let i=0;i<400;i++)status.append(f.document.createElement("span"));f.drain();
+ for(const leaf of [...status.children])leaf.remove();f.drain();
+ assert.equal(cleanups,0,"plain polling leaves must not enqueue adapter destruction");
+ const button=f.document.createElement("button");button.className="control";status.append(button);f.drain();
+ assert.equal(created,1);button.className="";button.remove();f.drain();
+ assert.equal(cleanups,1,"remember enhanced controls when their selector changes before removal");
+ let later=0;f.window.MaterialRuntime.register({selector:"input",enhance(){later++;}});
+ status.append(f.document.createElement("input"));f.drain();
+ assert.equal(later,1,"late adapter registration invalidates cached discovery plans");
+}
 console.log("Runtime lifecycle, discovery dispatch, branding, viewport and LED scope contracts passed (no browser rendering).");

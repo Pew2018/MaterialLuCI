@@ -59,10 +59,11 @@
   <span id="ml-title" class="ml-title" aria-label="MaterialLuCI">MaterialLuCI</span>
   <div id="indicators"></div>
  </div></header>
+ <script>(function(){var m=document.querySelector('meta[name^="theme-"]'),h=document.querySelector(".ml-toolbar");if(m&&h)m.content=getComputedStyle(h).backgroundColor;})()</script>
  <a class="ml-skip" href="#maincontent"><%:Skip to content%></a>
  <div class="ml-layout">
  <aside id="ml-sidebar" class="ml-sidebar" aria-label="<%:Navigation%>">
-  <div id="ml-sidebar-heading" class="ml-sidebar-heading"><span id="ml-sidebar-name" data-default-name="<%=pcdata(boardinfo.hostname or "MaterialLuCI")%>"><%=pcdata(boardinfo.hostname or "MaterialLuCI")%></span><button id="ml-drawer-close" type="button" class="text-action" aria-label="<%:Close%>">×</button></div>
+  <div id="ml-sidebar-heading" class="ml-sidebar-heading"><span id="ml-sidebar-name" data-default-name="<%=pcdata(boardinfo.hostname or "MaterialLuCI")%>"><%=pcdata(boardinfo.hostname or "MaterialLuCI")%></span><button id="ml-drawer-close" type="button" class="ml-icon-button" aria-label="<%:Close%>"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button></div>
   <nav id="ml-menu-tree"><p class="hint"><%:Loading…%></p></nav>
  </aside>
  <div id="ml-drawer-scrim" class="ml-drawer-scrim" hidden></div>

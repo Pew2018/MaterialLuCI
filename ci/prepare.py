@@ -65,7 +65,7 @@ bootstrap+="\ninclude=function(name)templates[name]()end\n"
 renderer=ROOT/"build/render.lua";renderer.write_text(bootstrap)
 subprocess.run(["luac5.1","-p",str(renderer)],check=True)
 sample=ROOT/"ci/sample.html"
-env={"base_url":"/luci-static/resources","scriptname":"/cgi-bin/luci","resource":"/luci-static/resources","documentroot":"/www","media":"/luci-static/materialluci","ubuspath":"/ubus","sessionid":"0"*32,"requestpath":["admin","status","overview"],"dispatchpath":["admin","status","overview"],"nodespec":{"satisfied":True,"readonly":False}}
+env={"base_url":"/luci-static/resources","scriptname":"/cgi-bin/luci","resource":"/luci-static/resources","documentroot":"/www","media":"/luci-static/materialluci","ubuspath":"/ubus","sessionid":"0"*32,"requestpath":["admin","status","overview"],"dispatchpath":["admin","status","overview"],"pollinterval":5,"nodespec":{"satisfied":True,"readonly":False}}
 runtime='<script src="/luci-static/resources/luci.js"></script><script>window._=s=>s;window.L=new LuCI('+json.dumps(env)+');</script>'
 for login in (False,True):
  code=bootstrap+('\ninclude("sysauth")' if login else '\ninclude("header")\nwrite('+luaquote(sample.read_text())+')\ninclude("footer")')

@@ -134,5 +134,6 @@ function generateThemePalette(seed, dark) {
   };
 }
 
-global.MaterialPalette={generate:generateThemePalette,contrast:(a,b)=>contrastRatio(relativeLuminance(rgbForHex(a)),relativeLuminance(rgbForHex(b)))};
+// Picker chips need only their exact seed's black/white foreground, not all roles.
+global.MaterialPalette={swatchForeground:seed=>foregroundForRgb(rgbForHex(seed)).color,generate:generateThemePalette,contrast:(a,b)=>contrastRatio(relativeLuminance(rgbForHex(a)),relativeLuminance(rgbForHex(b)))};
 })(typeof window==="undefined"?globalThis:window);

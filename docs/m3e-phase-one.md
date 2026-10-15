@@ -1,6 +1,4 @@
 # M3E development phase one
-
-> 历史记录：本文描述对应开发阶段当时的状态。1.0.0 当前实现、默认设置和构建验证以 [版本记录](V1.0.0.md) 与 [安装文档](INSTALL.md) 为准。
 Base: e5ee53e3d62d64bc29a62a479cfaa0aada0b14ea. Development branch: feature/m3e-theme.
 Classic remains the default. Browser-local design preference (classic/m3e) takes effect on the next full page load. Changing a style never automatically reloads or saves LuCI configuration.
 

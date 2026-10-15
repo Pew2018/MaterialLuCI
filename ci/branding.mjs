@@ -62,7 +62,7 @@ export async function verifyBranding(browser,engine,base){
  if(engine==="chromium")await page.screenshot({path:"dist/previews/branding-desktop-light-settings.png",fullPage:true});
  await page.setViewportSize({width:390,height:844});await page.locator("#ml-brand-toolbar-title").fill("这是一个很长的中文顶栏标题，用来确认单行省略不会挤压菜单和状态指示器 🚀");
  await page.evaluate(()=>{MaterialAppearance.set("mode","dark");MaterialAppearance.set("toolbar",true);});await page.locator("#ml-brand-title-color-mode").selectOption("custom");await page.locator("#ml-brand-title-color-text").fill("#FFD166");await page.evaluate(()=>scrollTo(0,0));
- assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),64);
+ assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),56);
  if(engine==="chromium")await page.screenshot({path:"dist/previews/branding-mobile-dark-custom-title.png"});
  await page.locator("#ml-brand-sidebar-name").fill("旅行设备");await page.locator("#ml-brand-title-color-text").fill("#12");
  if(engine==="chromium")await page.screenshot({path:"dist/previews/branding-dark-custom-name-invalid-color.png",fullPage:true});

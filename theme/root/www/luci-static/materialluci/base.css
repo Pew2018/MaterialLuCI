@@ -490,72 +490,20 @@ p {
 }
 
 
-/* Change List */
-
-.uci-change-legend {
-    padding-top: 15px;
-}
-
-.uci-change-legend-label {
-    float: left;
-    margin-right: 100px;
-}
-
-.uci-change-legend-label>ins,
-.uci-change-legend-label>del,
-.uci-change-legend-label>var {
-    float: left;
-    width: 10px;
-    height: 10px;
-    margin-top: 3px;
-    margin-right: 6px;
-}
-
-.uci-change-list {
-    font-family: monospace;
-}
-
-.uci-change-list ins,
-.uci-change-legend-label ins,
-.uci-change-list del,
-.uci-change-legend-label del,
-.uci-change-list var,
-.uci-change-legend-label var {
-    display: block;
-    text-decoration: none;
-    padding: 2px;
-}
-
-.uci-change-list ins,
-.uci-change-legend-label ins {
-    background: #cfc;
-    border: 2px solid #4f4;
-}
-
-.uci-change-list del,
-.uci-change-legend-label del {
-    background: #fcc;
-    border: 2px solid #f00;
-}
-
-.uci-change-list var,
-.uci-change-legend-label var {
-    background: #f2f2f2;
-    border: 2px solid #ccc;
-}
-
-.uci-change-list var ins,
-.uci-change-list var del {
-    border: 0;
-    white-space: pre;
-    padding: 0;
-}
-
-.uci-change-legend-label var ins,
-.uci-change-legend-label var del {
-    border: 0;
-    line-height: 6px;
-}
+/* UCI change review semantics; retain LuCI's native command markup. */
+.uci-change-legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding:0}
+.uci-change-legend-label{display:inline-flex;align-items:center;gap:6px;margin:0;font:13px/20px sans-serif}
+.uci-change-legend-label>ins,.uci-change-legend-label>del,.uci-change-legend-label>var{display:inline-flex;align-items:center;justify-content:center;flex:none;float:none;width:10px;height:10px;margin:0;padding:0;border:0;text-decoration:none;font-size:0;line-height:1}
+.uci-change-legend-label>ins{background:var(--change-add-border)}.uci-change-legend-label>del{background:var(--change-del-border)}
+.uci-change-legend-label>var{border:1px solid var(--divider);background:var(--log)}
+.uci-change-legend-label>var>ins,.uci-change-legend-label>var>del{width:5px;height:5px}
+.uci-change-legend-label>var>ins{background:var(--change-add-border)}.uci-change-legend-label>var>del{background:var(--change-del-border)}
+.uci-change-list{font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere;white-space:pre-wrap;min-width:0}
+.uci-change-list h5{font:500 12px/20px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted);overflow-wrap:anywhere;margin:14px 0 8px}
+.uci-change-list>ins,.uci-change-list>del,.uci-change-list>var{display:block;margin:0 0 6px;padding:5px 8px;text-decoration:none;font-style:normal;overflow-wrap:anywhere;white-space:pre-wrap;border:0;border-left:2px solid var(--divider);background:var(--log);color:var(--ink)}
+.uci-change-list>ins{border-left-color:var(--change-add-border);color:var(--change-add-ink)}.uci-change-list>del{border-left-color:var(--change-del-border);color:var(--change-del-ink)}
+.uci-change-list>var>ins,.uci-change-list>var>del{display:inline;margin:0;padding:0;border:0;background:transparent;white-space:inherit;text-decoration:none}
+.uci-change-list>var>ins{color:var(--change-add-ink)}.uci-change-list>var>del{color:var(--change-del-ink)}
 
 
 /* Tabs */
@@ -829,9 +777,9 @@ textarea[disabled],
 input[readonly],
 select[readonly],
 textarea[readonly] {
-    background-color: #f5f5f5;
-    border-color: #ddd;
-    color: unset;
+    background-color: var(--surface);
+    border-color: var(--divider);
+    color: var(--ink);
 }
 
 table.cbi-section-table input,

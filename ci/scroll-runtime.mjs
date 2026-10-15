@@ -1,0 +1,142 @@
+import {createHash} from "node:crypto";
+import {traceCosts} from "./trace-costs.mjs";
+import {chromium,webkit} from "playwright";
+import {spawn,execFileSync} from "node:child_process";
+import fs from "node:fs";
+import assert from "node:assert/strict";
+const baseline="f32790a8a2ccc8217298aa8132edbc1b0f69f92b";
+const server=spawn("python3",["ci/server.py"],{stdio:"inherit"}),origin="http://127.0.0.1:8765";
+const out="dist/runtime-evidence/"+(process.env.ENGINE||"chromium");fs.mkdirSync(out,{recursive:true});
+for(let i=0;i<100;i++){try{await fetch(origin);break;}catch{await new Promise(r=>setTimeout(r,50));}}
+const results=[],sourceCache=new Map();
+function source(revision,file){
+ const key=revision+file;if(sourceCache.has(key))return sourceCache.get(key);
+ const read=f=>revision==="before"?execFileSync("git",["show",baseline+":theme/root/www/luci-static/materialluci/"+f],{encoding:"utf8"}):fs.readFileSync("theme/root/www/luci-static/materialluci/"+f,"utf8");
+ let body=read(file);
+ if(file==="cascade.css")body=body.replace("overscroll-behavior-y:contain","");
+ if(file==="runtime.js"||file==="surfaces.js")body=instrument(body,file);if(file==="cascade.css")body=read("base.css")+body.replace('@import url("base.css");',"");
+ if(file.endsWith(".js"))body=execFileSync("node_modules/.bin/esbuild",["--minify","--target=es2020","--loader=js"],{input:body,encoding:"utf8"});
+ sourceCache.set(key,body);return body;
+}
+function instrument(body,file){
+ const names=file==="runtime.js"?["discover","collect","flush","inRemoved"]:["owner","prepareRecords","updateSurfaces"];
+ let wrappers="";
+ for(const name of names){body=body.replace("function "+name+"(","function raw_"+name+"(");wrappers+="function "+name+"(...args){const start=performance.now();try{return raw_"+name+"(...args);}finally{window.__mlPerf.functions.push({name:'"+name+"',start,duration:performance.now()-start,root:args[0]?.id||args[0]?.nodeName||null,children:args[0]?.childElementCount||0,records:Array.isArray(args[0])?args[0].length:null});}}\n";}
+ const anchor=file==="runtime.js"?" window.MaterialRuntime=":" MaterialRuntime.registerLayout";
+ body=body.replace(anchor,wrappers+anchor);
+ if(file==="runtime.js"){
+  body=body.replace("if(node.isConnected)run();","if(node.isConnected){const start=performance.now();try{run();}finally{__mlPerf.jobs.push({start,duration:performance.now()-start,selector:a.selector||a.discoverSelector||'discovery',root:node.id||node.nodeName,children:node.childElementCount});}}");
+  body=body.replace("register(a){","register(a){const original=a.enhance;a.enhance=function(node){const start=performance.now();try{return original.call(this,node);}finally{__mlPerf.enhance.push({start,duration:performance.now()-start,selector:a.selector||a.discoverSelector,range:!!a.range,root:node.id||node.nodeName,children:node.childElementCount});}};");
+ }
+ return body;
+}
+const scenarios=[];
+for(const design of ["classic","m3e"])for(const width of [390,1280])for(const state of ["loading","polling"])scenarios.push({design,theme:"light",cards:"true",width,kind:"leases",state});
+try{for(const [engine,type]of [["chromium",chromium],["webkit",webkit]].filter(([name])=>name===(process.env.ENGINE||"chromium"))){
+ const browser=await type.launch({headless:false});
+ try{for(let repeat=0;repeat<3;repeat++)for(const config of scenarios)for(const revision of repeat%2?["after","before"]:["before","after"]){
+  const {design,theme,cards,width,kind,state}=config;
+  const page=await browser.newPage({viewport:{width,height:844}});
+  for(const file of ["runtime.js","surfaces.js","feedback.js","controls.js","app.js","cascade.css","design-m3.css"]){
+   await page.route("**/luci-static/materialluci/"+file+"?**",route=>route.fulfill({body:source(revision,file),contentType:file.endsWith(".css")?"text/css":"text/javascript"}));
+  }
+  await page.addInitScript(c=>{window.__mlLoad={frames:[],start:performance.now(),last:performance.now(),active:true};performance.mark("fixture-load-start");const loadFrame=t=>{__mlLoad.frames.push({time:t,gap:t-__mlLoad.last});__mlLoad.last=t;if(__mlLoad.active)requestAnimationFrame(loadFrame);};requestAnimationFrame(loadFrame);window.__mlPerf={functions:[],jobs:[],enhance:[]};localStorage.setItem("materialluci-design",c.design);localStorage.setItem("materialluci-mode",c.theme);localStorage.setItem("materialluci-cards",c.cards);},config);
+  const client=engine==="chromium"?await page.context().newCDPSession(page):null;
+  if(client)await client.send("Tracing.start",{categories:"toplevel,devtools.timeline,disabled-by-default-devtools.timeline,disabled-by-default-devtools.timeline.frame,disabled-by-default-devtools.timeline.stack,blink.user_timing,cc,gpu,v8",transferMode:"ReturnAsStream"});
+  await page.goto(origin+(kind==="system"?"/system.html":"/upstream.html"));
+  await page.waitForSelector("#ml-appearance-entry",{state:"attached"});
+  if(kind==="system"){
+   await page.waitForSelector(".cbi-tabmenu");
+   // Actual pinned system view's NTP controls; extra rows use real LuCI Value/Flag,
+   // because a normal four-server NTP form does not fill a long desktop page.
+   await page.evaluate(async()=>{
+    const form=await L.require("form");
+    const data={ntp:{enabled:"1",server:"0.pool.ntp.org"}};
+    for(let i=0;i<40;i++)data.ntp["server"+i]=""+i+".pool.ntp.org";
+    const m=new form.JSONMap(data,"NTP long form"),s=m.section(form.NamedSection,"ntp","ntp","Time synchronization");
+    s.option(form.Flag,"enabled","Enable NTP");
+    for(let i=0;i<40;i++)s.option(form.Value,"server"+i,"NTP server "+i);
+    view.append(await m.render());
+   });
+  }else await page.evaluate(async kind=>{
+   const form=await L.require("form"),m=new form.JSONMap({settings:{enabled:"1"}},kind==="leases"?"DHCP leases":"Realtime status");
+   const s=m.section(form.NamedSection,"settings","settings","Status");s.option(form.Flag,"enabled","Enabled");
+   const opt=s.option(form.DummyValue,"status","Status");
+   opt.renderWidget=()=>{
+    const host=E("div");
+    if(kind==="leases"){
+     const table=E("table",{class:"table",id:"lease_status_table"},[E("tr",[E("th","Host"),E("th","Address"),E("th","Expires"),E("th","Action")])]);
+     for(let i=0;i<120;i++)table.append(E("tr",[E("td","host-"+i),E("td","192.0.2."+i),E("td",{class:"clock"},"12h"),E("td",[E("button",{class:"cbi-button",type:"button"},"Edit")])]));
+     host.append(table);
+    }else{
+     // Representative SVG graph structure, not a claim to reproduce collectd RPC.
+     for(let i=0;i<16;i++){const div=E("div");div.innerHTML='<svg viewBox="0 0 600 160"><line x1="0" y1="150" x2="600" y2="150" stroke="gray"/><text x="5" y="20">Traffic</text><polyline points="0,140 120,90 200,120 300,40 400,80 600,20" fill="none" stroke="teal"/></svg>';host.append(div);}
+    }return host;
+   };view.replaceChildren(await m.render());
+  },kind);
+  if(state==="sidebar")await page.evaluate(()=>{const sidebar=document.querySelector(".ml-sidebar");for(let i=0;i<80;i++)sidebar.append(E("a",{href:"#"},"Menu group "+i));sidebar.scrollTop=0;});
+  if(state==="menu")await page.evaluate(async()=>{const ui=await L.require("ui");const row=E("div",{class:"cbi-value"},[E("label",{class:"cbi-value-title"},"Device"),E("div",{class:"cbi-value-field"})]);row.lastElementChild.append(new ui.Dropdown("wan",{"wan":"WAN","lan":"LAN","other":"Other"},{optional:true}).render());view.prepend(row);});
+  if(state==="modal")await page.evaluate(async()=>{const ui=await L.require("ui");ui.changes.changes={system:Array.from({length:60},(_,i)=>["set","ntp","server"+i,"0.pool.ntp.org long entry "+i])};ui.changes.displayChanges();});
+  if(state!=="loading")await page.waitForTimeout(700);
+  if(state==="menu")await page.locator("#view .cbi-dropdown").first().locator(":scope > .open").click();
+  await page.evaluate(state=>{
+   __mlLoad.active=false;performance.mark("fixture-load-end");performance.mark("scroll-measure-start");window.measure={frames:[],mutations:0,updates:0,longTasks:[],start:performance.now(),last:performance.now(),active:true,surfaces:MaterialSurfaces.count(),instances:MaterialFeedback.counts()};
+   const m=measure;window.sampleObserver=new MutationObserver(rs=>m.mutations+=rs.length);sampleObserver.observe(view,{subtree:true,childList:true});
+   if(PerformanceObserver.supportedEntryTypes.includes("longtask")){window.taskObserver=new PerformanceObserver(l=>m.longTasks.push(...l.getEntries().map(e=>({start:e.startTime,duration:e.duration}))));taskObserver.observe({type:"longtask"});}
+   const frame=t=>{m.frames.push(t-m.last);m.last=t;if(m.active)requestAnimationFrame(frame);};requestAnimationFrame(frame);
+   m.scrollEvents=[];window.scrollProbe=e=>m.scrollEvents.push({time:performance.now()-m.start,target:e.target.id||e.target.className||e.target.nodeName,top:e.target===document?scrollY:e.target.scrollTop});document.addEventListener("scroll",scrollProbe,{capture:true,passive:true});
+   window.fixtureClicks=0;view.addEventListener("click",()=>fixtureClicks++);
+   if(state==="polling")window.pollTimer=setInterval(()=>{
+    m.updates++;const clock=document.querySelector("#localtime");if(clock)clock.value="2026-10-14 03:"+String(m.updates).padStart(2,"0")+":00";for(const n of document.querySelectorAll(".clock"))n.replaceChildren(E("span",m.updates+"h"));
+    for(const n of document.querySelectorAll("svg polyline"))n.setAttribute("points","0,140 120,"+(m.updates%80)+" 200,120 300,40 400,80 600,20");
+   },150);
+  },state);
+  await page.mouse.move(state==="sidebar"?100:state==="modal"?width/2:width-80,400);
+  for(let i=0;i<72;i++){await page.mouse.wheel(0,Math.floor(i/12)%2===0?140:-140);await page.waitForTimeout(40);}
+  await page.waitForTimeout(120);
+  const sample=await page.evaluate(()=>{
+   performance.mark("scroll-measure-end");clearInterval(window.pollTimer);measure.active=false;document.removeEventListener("scroll",scrollProbe,true);sampleObserver.disconnect();window.taskObserver?.disconnect();
+   const m=measure,a=m.frames.slice().sort((a,b)=>a-b);
+   const loadGaps=__mlLoad.frames.map(f=>f.gap).sort((a,b)=>a-b);
+   return {loading:{start:__mlLoad.start,end:m.start,duration:m.start-__mlLoad.start,raf:{raw:__mlLoad.frames,p50:loadGaps[Math.floor(loadGaps.length*.5)],p95:loadGaps[Math.floor(loadGaps.length*.95)],p99:loadGaps[Math.floor(loadGaps.length*.99)],max:Math.max(0,...loadGaps)}},measureStart:m.start,runtimeMetrics:__mlPerf,duration:performance.now()-m.start,mutations:m.mutations,updates:m.updates,longTasks:m.longTasks,raf:{count:a.length,p50:a[Math.floor(a.length*.5)],p95:a[Math.floor(a.length*.95)],p99:a[Math.floor(a.length*.99)],max:Math.max(0,...a),over20:a.filter(x=>x>20).length,over34:a.filter(x=>x>34).length,raw:m.frames},surfacePasses:MaterialSurfaces.count()-m.surfaces,instancesBefore:m.instances,instancesAfter:MaterialFeedback.counts(),waitInstances:MaterialWait.activeCount(),activeAnimations:document.getAnimations().filter(a=>a.playState==="running").map(a=>({name:a.animationName||a.constructor.name,target:a.effect?.target?.className||a.effect?.target?.tagName})),scrollTop:scrollY,scrollEvents:m.scrollEvents,sidebarScroll:document.querySelector(".ml-sidebar")?.scrollTop,modalScroll:document.querySelector(".modal")?.scrollTop,clicks:fixtureClicks,overflow:document.documentElement.scrollWidth>innerWidth};
+  });
+  let touch=null;
+  if(client&&width===390&&state==="idle"&&theme==="light"&&cards==="true"){
+   const target=page.locator("#view .ml-switch-hit, #view button.cbi-button").first();
+   if(await target.count()){
+    await target.scrollIntoViewIfNeeded();const r=await target.boundingBox();
+    if(r&&r.y>160){
+     const x=r.x+r.width/2,y=r.y+r.height/2;
+     const startScroll=await page.evaluate(()=>scrollY),clickBefore=await page.evaluate(()=>fixtureClicks),checkedBefore=await target.evaluate(n=>n.querySelector("input")?.checked);
+     await client.send("Emulation.setTouchEmulationEnabled",{enabled:true,maxTouchPoints:1});
+     await client.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{x,y}]});
+     for(let i=1;i<=8;i++){await client.send("Input.dispatchTouchEvent",{type:"touchMove",touchPoints:[{x,y:y-i*18}]});await page.waitForTimeout(20);}
+     await client.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});await page.waitForTimeout(150);
+     touch={startScroll,endScroll:await page.evaluate(()=>scrollY),clickDelta:(await page.evaluate(()=>fixtureClicks))-clickBefore,checkedChanged:(await target.evaluate(n=>n.querySelector("input")?.checked))!==checkedBefore,input:"Chromium CDP touch start/move/end over actual enhanced control"};
+     assert.equal(touch.clickDelta,0,"touch scroll must not click a control");assert.equal(touch.checkedChanged,false,"touch scroll must not toggle a flag");
+     await client.send("Emulation.setTouchEmulationEnabled",{enabled:false});
+    }
+   }
+  }
+  sample.touch=touch;sample.validMovement=sample.scrollEvents.length>0&&Math.max(...sample.scrollEvents.map(e=>e.top))-Math.min(...sample.scrollEvents.map(e=>e.top))>200;assert.ok(sample.validMovement,"runtime comparison requires wheel displacement");assert.equal(sample.clicks,0);assert.equal(sample.overflow,false);
+  const id=[engine,repeat,revision,design,theme,cards,width,kind,state].join("-");
+  if(client){
+   const done=new Promise(resolve=>client.once("Tracing.tracingComplete",resolve));await client.send("Tracing.end");const {stream}=await done;
+   let trace="";while(true){const part=await client.send("IO.read",{handle:stream});trace+=part.data;if(part.eof)break;}await client.send("IO.close",{handle:stream});
+   // Retain all raw paired traces, including thread metadata.
+   fs.writeFileSync(out+"/"+id+".json.gz",(await import("node:zlib")).gzipSync(trace));
+   const events=JSON.parse(trace).traceEvents,start=events.find(e=>e.name==="scroll-measure-start")?.ts,end=events.find(e=>e.name==="scroll-measure-end")?.ts;assert.ok(start&&end,"trace phase markers required");const complete=events.filter(e=>e.ph==="X"&&e.ts>=start&&e.ts<end),costs={};
+   for(const name of ["Layout","UpdateLayoutTree","Paint","RasterTask","FunctionCall","RunTask","ThreadControllerImpl::RunTask","CompositeLayers","DrawFrame"]){
+    const selected=complete.filter(e=>e.name===name);
+    costs[name]={count:selected.length,totalMs:selected.reduce((s,e)=>s+(e.dur||0)/1000,0),maxMs:Math.max(0,...selected.map(e=>(e.dur||0)/1000)),threads:[...new Set(selected.map(e=>e.pid+":"+e.tid))]};
+   }
+   sample.traceFile=id+".json.gz";sample.traceSha256=createHash("sha256").update(trace).digest("hex");sample.loading.traceEvidence=traceCosts(events,events.find(e=>e.name==="fixture-load-start")?.ts,start);sample.costs=costs;sample.traceEvidence=traceCosts(events,start,end);sample.heaviestFunctions=complete.filter(e=>e.name==="FunctionCall").sort((a,b)=>(b.dur||0)-(a.dur||0)).slice(0,8).map(e=>({durationMs:(e.dur||0)/1000,...e.args?.data}));
+   sample.eventNames=[...new Set(events.map(e=>e.name))].filter(n=>/Raster|Task|Composite|Frame/.test(n));
+  }
+  results.push({sourceSha:revision==="before"?baseline:process.env.GITHUB_SHA,baselineScrollNormalization:"root overscroll containment removed in test route for comparable wheel movement",engine,browser:browser.version(),repeat,revision,baseline,...config,...sample});
+  fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));const frameSummary=Object.fromEntries(["p50","p95","p99","max","over20","over34"].map(k=>[k,sample.raf[k]]));const traceSummary=sample.costs?Object.fromEntries(Object.entries(sample.costs).map(([k,v])=>[k,{count:v.count,totalMs:+v.totalMs.toFixed(2),maxMs:+v.maxMs.toFixed(2)}])):null;console.log("SCROLL_EVIDENCE "+JSON.stringify({id,revision,design,width,state,frameMs:frameSummary,mutations:sample.mutations,updates:sample.updates,longTasks:sample.longTasks.length,surfacePasses:sample.surfacePasses,trace:traceSummary,hotFunctions:sample.traceEvidence?.hotFunctions?.slice(0,5)}));
+  fs.writeFileSync(out+"/case-index.json",JSON.stringify(results.map(r=>({sourceSha:r.sourceSha,baseline:r.baseline,engine:r.engine,browser:r.browser,repeat:r.repeat,revision:r.revision,design:r.design,width:r.width,traceFile:r.traceFile??null,traceSha256:r.traceSha256??null})),null,2));
+  await page.close();
+ }}finally{await browser.close();}
+}}finally{server.kill();fs.writeFileSync(out+"/comparison.json",JSON.stringify(results,null,2));}
+fs.writeFileSync(out+"/scope.txt","Three paired repeats AB/BA/AB; historical f327 theme versus final theme, root overscroll normalized for valid baseline movement. Instrumented wrappers measure discover/collect/flush/owner/prepareRecords/updateSurfaces and adapter calls, default production instrumentation absent. Loading rAF starts before document scripts, ends at native fixture render; loading includes browser/theme initialization and fixture preparation, not theme-only JS cost. Scroll phase starts immediately after native 120-row lease fixture insertion, no settling delay. Raw trace and wrapper timestamps distinguish initialization, construction and scroll; no presented FPS claim. Chromium X/B/E per-thread traces; WebKit GTK is not macOS Safari and lacks rendering traces. No router/physical trackpad verification.\n");

@@ -12,7 +12,7 @@
   frame=0;if(stopped||!root||!modal||!overlay)return;
   const box=modal.getBoundingClientRect(),outer=overlay.getBoundingClientRect(),padding=innerWidth<600?18:24;
   MaterialRuntime.setStyle(root,"left",(box.left-outer.left+padding)+"px");
-  MaterialRuntime.setStyle(root,"top",(box.bottom-outer.top-(MaterialComponents.isM3()?28:16))+"px");
+  MaterialRuntime.setStyle(root,"top",(box.bottom-outer.top-16)+"px");
   MaterialRuntime.setStyle(root,"width",Math.max(0,box.width-padding*2)+"px");
   if(moving.size&&performance.now()<followUntil)frame=requestAnimationFrame(position);
  }
@@ -25,9 +25,9 @@
  }
  function destroyNode(n){if(!n)return;n._mlComponent?.destroy();n.remove();}
  function stopTask(token){const task=tasks.get(token);if(!task)return;tasks.delete(token);destroyNode(task.node);if(task.host?.children.length===0&&(task.host!==task.scope||task.host.classList.contains("ml-view-progress")))task.host.remove();}
- function startTask(label,options={}){const scope=options.scope||document.getElementById("maincontent")||document.body;const node=document.createElement("div");node.className="mdc-linear-progress mdc-linear-progress--indeterminate ml-task-progress";node.setAttribute("role","progressbar");node.setAttribute("aria-label",label||statusLabel());node.setAttribute("aria-busy","true");const host=scope.matches?.(".ml-progress-host")?scope:document.createElement("div");if(host!==scope){host.className="ml-progress-host";scope.prepend(host);}host.prepend(node);node.innerHTML='<div class="mdc-linear-progress__buffer"><div class="mdc-linear-progress__buffer-bar"></div><div class="mdc-linear-progress__buffer-dots"></div></div><div class="mdc-linear-progress__bar mdc-linear-progress__primary-bar"><span class="mdc-linear-progress__bar-inner"></span></div><div class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar"><span class="mdc-linear-progress__bar-inner"></span></div>';const instance=MaterialComponents.progress(node);node._mlComponent=instance;const token="task-"+(++taskSeq);tasks.set(token,{node,host,scope});instance.determinate=false;instance.buffer=1;instance.open();return {token,stop:()=>stopTask(token),update:(next)=>{if(next)node.setAttribute("aria-label",next);}};}
+ function startTask(label,options={}){const scope=options.scope||document.getElementById("maincontent")||document.body;const node=document.createElement("div");node.className="mdc-linear-progress mdc-linear-progress--indeterminate ml-task-progress";node.setAttribute("role","progressbar");node.setAttribute("aria-label",label||statusLabel());node.setAttribute("aria-busy","true");const host=scope.matches?.(".ml-progress-host")?scope:document.createElement("div");if(host!==scope){host.className="ml-progress-host";scope.prepend(host);}host.prepend(node);node.innerHTML='<div class="mdc-linear-progress__buffer"><div class="mdc-linear-progress__buffer-bar"></div><div class="mdc-linear-progress__buffer-dots"></div></div><div class="mdc-linear-progress__bar mdc-linear-progress__primary-bar"><span class="mdc-linear-progress__bar-inner"></span></div><div class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar"><span class="mdc-linear-progress__bar-inner"></span></div>';const instance=MaterialComponents.progress(node,{scene:options.scene});node._mlComponent=instance;const token="task-"+(++taskSeq);tasks.set(token,{node,host,scope});instance.determinate=false;instance.buffer=1;instance.open();return {token,stop:()=>stopTask(token),update:(next)=>{if(next)node.setAttribute("aria-label",next);}};}
  function stopModal(){moving.clear();followUntil=0;if(frame){cancelAnimationFrame(frame);frame=0;}if(!root)return;component?.destroy();component=null;resizeObserver?.disconnect();resizeObserver=null;root.remove();root=null;if(modal){modal.classList.remove("ml-has-progress");const owns=modal.getAttribute("aria-owns")?.split(/\s+/).filter(id=>id!=="ml-mdc-wait-progress").join(" ");if(owns)modal.setAttribute("aria-owns",owns);else modal.removeAttribute("aria-owns");}}
- function sync(){const current=overlay?.querySelector(":scope>.modal"),shown=document.body.classList.contains("modal-overlay-active"),busy=shown&&current&&(current.classList.contains("spinning")||current.querySelector("p.spinning,div.spinning:not(.btn):not(.cbi-button)")),determinate=current?.querySelector('.cbi-progressbar,[role="progressbar"][aria-valuenow]');if(!busy||determinate){stopModal();return;}if(modal&&modal!==current)stopModal();modal=current;if(!modal.classList.contains("ml-has-progress"))modal.classList.add("ml-has-progress");if(!root){root=document.createElement("div");root.id="ml-mdc-wait-progress";root.className="mdc-linear-progress mdc-linear-progress--indeterminate ml-wait-progress";root.setAttribute("role","progressbar");root.setAttribute("aria-label",statusLabel());root.setAttribute("aria-valuemin","0");root.setAttribute("aria-valuemax","1");root.innerHTML='<div class="mdc-linear-progress__buffer"><div class="mdc-linear-progress__buffer-bar"></div><div class="mdc-linear-progress__buffer-dots"></div></div><div class="mdc-linear-progress__bar mdc-linear-progress__primary-bar"><span class="mdc-linear-progress__bar-inner"></span></div><div class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar"><span class="mdc-linear-progress__bar-inner"></span></div>';overlay.append(root);position();component=MaterialComponents.progress(root);component.determinate=false;component.buffer=1;component.open();if(window.ResizeObserver){resizeObserver=new ResizeObserver(queuePosition);resizeObserver.observe(modal);}}const owns=new Set((modal.getAttribute("aria-owns")||"").split(/\s+/).filter(Boolean));owns.add(root.id);const value=[...owns].join(" ");if(modal.getAttribute("aria-owns")!==value)modal.setAttribute("aria-owns",value);queuePosition();}
+ function sync(){const current=overlay?.querySelector(":scope>.modal"),shown=document.body.classList.contains("modal-overlay-active"),busy=shown&&current&&(current.classList.contains("spinning")||current.querySelector("p.spinning,div.spinning:not(.btn):not(.cbi-button)")),determinate=current?.querySelector('.cbi-progressbar,[role="progressbar"][aria-valuenow]');if(!busy||determinate){stopModal();return;}if(modal&&modal!==current)stopModal();modal=current;if(!modal.classList.contains("ml-has-progress"))modal.classList.add("ml-has-progress");if(!root){root=document.createElement("div");root.id="ml-mdc-wait-progress";root.className="mdc-linear-progress mdc-linear-progress--indeterminate ml-wait-progress";root.setAttribute("role","progressbar");root.setAttribute("aria-label",statusLabel());root.setAttribute("aria-valuemin","0");root.setAttribute("aria-valuemax","1");root.innerHTML='<div class="mdc-linear-progress__buffer"><div class="mdc-linear-progress__buffer-bar"></div><div class="mdc-linear-progress__buffer-dots"></div></div><div class="mdc-linear-progress__bar mdc-linear-progress__primary-bar"><span class="mdc-linear-progress__bar-inner"></span></div><div class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar"><span class="mdc-linear-progress__bar-inner"></span></div>';overlay.append(root);position();component=MaterialComponents.progress(root,{scene:"modal"});component.determinate=false;component.buffer=1;component.open();if(window.ResizeObserver){resizeObserver=new ResizeObserver(queuePosition);resizeObserver.observe(modal);}}const owns=new Set((modal.getAttribute("aria-owns")||"").split(/\s+/).filter(Boolean));owns.add(root.id);const value=[...owns].join(" ");if(modal.getAttribute("aria-owns")!==value)modal.setAttribute("aria-owns",value);queuePosition();}
  const busySelector="p.spinning,div.spinning:not(.btn):not(.cbi-button),.cbi-progressbar,[role=progressbar]";
  function relevantModal(record){
   if(record.target.closest?.("[data-ml-component=progress],.ml-wait-progress"))return false;
@@ -62,24 +62,37 @@
  // LuCI View.__init__ inserts #view > .spinning, then replaces its
  // children only after load AND render resolve. Observe that structural
  // lifecycle, independent of locale and sidebar menu tasks.
- let viewTask=null,viewScope=null,failedScope=null;
+ let viewTask=null,viewScope=null,failedScope=null,failedLoader=null;
+ const viewPromises=new WeakMap();let viewPrototype=null,originalInit=null,trackedInit=null;
+ function installViewTracking(){
+  const proto=window.L?.view?.prototype;if(!proto||typeof proto.__init__!=="function"||viewPrototype)return;
+  viewPrototype=proto;originalInit=proto.__init__;
+  trackedInit=function(){
+   const result=originalInit.apply(this,arguments),scope=document.getElementById("view"),loader=scope?.querySelector(":scope > .spinning:not(button):not(.btn):not(.cbi-button)");
+   if(result&&typeof result==="object"&&loader)viewPromises.set(result,{scope,loader});
+   return result;
+  };
+  proto.__init__=trackedInit;
+ }
+ // Native setup waits for DOMContentLoaded before instantiating view classes.
+ // Track identity only: do not attach a catch or alter the business promise.
+ installViewTracking();document.addEventListener("DOMContentLoaded",installViewTracking,{once:true,signal:abort.signal});
  function stopView(){viewScope?.classList.remove("ml-view-loading");viewTask?.stop();viewTask=null;viewScope=null;}
  function syncView(records=[]){
   const scope=document.getElementById("view");
   // Only the view-level loader is a view load. A nested busy button, upload
   // or directory browser must never turn the whole page into a loading view.
   const busy=scope?.querySelector(":scope > .spinning:not(button):not(.btn):not(.cbi-button)");
-  const failure=records.some(r=>[...r.addedNodes].some(n=>n.nodeType===1&&(n.matches(".alert-message.danger")||n.querySelector(".alert-message.danger"))));
-  if(failure&&viewTask){failedScope=scope;stopView();}
-  if(!busy){if(viewTask&&scope?.isConnected)window.MaterialSurfaces?.ensure(scope);if(failedScope===scope)failedScope=null;stopView();return;}
-  if(failedScope===scope)return;
+  if(!busy){if(viewTask&&scope?.isConnected)window.MaterialSurfaces?.ensure(scope);failedScope=null;failedLoader=null;stopView();return;}
+  if(failedScope===scope&&failedLoader===busy)return;
+  if(failedScope){failedScope=null;failedLoader=null;}
   if(viewTask&&(viewScope!==scope||!scope.isConnected))stopView();
   if(!viewTask){
    viewScope=scope;scope.classList.add("ml-view-loading");
    // Mount outside #view: LuCI DOM.content() owns every child of #view.
    // This host stays visible while load/render replaces that content.
    const host=document.createElement("div");host.className="ml-progress-host ml-view-progress";
-   scope.before(host);viewTask=startTask(t("正在载入视图","Loading view"),{scope:host});
+   scope.before(host);viewTask=startTask(t("正在载入视图","Loading view"),{scope:host,scene:"view"});
   }
  }
  function observeView(n){
@@ -94,7 +107,7 @@
     const relevant=records.filter(r=>{
      if(r.target.closest?.("[data-ml-component=progress],.ml-view-progress,.ml-progress-host"))return false;
      if(r.target===viewNode)return true;
-     return !!viewTask&&[...r.addedNodes].some(el=>el.nodeType===1&&(el.matches?.(".alert-message.danger")||el.querySelector?.(".alert-message.danger")));
+     return false;
     });
     if(relevant.length)syncView(relevant);
    });
@@ -102,8 +115,7 @@
   }
   syncView();
  }
- MaterialRuntime.register({range:true,discoverSelector:'#view,#modal_overlay,.alert-message.danger',priority:-30,enhance(n){
-  if(viewTask&&(n.matches?.(".alert-message.danger")||n.querySelector?.(".alert-message.danger")))syncView([{addedNodes:[n]}]);
+ MaterialRuntime.register({range:true,discoverSelector:'#view,#modal_overlay',priority:-30,enhance(n){
   if(n.id==="modal_overlay")observe(n);else if(!overlay?.isConnected){const candidate=n.querySelector?.("#modal_overlay");if(candidate)observe(candidate);}
   if(n.id==="view")observeView(n);else if(!viewNode?.isConnected){const candidate=n.querySelector?.("#view");if(candidate)observeView(candidate);}
  },cleanup(n){
@@ -112,11 +124,14 @@
   for(const [token,task] of tasks)if(!task.scope.isConnected&&(n===task.scope||n.contains(task.scope)))stopTask(token);
  }});
  observeView(document.getElementById("view"));
- window.addEventListener("unhandledrejection",()=>{if(viewTask){failedScope=viewScope;stopView();}},{signal:abort.signal});
+ window.addEventListener("unhandledrejection",event=>{
+  const task=viewPromises.get(event.promise);
+  if(task&&task.scope===document.getElementById("view")&&task.loader.parentElement===task.scope&&task.loader.classList.contains("spinning")){failedScope=task.scope;failedLoader=task.loader;stopView();}
+ },{signal:abort.signal});
  window.addEventListener("pagehide",event=>{
   if(frame){cancelAnimationFrame(frame);frame=0;}
   if(event.persisted)return;
-  stopped=true;abort.abort();visibilityObserver.disconnect();viewObserver?.disconnect();viewStateObserver?.disconnect();modalObserver?.disconnect();
+  stopped=true;abort.abort();if(viewPrototype?.__init__===trackedInit)viewPrototype.__init__=originalInit;visibilityObserver.disconnect();viewObserver?.disconnect();viewStateObserver?.disconnect();modalObserver?.disconnect();
   stopView();for(const token of [...tasks.keys()])stopTask(token);stopModal();
   if(overlay){overlay.removeEventListener("scroll",queuePosition);for(const event of ["transitionrun","transitionend","transitioncancel"])overlay.removeEventListener(event,motion,true);}
  });

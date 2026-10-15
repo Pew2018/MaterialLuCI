@@ -5,8 +5,8 @@ export async function verifyToolbar(browser,name,base){
  const seeds=["#42A5F5","#CC6F4E","#E6A545","#7DC22F","#26C6DA","#F06292","#808080","#FFFFFF","#000000","#FFFF00"];
  for(const width of [390,1440]){
   await page.setViewportSize({width,height:900});
-  assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),width>=1024?56:64);
-  assert.equal(await page.locator(".ml-toolbar").evaluate(el=>getComputedStyle(el).paddingTop),width>=1024?"0px":"8px");
+  assert.equal(await page.locator(".ml-toolbar").evaluate(el=>el.getBoundingClientRect().height),56);
+  assert.equal(await page.locator(".ml-toolbar").evaluate(el=>getComputedStyle(el).paddingTop),"0px");
   for(const dark of [false,true])for(const colored of [false,true])for(const seed of seeds){
    await page.evaluate(({dark,colored,seed})=>{MaterialAppearance.set("mode",dark?"dark":"light");MaterialAppearance.set("seed",seed);MaterialAppearance.set("toolbar",colored);MaterialAppearance.set("icons",true);},{dark,colored,seed});
    const check=async(minimum)=>page.evaluate(minimum=>{
@@ -25,7 +25,7 @@ export async function verifyToolbar(browser,name,base){
      if(contrast(foreground,stateBackground)<4.5)throw Error("toolbar control state contrast");
      if(el===document.activeElement&&s.outlineStyle!=="none"&&s.outlineColor!==s.color)throw Error("focus ink differs");
     }
-    if(document.querySelector('meta[name="theme-color"]').content!==(document.documentElement.dataset.theme==="dark"?"#121212":"#FAFAFA"))throw Error("browser hint changed to accent");
+    if(document.querySelector('meta[name="theme-color"]').content!==getComputedStyle(document.querySelector(".ml-toolbar")).backgroundColor)throw Error("browser hint does not follow the toolbar surface");
    },minimum);
    await check(colored?7:4.5);
    if(width===390){
@@ -41,5 +41,5 @@ export async function verifyToolbar(browser,name,base){
    await page.screenshot({path:"dist/previews/toolbar-"+name+"-"+width+"-"+seed.slice(1)+"-"+(dark?"dark":"light")+".png"});
   }
  }
- await page.close();console.log(name+": extracted-IPK toolbar title/control contrast, hover, pressed, focus and neutral browser hints passed");
+ await page.close();console.log(name+": extracted-IPK toolbar title/control contrast, hover, pressed, focus and toolbar-following browser hint passed");
 }
