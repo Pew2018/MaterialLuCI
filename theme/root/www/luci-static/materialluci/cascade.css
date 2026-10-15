@@ -562,7 +562,7 @@ body .ml-mdc-selection>.mdc-checkbox__background,body .ml-mdc-selection>.mdc-rad
  position:absolute;left:var(--ml-selection-left,0px);top:var(--ml-selection-top,0px);width:18px;height:18px;pointer-events:none
 }
 body .ml-mdc-selection>.mdc-checkbox__ripple,body .ml-mdc-selection>.mdc-radio__ripple{
- left:calc(var(--ml-selection-left,0px) - 15px);top:calc(var(--ml-selection-top,0px) - 15px);width:48px;height:48px;pointer-events:none
+ left:calc(var(--ml-selection-left,0px) - 9px);top:calc(var(--ml-selection-top,0px) - 9px);width:36px;height:36px;border-radius:50%;pointer-events:none
 }
 body .ml-mdc-selection:focus-within>.mdc-checkbox__background,body .ml-mdc-selection:focus-within>.mdc-radio__background{outline:2px solid var(--control-strong);outline-offset:2px}
 body .ml-radio.ml-mdc-selection{width:16px;height:16px;border:0;flex:none;display:inline-block!important}
